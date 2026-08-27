@@ -1,0 +1,12 @@
+wordoguessr.localhost {
+    tls /etc/caddy/certificates/wordoguessr.localhost.crt /etc/caddy/certificates/wordoguessr.localhost.key
+
+    @backend path /api* /openapi* /scalar*
+    handle @backend {
+        reverse_proxy wordoguessr.webapi:8080
+    }
+
+    handle {
+        reverse_proxy wordoguessr.ui:80
+    }
+}

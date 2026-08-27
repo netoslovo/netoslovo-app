@@ -1,0 +1,36 @@
+using System.Security.Claims;
+using WordoGuessr.API.BuildingBlocks.Security.Authorization;
+
+namespace WordoGuessr.Auth.API.Security;
+
+internal sealed class AuthPermissionClaimsTransformation : IModuleClaimsTransformation
+{
+    private static readonly string[] _adminPermissions =
+    [
+        Permissions.ManageUserNameFilter
+    ];
+
+    public Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
+    {
+        if (!principal.IsInRole(AppRoles.Admin))
+        {
+            return Task.FromResult(principal);
+        }
+
+        var assignedPermissions = principal.FindAll(AppClaimTypes.Permission)
+            .Select(claim => claim.Value)
+            .ToHashSet();
+
+        var permissionClaims = _adminPermissions
+            .Where(permission => !assignedPermissions.Contains(permission))
+            .Select(permission => new Claim(AppClaimTypes.Permission, permission))
+            .ToArray();
+
+        if (permissionClaims.Length > 0)
+        {
+            principal.AddIdentity(new ClaimsIdentity(permissionClaims));
+        }
+
+        return Task.FromResult(principal);
+    }
+}

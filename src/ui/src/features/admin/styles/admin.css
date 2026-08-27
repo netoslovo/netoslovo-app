@@ -1,0 +1,210 @@
+.admin-page {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-page__header {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-page__header > div {
+  min-width: 0;
+}
+
+.admin-page__eyebrow {
+  margin: 0;
+  color: var(--p-text-muted-color);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.admin-page__header h1 {
+  margin: 2px 0 0;
+  font-size: clamp(24px, 4vw, 30px);
+}
+
+.admin-page__description {
+  margin: 5px 0 0;
+  color: var(--color-gray-600);
+  line-height: 1.45;
+}
+
+.admin-panel,
+.admin-filters {
+  border: 1px solid var(--color-gray-200);
+  border-radius: 8px;
+  background: white;
+}
+
+.admin-panel {
+  padding: 14px;
+}
+
+.admin-panel__header {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-panel__header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.admin-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--color-gray-600);
+  font-size: 13px;
+}
+
+.admin-field input,
+.admin-native-field,
+.admin-dialog input,
+.admin-select.p-select,
+.admin-date-picker .p-inputtext {
+  height: 42px;
+  min-height: 42px;
+  border-radius: 14px;
+  font-size: 14px;
+}
+
+.admin-field input,
+.admin-native-field,
+.admin-dialog input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--color-gray-300);
+  padding: 0 9px;
+  background: white;
+  color: var(--color-gray-800);
+}
+
+.admin-select.p-select .p-select-label,
+.admin-select-overlay .p-select-option {
+  font-size: 14px;
+}
+
+.admin-page input[type="search"],
+.admin-dialog input[type="search"] {
+  appearance: textfield;
+}
+
+.admin-page input[type="search"]::-webkit-search-cancel-button,
+.admin-dialog input[type="search"]::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+.admin-date-picker .p-inputtext {
+  border: 1px solid var(--color-gray-300);
+  padding: 0 9px;
+  background: white;
+}
+
+.admin-date-picker .p-datepicker-input-icon-container {
+  color: var(--color-primary-600);
+}
+
+.admin-field input:focus,
+.admin-native-field:focus,
+.admin-dialog input:focus {
+  border-color: var(--color-primary-500);
+  outline: 0;
+  box-shadow: none;
+}
+
+.admin-native-action:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.admin-field input:disabled,
+.admin-native-field:disabled,
+.admin-dialog input:disabled {
+  background: var(--color-gray-50);
+  color: var(--p-text-muted-color);
+  cursor: not-allowed;
+}
+
+.admin-actions,
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+button.admin-filters-toggle.p-button {
+  display: none;
+}
+
+.empty-state,
+.inline-error {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--color-gray-600);
+}
+
+.inline-error {
+  min-height: auto;
+  justify-content: space-between;
+  border: 1px solid var(--color-red-200);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--color-red-100);
+  color: var(--color-red-700);
+}
+
+.confirm-text {
+  max-width: 440px;
+  color: var(--color-gray-700);
+  line-height: 1.5;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .admin-native-action:hover {
+    background: var(--color-primary-50);
+    color: var(--color-primary-700);
+  }
+}
+
+@container admin-content (max-width: 560px) {
+  .admin-page__header {
+    flex-direction: column;
+  }
+
+  .admin-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  button.admin-filters-toggle.p-button {
+    display: inline-flex;
+    align-self: flex-start;
+  }
+
+  .admin-content .admin-collapsible-filters.admin-collapsible-filters--closed {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .dialog-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

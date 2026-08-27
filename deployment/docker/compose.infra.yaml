@@ -1,0 +1,178 @@
+name: wordoguessr
+
+services:
+  postgres:
+    image: postgres:18.4
+    restart: always
+    volumes:
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    environment:
+      POSTGRES_DB: wordoguessr
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: changeme
+      TZ: ${WORDOGUESSR_TZ:-Asia/Yekaterinburg}
+      PGTZ: ${WORDOGUESSR_TZ:-Asia/Yekaterinburg}
+    ports:
+      - "127.0.0.1:${POSTGRES_PUBLIC_PORT:-15432}:5432"
+
+  mailpit:
+    image: axllent/mailpit:v1.30
+    restart: always
+    environment:
+      TZ: ${WORDOGUESSR_TZ:-Asia/Yekaterinburg}
+    ports:
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-11025}:1025"
+      - "127.0.0.1:${MAILPIT_WEB_PORT:-18025}:8025"
+
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: changeme
+      TZ: ${WORDOGUESSR_TZ:-Asia/Yekaterinburg}
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    volumes:
+      - minio:/data
+    ports:
+      - "127.0.0.1:${MINIO_API_PUBLIC_PORT:-19000}:9000"
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    volumes:
+      - ${MINIO_INIT_PATH:-../sample-data}:/seed:ro
+    entrypoint: >
+      /bin/sh -c "
+        until mc alias set local http://minio:9000 admin changeme; do
+          sleep 1;
+        done;
+        mc mb --ignore-existing local/wordoguessr;
+        mc cp --recursive /seed/ local/wordoguessr/;
+      "
+
+  valkey-inmemory:
+    image: valkey/valkey:9.1-alpine
+    restart: always
+    command: >-
+      valkey-server
+      --maxmemory-policy allkeys-lru
+      --appendonly no
+      --save ""
+      --databases 1
+      --timeout 0
+      --tcp-keepalive 300
+      --slowlog-log-slower-than 10000
+      --slowlog-max-len 128
+      --notify-keyspace-events ""
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    ports:
+      - "127.0.0.1:${VALKEY_INMEMORY_PUBLIC_PORT:-16379}:6379"
+
+  valkey-persistent:
+    image: valkey/valkey:9.1-alpine
+    restart: always
+    command: >-
+      valkey-server
+      --maxmemory-policy noeviction
+      --appendonly yes
+      --appendfsync everysec
+      --save "900 1"
+      --databases 1
+      --timeout 0
+      --tcp-keepalive 300
+      --slowlog-log-slower-than 10000
+      --slowlog-max-len 128
+      --notify-keyspace-events ""
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    volumes:
+      - valkey-persistent:/data
+    ports:
+      - "127.0.0.1:${VALKEY_PERSISTENT_PUBLIC_PORT:-13678}:6379"
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.149.0
+    restart: unless-stopped
+    command:
+      - -storageDataPath=/storage
+      - -retentionPeriod=30d
+      - -promscrape.config=/etc/victoriametrics/prometheus.yml
+    volumes:
+      - victoria-metrics-data:/storage
+      - ./configuration/vm-prometheus.yml:/etc/victoriametrics/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:${VICTORIAMETRICS_HTTP_PORT:-18428}:8428"
+
+  victorialogs:
+    image: victoriametrics/victoria-logs:v1.52.0
+    restart: unless-stopped
+    command:
+      - -storageDataPath=/storage
+      - -retentionPeriod=30d
+    volumes:
+      - victoria-logs-data:/storage
+    ports:
+      - "127.0.0.1:${VICTORIALOGS_HTTP_PORT:-19428}:9428"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.158.0
+    restart: unless-stopped
+    command:
+      - --config=/etc/otelcol/config.yml
+    volumes:
+      - ./configuration/otel-collector.yml:/etc/otelcol/config.yml:ro
+    ports:
+      - "127.0.0.1:${OTEL_COLLECTOR_GRPC_PORT:-14317}:4317"
+    depends_on:
+      - victoriametrics
+      - victorialogs
+
+  grafana:
+    image: grafana/grafana:13.2
+    restart: unless-stopped
+    depends_on:
+      - victorialogs
+      - victoriametrics
+    environment:
+      GF_INSTALL_PLUGINS: victoriametrics-logs-datasource
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/overview.json
+      GF_SECURITY_ADMIN_PASSWORD: changeme
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./configuration/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./configuration/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ../dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:${GRAFANA_HTTP_PORT:-13000}:3000"
+
+volumes:
+  postgres:
+  minio:
+  valkey-persistent:
+  victoria-metrics-data:
+  victoria-logs-data:
+  grafana-data:

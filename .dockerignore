@@ -1,0 +1,134 @@
+# =========================
+# Git
+# =========================
+.git/
+.gitignore
+.gitattributes
+
+
+# =========================
+# IDE / editors
+# =========================
+.vs/
+.vscode/
+.idea/
+
+**/.vs/
+**/.vscode/
+**/.idea/
+
+*.suo
+*.user
+*.*proj.user
+*.rsuser
+
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+
+# =========================
+# .NET
+# =========================
+**/bin/
+**/obj/
+**/TestResults/
+**/coverage/
+**/*.dbmdl
+**/*.jfm
+
+# Local DB / generated DB files
+**/*.mdf
+**/*.ldf
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+
+
+# =========================
+# Node / Frontend
+# =========================
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/build/
+**/.next/
+**/.nuxt/
+**/.vite/
+**/.turbo/
+**/.cache/
+**/coverage/
+
+
+# =========================
+# Logs
+# =========================
+logs/
+**/logs/
+*.log
+**/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+
+# =========================
+# Docker / Compose
+# =========================
+**/docker-compose*.yml
+**/docker-compose*.yaml
+**/Dockerfile*
+**/.dockerignore
+
+
+# =========================
+# Environment / secrets
+# =========================
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+**/secrets.dev.yaml
+**/values.dev.yaml
+**/azds.yaml
+
+
+# =========================
+# Kubernetes / Helm / deployment artifacts
+# =========================
+**/charts/
+
+
+# =========================
+# Docs / repo metadata
+# =========================
+README.md
+LICENSE
+*.md
+
+
+# =========================
+# Java / Eclipse leftovers
+# =========================
+**/.classpath
+**/.project
+**/.settings/
+**/.toolstarget
+
+
+# =========================
+# Database folders
+# =========================
+**/db/
+
+/tools
+/data
+**/appsettings.*.json

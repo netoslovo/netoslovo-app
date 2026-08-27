@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Storage/Migrations/*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WolverineFx" />
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\WordoGuessr.API.BuildingBlocks\WordoGuessr.API.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\WordoGuessr.Sagas.App\WordoGuessr.Sagas.App.csproj" />
+    <ProjectReference Include="..\WordoGuessr.Sagas.Domain\WordoGuessr.Sagas.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

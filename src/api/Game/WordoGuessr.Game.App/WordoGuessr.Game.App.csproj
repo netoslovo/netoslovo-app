@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="WolverineFx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Auth/WordoGuessr.Auth.Contract/WordoGuessr.Auth.Contract.csproj" />
+    <ProjectReference Include="..\..\Common\WordoGuessr.API.BuildingBlocks\WordoGuessr.API.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\..\Common\WordoGuessr.Common.App\WordoGuessr.Common.App.csproj" />
+    <ProjectReference Include="..\..\Words\WordoGuessr.Words.Contract\WordoGuessr.Words.Contract.csproj" />
+    <ProjectReference Include="..\WordoGuessr.Game.Contract\WordoGuessr.Game.Contract.csproj" />
+    <ProjectReference Include="..\WordoGuessr.Game.Domain\WordoGuessr.Game.Domain.csproj" />
+    <ProjectReference Include="..\WordoGuessr.Game.Dto\WordoGuessr.Game.Dto.csproj" />
+    <ProjectReference Include="..\WordoGuessr.Game.ReadModels\WordoGuessr.Game.ReadModels.csproj" />
+  </ItemGroup>
+</Project>

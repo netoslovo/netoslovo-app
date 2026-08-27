@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="WolverineFx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Common/WordoGuessr.API.BuildingBlocks/WordoGuessr.API.BuildingBlocks.csproj" />
+    <ProjectReference Include="../../Game/WordoGuessr.Game.Contract/WordoGuessr.Game.Contract.csproj" />
+    <ProjectReference Include="..\WordoGuessr.Words.Contract\WordoGuessr.Words.Contract.csproj" />
+  </ItemGroup>
+</Project>

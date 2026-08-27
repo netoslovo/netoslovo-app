@@ -1,0 +1,19 @@
+services:
+
+  caddy-host:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+    network_mode: host
+    volumes:
+      - ./configuration/Caddyfile.host:/etc/caddy/Caddyfile:ro
+      - ${TLS_CERT_PATH:?}:/etc/caddy/certificates/wordoguessr.localhost.crt:ro
+      - ${TLS_KEY_PATH:?}:/etc/caddy/certificates/wordoguessr.localhost.key:ro
+      - caddy_host_data:/data
+      - caddy_host_config:/config
+
+volumes:
+  caddy_host_data:
+  caddy_host_config:

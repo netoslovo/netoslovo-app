@@ -1,0 +1,32 @@
+{
+  "name": "wordoguessr-vue-ui",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@11.22.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "pnpm lint && vue-tsc --noEmit && vite build",
+    "lint": "eslint . --max-warnings 0",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/golos-text": "^5.2.8",
+    "@primeuix/themes": "^2.0.3",
+    "axios": "^1.7.7",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.5.5",
+    "vue": "^3.4.38",
+    "vue-router": "^5.1.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.1.2",
+    "@vue/eslint-config-typescript": "^14.9.0",
+    "eslint": "^10.8.1",
+    "eslint-plugin-vue": "^10.10.0",
+    "typescript": "^5.5.4",
+    "vite": "^6.4.3",
+    "vue-tsc": "^2.0.29"
+  }
+}

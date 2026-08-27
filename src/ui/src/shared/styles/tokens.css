@@ -1,0 +1,71 @@
+:root {
+  --color-black: var(--p-surface-950);
+  --color-gray-50: var(--p-surface-50);
+  --color-gray-100: var(--p-surface-100);
+  --color-gray-200: var(--p-surface-200);
+  --color-gray-300: var(--p-surface-300);
+  --color-gray-400: var(--p-surface-400);
+  --color-gray-500: var(--p-surface-500);
+  --color-gray-600: var(--p-surface-600);
+  --color-gray-700: var(--p-surface-700);
+  --color-gray-800: var(--p-surface-800);
+  --color-gray-900: var(--p-surface-900);
+  --color-primary-50: var(--p-primary-50);
+  --color-primary-100: var(--p-primary-100);
+  --color-primary-200: var(--p-primary-200);
+  --color-primary-300: var(--p-primary-300);
+  --color-primary-400: var(--p-primary-400);
+  --color-primary-500: var(--p-primary-500);
+  --color-primary-600: var(--p-primary-600);
+  --color-primary-700: var(--p-primary-700);
+  --color-red-100: #f1dbdb;
+  --color-red-200: #e6bbbb;
+  --color-red-600: #b14646;
+  --color-red-700: #983939;
+  --color-notification-success: var(--color-primary-600);
+  --color-notification-error: var(--color-red-600);
+  --color-notification-info: var(--color-gray-500);
+  --color-streak-50: #fbf8ef;
+  --color-streak-100: #eee4c8;
+  --color-streak-600: #8d6d28;
+  --color-orange-200: #e8d6c3;
+  --color-yellow-300: #e6e0be;
+  --color-green-200: #aee1c7;
+  --shadow-menu: 0 12px 32px rgba(25, 32, 43, 0.16);
+  --container-sm: 640px;
+  --app-header-height: 50px;
+  --app-header-side-size: 40px;
+  --game-logo-width: 200px;
+  --resolved-word-font-size: 24px;
+  --history-card-title-font-size: 15px;
+  --history-card-status-icon-size: 17px;
+  --history-group-title-font-size: 15px;
+  --info-popover-font-size: 14px;
+  --leaderboard-tab-font-size: 15px;
+  --leaderboard-emphasis-font-weight: 500;
+  color-scheme: light;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --app-header-height: 58px;
+    --app-header-side-size: 44px;
+    --game-logo-width: 250px;
+    --resolved-word-font-size: 28px;
+    --leaderboard-tab-font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --leaderboard-tab-font-size: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --app-header-height: 62px;
+    --game-logo-width: 265px;
+    --resolved-word-font-size: 32px;
+  }
+}

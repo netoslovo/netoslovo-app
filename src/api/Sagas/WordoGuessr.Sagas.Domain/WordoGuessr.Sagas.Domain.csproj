@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WolverineFx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\WordoGuessr.Common.Domain\WordoGuessr.Common.Domain.csproj" />
+    <ProjectReference Include="..\..\Game\WordoGuessr.Game.Contract\WordoGuessr.Game.Contract.csproj" />
+    <ProjectReference Include="..\..\Words\WordoGuessr.Words.Contract\WordoGuessr.Words.Contract.csproj" />
+    <ProjectReference Include="..\WordoGuessr.Sagas.Contract\WordoGuessr.Sagas.Contract.csproj" />
+  </ItemGroup>
+
+</Project>

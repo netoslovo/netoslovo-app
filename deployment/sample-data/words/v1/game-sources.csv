@@ -1,0 +1,13 @@
+GameSourceId,Word,DifficultyCode,PredictedDifficulty
+470,кот,easy,6
+262,собака,easy,7
+15,дом,easy,7
+76,чувство,medium,38
+284,детство,medium,34
+393,воспоминание,medium,43
+123,сознание,hard,56
+1034,восприятие,hard,65
+1083,мышление,hard,65
+2346,мировоззрение,impossible,71
+5694,метафизика,impossible,85
+4988,диалектика,impossible,83

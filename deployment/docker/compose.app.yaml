@@ -1,0 +1,99 @@
+name: wordoguessr
+
+services:
+
+  migrations:
+    image: wordoguessr-webapi
+    build:
+      context: ./../../..
+      dockerfile: src/api/WordoGuessr.WebAPI/Dockerfile
+    command: ["migrate"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    environment:
+      ConnectionStrings__PostgreSql: "Host=postgres;port=5432;Database=wordoguessr;Username=admin;Password=changeme"
+      OpenTelemetry__OtlpEndpoint: "http://otel-collector:4317"
+      OpenTelemetry__OtlpProtocol: "Grpc"
+      OpenTelemetry__ExportInterval: "00:00:05"
+      TZ: ${WORDOGUESSR_TZ:-Asia/Yekaterinburg}
+
+  wordoguessr.webapi:
+    image: wordoguessr-webapi
+    build:
+      context: ./../../..
+      dockerfile: src/api/WordoGuessr.WebAPI/Dockerfile
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+      valkey-inmemory:
+        condition: service_healthy
+      valkey-persistent:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_HTTP_PORTS: 8080
+
+      HostingFeatures__EmbeddedMigrations: "false"
+      HostingFeatures__OpenApi: "true"
+      HostingFeatures__ForwardedHeaders: "true"
+      HostingFeatures__WolverineDynamicCodeGeneration: "false"
+
+      ConnectionStrings__PostgreSql: "Host=postgres;port=5432;Database=wordoguessr;Username=admin;Password=changeme"
+      ConnectionStrings__InmemoryRedis: "valkey-inmemory:6379"
+      ConnectionStrings__PersistentRedis: "valkey-persistent:6379"
+
+      ObjectStorage__S3__ServiceUrl: "http://minio:9000"
+      ObjectStorage__S3__AccessKey: admin
+      ObjectStorage__S3__SecretKey: changeme
+      ObjectStorage__S3__BucketName: wordoguessr
+      ObjectStorage__S3__ForcePathStyle: "true"
+      ObjectStorage__S3__UseHttp: "true"
+      ObjectStorage__S3__Region: "ru-1"
+
+      Email__Sender__SmtpServer: mailpit
+      Email__Sender__SmtpPort: 1025
+      Email__Sender__SmtpLogin: ""
+      Email__Sender__SmtpPassword: ""
+      Email__Sender__FromBaseAddress: "no-reply"
+      Email__Sender__FromDomain: "xn--b1afsggbbuh.xn--p1ai"
+      Email__Sender__FromDisplayName: "нетослово.рф"
+      Email__Sender__UseSSL: "false"
+
+      Auth__Otp__Subject: "Код для входа в нетослово.рф"
+      Auth__OtpCodeHasher__SecretKey: my-very-strong-secret-key-of-length-more-than-32
+      Auth__DefaultAdmin__Emails__0: admin@admin.local 
+
+      DataProtection__CertificatePath: /run/secrets/dataprotection-dev.pfx
+      DataProtection__CertificatePassword: ${DATA_PROTECTION_KEY_PASSWORD:?}
+
+      OpenTelemetry__OtlpEndpoint: "http://otel-collector:4317"
+      OpenTelemetry__ExportInterval: "00:00:15"
+
+      TZ: ${WORDOGUESSR_TZ:-Asia/Yekaterinburg}
+    volumes:
+      - ${USER_SECRETS_PATH:?}:/home/app/.microsoft/usersecrets:ro
+      - ${DATA_PROTECTION_KEY_PATH:?}:/run/secrets/dataprotection-dev.pfx:ro
+    ports:
+      - "${WEBAPI_HTTP_PORT:-8080}:8080"
+
+  wordoguessr.ui:
+    image: wordoguessr-ui
+    build:
+      context: ./../../../src/ui
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+    environment:
+      TZ: ${WORDOGUESSR_TZ:-Asia/Yekaterinburg}
+    ports:
+      - "${UI_HTTP_PORT:-8088}:80"

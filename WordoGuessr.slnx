@@ -1,0 +1,58 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/src/" />
+  <Folder Name="/src/api/">
+    <Project Path="src/api/WordoGuessr.WebAPI/WordoGuessr.WebAPI.csproj" />
+  </Folder>
+  <Folder Name="/src/api/Auth/">
+    <Project Path="src/api/Auth/WordoGuessr.Auth.API/WordoGuessr.Auth.API.csproj" />
+    <Project Path="src/api/Auth/WordoGuessr.Auth.App/WordoGuessr.Auth.App.csproj" />
+    <Project Path="src/api/Auth/WordoGuessr.Auth.Contract/WordoGuessr.Auth.Contract.csproj" />
+    <Project Path="src/api/Auth/WordoGuessr.Auth.Domain/WordoGuessr.Auth.Domain.csproj" />
+    <Project Path="src/api/Auth/WordoGuessr.Auth.Infra/WordoGuessr.Auth.Infra.csproj" />
+  </Folder>
+  <Folder Name="/src/api/Common/">
+    <Project Path="src/api/Common/WordoGuessr.API.BuildingBlocks/WordoGuessr.API.BuildingBlocks.csproj" />
+    <Project Path="src/api/Common/WordoGuessr.Common.Dto/WordoGuessr.Common.Dto.csproj" />
+    <Project Path="src/api/Common/WordoGuessr.Common.App/WordoGuessr.Common.App.csproj" />
+    <Project Path="src/api/Common/WordoGuessr.Common.Domain/WordoGuessr.Common.Domain.csproj" />
+  </Folder>
+  <Folder Name="/src/api/Email/">
+    <Project Path="src/api/Email/WordoGuessr.Email.App/WordoGuessr.Email.App.csproj" />
+    <Project Path="src/api/Email/WordoGuessr.Email.Contract/WordoGuessr.Email.Contract.csproj" />
+    <Project Path="src/api/Email/WordoGuessr.Email.Domain/WordoGuessr.Email.Domain.csproj" />
+    <Project Path="src/api/Email/WordoGuessr.Email.Infra/WordoGuessr.Email.Infra.csproj" />
+  </Folder>
+  <Folder Name="/src/api/Game/">
+    <Project Path="src/api/Game/WordoGuessr.Game.API/WordoGuessr.Game.API.csproj" />
+    <Project Path="src/api/Game/WordoGuessr.Game.App/WordoGuessr.Game.App.csproj" />
+    <Project Path="src/api/Game/WordoGuessr.Game.Contract/WordoGuessr.Game.Contract.csproj" />
+    <Project Path="src/api/Game/WordoGuessr.Game.Domain/WordoGuessr.Game.Domain.csproj" />
+    <Project Path="src/api/Game/WordoGuessr.Game.Dto/WordoGuessr.Game.Dto.csproj" />
+    <Project Path="src/api/Game/WordoGuessr.Game.Infra/WordoGuessr.Game.Infra.csproj" />
+    <Project Path="src/api/Game/WordoGuessr.Game.ReadModels/WordoGuessr.Game.ReadModels.csproj" />
+  </Folder>
+  <Folder Name="/src/api/Sagas/">
+    <Project Path="src/api/Sagas/WordoGuessr.Sagas.API/WordoGuessr.Sagas.API.csproj" />
+    <Project Path="src/api/Sagas/WordoGuessr.Sagas.App/WordoGuessr.Sagas.App.csproj" />
+    <Project Path="src/api/Sagas/WordoGuessr.Sagas.Contract/WordoGuessr.Sagas.Contract.csproj" />
+    <Project Path="src/api/Sagas/WordoGuessr.Sagas.Dto/WordoGuessr.Sagas.Dto.csproj" />
+    <Project Path="src/api/Sagas/WordoGuessr.Sagas.Domain/WordoGuessr.Sagas.Domain.csproj" />
+    <Project Path="src/api/Sagas/WordoGuessr.Sagas.Infra/WordoGuessr.Sagas.Infra.csproj" />
+  </Folder>
+  <Folder Name="/src/api/Words/">
+    <Project Path="src/api/Words/WordoGuessr.Words.App/WordoGuessr.Words.App.csproj" />
+    <Project Path="src/api/Words/WordoGuessr.Words.Contract/WordoGuessr.Words.Contract.csproj" />
+    <Project Path="src/api/Words/WordoGuessr.Words.Infra/WordoGuessr.Words.Infra.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WordoGuessr.Auth.Tests/WordoGuessr.Auth.Tests.csproj" />
+    <Project Path="tests/WordoGuessr.Email.Tests/WordoGuessr.Email.Tests.csproj" />
+    <Project Path="tests/WordoGuessr.Game.Tests/WordoGuessr.Game.Tests.csproj" />
+    <Project Path="tests/WordoGuessr.Testing.Common/WordoGuessr.Testing.Common.csproj" />
+  </Folder>
+</Solution>

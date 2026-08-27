@@ -1,0 +1,78 @@
+.p-button:focus-visible {
+  outline: 2px solid var(--color-primary-600);
+  outline-offset: 2px;
+}
+
+.p-select-label {
+  align-self: center;
+}
+
+.p-dialog[tabindex="-1"]:focus {
+  outline: none;
+}
+
+.info-popover.p-popover {
+  box-shadow: var(--shadow-menu);
+}
+
+.info-popover.p-popover .p-popover-content {
+  padding: 10px 12px;
+}
+
+.game-dialog.p-dialog {
+  --game-dialog-padding: clamp(16px, 4vw, 22px);
+  --game-dialog-body-font-size: clamp(14px, 3.5vw, 15px);
+  width: min(calc(100vw - 24px), 460px);
+  max-height: calc(100dvh - 24px);
+  border-radius: clamp(8px, 2vw, 10px);
+}
+
+.game-dialog.p-dialog .p-dialog-header {
+  padding: var(--game-dialog-padding) var(--game-dialog-padding) clamp(8px, 2vw, 10px);
+}
+
+.game-dialog.p-dialog .p-dialog-title {
+  color: var(--color-gray-900);
+  font-size: clamp(19px, 4.8vw, 21px);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.game-dialog.p-dialog .p-dialog-content {
+  padding: 0 var(--game-dialog-padding) var(--game-dialog-padding);
+  font-size: var(--game-dialog-body-font-size);
+  overscroll-behavior: contain;
+}
+
+.game-dialog.p-dialog .p-dialog-header-actions,
+.game-dialog.p-dialog .p-dialog-close-button {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+}
+
+.game-dialog.p-dialog .p-dialog-close-button {
+  border: 0;
+  border-radius: 8px;
+  box-shadow: none;
+  background: transparent;
+  color: var(--color-gray-600);
+  transition: background-color 0.16s ease, color 0.16s ease, transform 0.1s ease;
+}
+
+.game-dialog.p-dialog .p-dialog-close-button:active {
+  background: var(--color-gray-100);
+  color: var(--color-gray-900);
+  transform: translateY(1px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .game-dialog.p-dialog .p-dialog-close-button:hover {
+    background: var(--color-gray-100);
+    color: var(--color-gray-900);
+  }
+}
+
+@media (max-height: 600px) {
+  .game-dialog.p-dialog { --game-dialog-padding: 14px; }
+}

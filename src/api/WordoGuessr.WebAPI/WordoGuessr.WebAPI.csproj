@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>..\..\..</DockerfileContext>
+    <DockerComposeProjectPath>..\..\docker-compose.dcproj</DockerComposeProjectPath>
+    <UserSecretsId>6a76a425-7296-4071-bb09-850ec57c1d89</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+    <PackageReference Include="OpenTelemetry" />
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" />
+    <PackageReference Include="PGDeployer" />
+    <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" />
+    <PackageReference Include="WolverineFx.Postgresql" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="WolverineFx.RuntimeCompilation" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Messaging/Migrations/*" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Auth\WordoGuessr.Auth.API\WordoGuessr.Auth.API.csproj" />
+    <ProjectReference Include="..\Auth\WordoGuessr.Auth.Infra\WordoGuessr.Auth.Infra.csproj" />
+    <ProjectReference Include="..\Common\WordoGuessr.API.BuildingBlocks\WordoGuessr.API.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Email\WordoGuessr.Email.App\WordoGuessr.Email.App.csproj" />
+    <ProjectReference Include="..\Email\WordoGuessr.Email.Infra\WordoGuessr.Email.Infra.csproj" />
+    <ProjectReference Include="..\Game\WordoGuessr.Game.API\WordoGuessr.Game.API.csproj" />
+    <ProjectReference Include="..\Game\WordoGuessr.Game.App\WordoGuessr.Game.App.csproj" />
+    <ProjectReference Include="..\Game\WordoGuessr.Game.Infra\WordoGuessr.Game.Infra.csproj" />
+    <ProjectReference Include="..\Sagas\WordoGuessr.Sagas.API\WordoGuessr.Sagas.API.csproj" />
+    <ProjectReference Include="..\Sagas\WordoGuessr.Sagas.App\WordoGuessr.Sagas.App.csproj" />
+    <ProjectReference Include="..\Sagas\WordoGuessr.Sagas.Infra\WordoGuessr.Sagas.Infra.csproj" />
+    <ProjectReference Include="..\Words\WordoGuessr.Words.App\WordoGuessr.Words.App.csproj" />
+    <ProjectReference Include="..\Words\WordoGuessr.Words.Infra\WordoGuessr.Words.Infra.csproj" />
+  </ItemGroup>
+</Project>

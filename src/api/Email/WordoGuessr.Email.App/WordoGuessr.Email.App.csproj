@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options" />    
+    <PackageReference Include="WolverineFx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WordoGuessr.Email.Contract\WordoGuessr.Email.Contract.csproj" />
+    <ProjectReference Include="..\WordoGuessr.Email.Domain\WordoGuessr.Email.Domain.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,21 @@
+services:
+
+  caddy-docker:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    depends_on:
+      - wordoguessr.webapi
+      - wordoguessr.ui
+    ports:
+      - "127.0.0.1:${CADDY_HTTP_PORT:-80}:80"
+      - "127.0.0.1:${CADDY_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./configuration/Caddyfile.docker:/etc/caddy/Caddyfile:ro
+      - ${TLS_CERT_PATH:?}:/etc/caddy/certificates/wordoguessr.localhost.crt:ro
+      - ${TLS_KEY_PATH:?}:/etc/caddy/certificates/wordoguessr.localhost.key:ro
+      - caddy_docker_data:/data
+      - caddy_docker_config:/config
+
+volumes:
+  caddy_docker_data:
+  caddy_docker_config:

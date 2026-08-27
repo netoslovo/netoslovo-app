@@ -1,0 +1,119 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug API",
+      "type": "coreclr",
+      "request": "launch",
+
+      "preLaunchTask": "api:prepare-debug",
+      "postDebugTask": "docker:debug-stack-down",
+
+      "program": "${workspaceFolder}/src/api/WordoGuessr.WebAPI/bin/Debug/net10.0/WordoGuessr.WebAPI.dll",
+      "cwd": "${workspaceFolder}/src/api/WordoGuessr.WebAPI",
+
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true,
+
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+
+      "serverReadyAction": {
+        "pattern": "Now listening on:\\s+(https?://\\S+)",
+        "action": "startDebugging",
+        "name": "Open API (integrated)",
+        "killOnServerStop": true
+      }
+    },
+    {
+      "name": "Open API (integrated)",
+      "type": "editor-browser",
+      "request": "launch",
+
+      "presentation": {
+        "hidden": true
+      },
+
+      "url": "http://localhost:5292/scalar"
+    },
+    {
+      "name": "Debug API (migration mode)",
+      "type": "coreclr",
+      "request": "launch",
+
+      "preLaunchTask": "api:prepare-debug-migration-mode",
+      "postDebugTask": "docker:debug-stack-down",
+
+      "program": "${workspaceFolder}/src/api/WordoGuessr.WebAPI/bin/Debug/net10.0/WordoGuessr.WebAPI.dll",
+      "args": ["migrate"],
+      "cwd": "${workspaceFolder}/src/api/WordoGuessr.WebAPI",
+
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true,
+
+      "env": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    },
+    {
+      "name": "Debug API + UI + proxy (host_mode)",
+      "type": "coreclr",
+      "request": "launch",
+
+      "preLaunchTask": "api:prepare-debug-host-mode",
+      "postDebugTask": "docker:debug-stack-down",
+
+      "program": "${workspaceFolder}/src/api/WordoGuessr.WebAPI/bin/Debug/net10.0/WordoGuessr.WebAPI.dll",
+      "cwd": "${workspaceFolder}/src/api/WordoGuessr.WebAPI",
+
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true,
+
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+
+      "serverReadyAction": {
+        "pattern": "Now listening on:\\s+(https?://\\S+)",
+        "action": "startDebugging",
+        "name": "Debug UI (host_mode)",
+        "killOnServerStop": true
+      }
+    },
+    {
+      "name": "Debug UI (host_mode)",
+      "type": "node-terminal",
+      "request": "launch",
+
+      "presentation": {
+        "hidden": true
+      },
+
+      "command": "pnpm dev --host localhost --port 5173",
+      "cwd": "${workspaceFolder}/src/ui",
+
+      "serverReadyAction": {
+        "pattern": "Local:\\s+(https?://\\S+)",
+        "action": "startDebugging",
+        "name": "Open UI (integrated)",
+        "killOnServerStop": true
+      }
+    },
+    {
+      "name": "Open UI (integrated)",
+      "type": "editor-browser",
+      "request": "launch",
+
+      "presentation": {
+        "hidden": true
+      },
+
+      "url": "https://wordoguessr.localhost",
+      "webRoot": "${workspaceFolder}/src/ui"
+    }
+  ]
+}
