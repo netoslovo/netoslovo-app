@@ -93,14 +93,14 @@ jobs:
           sbom: true
           provenance: false
 
-      - name: Attest ${{ matrix.component }} image
-        id: attest
-        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
-        with:
-          subject-name: ${{ matrix.image }}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
-          create-storage-record: false
+      # - name: Attest ${{ matrix.component }} image
+      #   id: attest
+      #   uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+      #   with:
+      #     subject-name: ${{ matrix.image }}
+      #     subject-digest: ${{ steps.push.outputs.digest }}
+      #     push-to-registry: true
+      #     create-storage-record: false
 
       - name: Write publication summary
         if: always()
@@ -125,3 +125,4 @@ jobs:
               echo "- Provenance: ${ATTESTATION_URL}"
             fi
           } >> "${GITHUB_STEP_SUMMARY}"
+
