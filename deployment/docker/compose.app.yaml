@@ -71,7 +71,7 @@ services:
 
       Auth__Otp__Subject: "Код для входа в нетослово.рф"
       Auth__OtpCodeHasher__SecretKey: my-very-strong-secret-key-of-length-more-than-32
-      Auth__DefaultAdmin__Emails__0: admin@admin.local 
+      Auth__DefaultAdmin__Emails__0: admin@admin.local
 
       DataProtection__CertificatePath: /run/secrets/dataprotection-dev.pfx
       DataProtection__CertificatePassword: ${DATA_PROTECTION_KEY_PASSWORD:?}
@@ -84,7 +84,7 @@ services:
       - ${USER_SECRETS_PATH:?}:/home/app/.microsoft/usersecrets:ro
       - ${DATA_PROTECTION_KEY_PATH:?}:/run/secrets/dataprotection-dev.pfx:ro
     ports:
-      - "${WEBAPI_HTTP_PORT:-8080}:8080"
+      - "127.0.0.1:${WEBAPI_HTTP_PORT:-8080}:8080"
 
   wordoguessr.ui:
     image: wordoguessr-ui
@@ -96,4 +96,4 @@ services:
     environment:
       TZ: ${WORDOGUESSR_TZ:-Asia/Yekaterinburg}
     ports:
-      - "${UI_HTTP_PORT:-8088}:8080"
+      - "127.0.0.1:${UI_HTTP_PORT:-8088}:8080"
