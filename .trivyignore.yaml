@@ -1,0 +1,12 @@
+# Keep this allowlist empty unless a reviewed exception is required.
+# Every exception must be scoped by path or purl and include both a reason and
+# an expiry date. Replace the empty list with entries in this form:
+#
+# vulnerabilities:
+#   - id: CVE-YYYY-NNNN
+#     purls:
+#       - pkg:example/name@version
+#     statement: Reviewed reason for accepting the risk temporarily.
+#     expired_at: YYYY-MM-DD
+
+vulnerabilities: []

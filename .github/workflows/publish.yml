@@ -1,0 +1,127 @@
+name: Publish images
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: publish-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: publish / ${{ matrix.component }}
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: api
+            image: ghcr.io/netoslovo/netoslovo-api
+            context: .
+            dockerfile: src/api/WordoGuessr.WebAPI/Dockerfile
+            cache-scope: netoslovo-api
+          - component: ui
+            image: ghcr.io/netoslovo/netoslovo-ui
+            context: src/ui
+            dockerfile: src/ui/Dockerfile
+            cache-scope: netoslovo-ui
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build ${{ matrix.component }} image for scanning
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          load: true
+          tags: ${{ matrix.image }}:sha-${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.cache-scope }}
+
+      - name: Scan ${{ matrix.component }} image
+        id: scan
+        continue-on-error: true
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: v0.74.0
+          image-ref: ${{ matrix.image }}:sha-${{ github.sha }}
+          scan-type: image
+          scanners: vuln
+          severity: CRITICAL
+          ignore-unfixed: false
+          trivyignores: .trivyignore.yaml
+          format: table
+          exit-code: 1
+
+      - name: Enforce vulnerability policy
+        if: steps.scan.outcome != 'success'
+        run: |
+          echo "Critical vulnerabilities blocked publication of ${{ matrix.image }}." >&2
+          exit 1
+
+      - name: Push ${{ matrix.component }} image
+        id: push
+        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ matrix.image }}:sha-${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.cache-scope }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.cache-scope }}
+          sbom: true
+          provenance: false
+
+      - name: Attest ${{ matrix.component }} image
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ matrix.image }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
+
+      - name: Write publication summary
+        if: always()
+        env:
+          IMAGE: ${{ matrix.image }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+          SCAN_RESULT: ${{ steps.scan.outcome }}
+          ATTESTATION_URL: ${{ steps.attest.outputs.attestation-url }}
+        run: |
+          {
+            echo "### ${IMAGE}"
+            echo "- Source SHA: \`${GITHUB_SHA}\`"
+            echo "- Tag: \`${IMAGE}:sha-${GITHUB_SHA}\`"
+            echo "- Critical vulnerability scan: \`${SCAN_RESULT}\`"
+            if [ -n "${DIGEST}" ]; then
+              echo "- Immutable image: \`${IMAGE}@${DIGEST}\`"
+              echo "- SBOM: attached to the registry image"
+            else
+              echo "- Publication: blocked before push"
+            fi
+            if [ -n "${ATTESTATION_URL}" ]; then
+              echo "- Provenance: ${ATTESTATION_URL}"
+            fi
+          } >> "${GITHUB_STEP_SUMMARY}"

@@ -10,7 +10,7 @@ RUN corepack enable \
 COPY . .
 
 ARG VITE_API_URL
-RUN pnpm build
+RUN pnpm exec vite build
 
 
 FROM nginx:1.30-alpine
