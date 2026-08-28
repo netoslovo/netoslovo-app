@@ -7,6 +7,6 @@ wordoguessr.localhost {
     }
 
     handle {
-        reverse_proxy wordoguessr.ui:80
+        reverse_proxy wordoguessr.ui:8080
     }
 }
