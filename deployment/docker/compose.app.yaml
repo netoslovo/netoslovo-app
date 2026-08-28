@@ -5,7 +5,7 @@ services:
   migrations:
     image: wordoguessr-webapi
     build:
-      context: ./../../..
+      context: ./../..
       dockerfile: src/api/WordoGuessr.WebAPI/Dockerfile
     command: ["migrate"]
     restart: "no"
@@ -24,7 +24,7 @@ services:
   wordoguessr.webapi:
     image: wordoguessr-webapi
     build:
-      context: ./../../..
+      context: ./../..
       dockerfile: src/api/WordoGuessr.WebAPI/Dockerfile
     depends_on:
       migrations:
@@ -89,7 +89,7 @@ services:
   wordoguessr.ui:
     image: wordoguessr-ui
     build:
-      context: ./../../../src/ui
+      context: ./../../src/ui
       dockerfile: Dockerfile
       args:
         VITE_API_URL: ""
