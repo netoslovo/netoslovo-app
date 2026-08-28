@@ -8,8 +8,6 @@ on:
 permissions:
   contents: read
   packages: write
-  id-token: write
-  attestations: write
 
 concurrency:
   group: publish-${{ github.sha }}
@@ -93,6 +91,8 @@ jobs:
           sbom: true
           provenance: false
 
+      # Restore after the repositories become public,
+      # with id-token: write and attestations: write permissions.
       # - name: Attest ${{ matrix.component }} image
       #   id: attest
       #   uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
@@ -108,7 +108,6 @@ jobs:
           IMAGE: ${{ matrix.image }}
           DIGEST: ${{ steps.push.outputs.digest }}
           SCAN_RESULT: ${{ steps.scan.outcome }}
-          ATTESTATION_URL: ${{ steps.attest.outputs.attestation-url }}
         run: |
           {
             echo "### ${IMAGE}"
@@ -120,9 +119,6 @@ jobs:
               echo "- SBOM: attached to the registry image"
             else
               echo "- Publication: blocked before push"
-            fi
-            if [ -n "${ATTESTATION_URL}" ]; then
-              echo "- Provenance: ${ATTESTATION_URL}"
             fi
           } >> "${GITHUB_STEP_SUMMARY}"
 
