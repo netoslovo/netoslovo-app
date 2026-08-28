@@ -15,7 +15,7 @@ services:
       otel-collector:
         condition: service_started
     environment:
-      ConnectionStrings__PostgreSql: "Host=postgres;port=5432;Database=wordoguessr;Username=admin;Password=changeme"
+      ConnectionStrings__PostgreSql: "Host=postgres;port=5432;Database=wordoguessr;Username=admin;Password=changeme;GSS Encryption Mode=Disable"
       OpenTelemetry__OtlpEndpoint: "http://otel-collector:4317"
       OpenTelemetry__OtlpProtocol: "Grpc"
       OpenTelemetry__ExportInterval: "00:00:05"
@@ -48,7 +48,7 @@ services:
       HostingFeatures__ForwardedHeaders: "true"
       HostingFeatures__WolverineDynamicCodeGeneration: "false"
 
-      ConnectionStrings__PostgreSql: "Host=postgres;port=5432;Database=wordoguessr;Username=admin;Password=changeme"
+      ConnectionStrings__PostgreSql: "Host=postgres;port=5432;Database=wordoguessr;Username=admin;Password=changeme;GSS Encryption Mode=Disable;"
       ConnectionStrings__InmemoryRedis: "valkey-inmemory:6379"
       ConnectionStrings__PersistentRedis: "valkey-persistent:6379"
 
