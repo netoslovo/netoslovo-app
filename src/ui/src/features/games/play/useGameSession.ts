@@ -1,4 +1,4 @@
-import { computed, onBeforeUnmount, ref, watch, type ComputedRef } from "vue";
+import { computed, onBeforeUnmount, ref, toValue, watch, type ComputedRef, type MaybeRefOrGetter } from "vue";
 import { sessionRevision } from "../../auth/model/authSession";
 import {
   isApiRequestCanceled,
@@ -41,6 +41,7 @@ export function useGameSession(
   mode: GameMode,
   routeKey: ComputedRef<string | null>,
   onMissing?: () => void,
+  replayAvailable: MaybeRefOrGetter<boolean> = true,
 ) {
   const game = ref<Game | null>(null);
   const loading = ref(false);
@@ -72,10 +73,20 @@ export function useGameSession(
     ),
   );
   const canReplay = computed(() =>
-    mode === "arcade" && replayDifficultiesLoaded.value && difficulties.value.length > 0 && !creating.value,
+    mode === "arcade" &&
+    toValue(replayAvailable) &&
+    replayDifficultiesLoaded.value &&
+    difficulties.value.length > 0 &&
+    !creating.value,
   );
 
   watch([routeKey, sessionRevision], () => void load(), { immediate: true });
+  watch(
+    () => toValue(replayAvailable),
+    (available) => {
+      if (available && game.value && game.value.gameState !== "active") void loadReplayDifficulties();
+    },
+  );
   onBeforeUnmount(() => {
     loadRequestId += 1;
     actionRequestId += 1;
@@ -102,7 +113,8 @@ export function useGameSession(
       if (requestId !== loadRequestId) return;
       game.value = loadedGame;
       if (!loadedGame && mode === "arcade") onMissing?.();
-      if (loadedGame?.gameState !== "active" && mode === "arcade") {
+      loading.value = false;
+      if (loadedGame?.gameState !== "active" && mode === "arcade" && toValue(replayAvailable)) {
         await loadReplayDifficulties(requestId, abortController.signal);
       }
     } catch (error) {
@@ -158,6 +170,9 @@ export function useGameSession(
       difficulties.value = values;
       replayDifficultiesLoaded.value = true;
       selectedDifficultyCode.value = game.value?.difficulty.code ?? values[0]?.code ?? "easy";
+    } catch (error) {
+      if (isApiRequestCanceled(error) || requestId !== loadRequestId) return;
+      replayDifficultiesLoaded.value = true;
     } finally {
       if (requestId === loadRequestId) replayDifficultiesRequestLoading.value = false;
     }
@@ -301,7 +316,7 @@ export function useGameSession(
         ? await getDailyGameForDay(routeKey.value)
         : id ? await getArcadeGameById(id) : null;
       if (id && game.value?.id === id && refreshed) game.value = refreshed;
-      if (mode === "arcade") await loadReplayDifficulties();
+      if (mode === "arcade" && toValue(replayAvailable)) await loadReplayDifficulties();
     } finally {
       finishedGameRefreshing.value = false;
     }
@@ -313,7 +328,9 @@ export function useGameSession(
       ? await getDailyGameForDay(routeKey.value)
       : id ? await getArcadeGameById(id) : null;
     if (id && game.value?.id === id && refreshed) game.value = refreshed;
-    if (refreshed?.gameState !== "active" && mode === "arcade") await loadReplayDifficulties();
+    if (refreshed?.gameState !== "active" && mode === "arcade" && toValue(replayAvailable)) {
+      await loadReplayDifficulties();
+    }
   }
 
   async function refreshOnConflict(error: ApiError) {
