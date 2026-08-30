@@ -6,16 +6,22 @@ import GameBoardSkeleton from "../features/games/play/GameBoardSkeleton.vue";
 import { useGameSession } from "../features/games/play/useGameSession";
 import { useGuestLoginPrompt } from "../features/games/play/useGuestLoginPrompt";
 import GuestLoginPrompt from "../features/games/components/GuestLoginPrompt.vue";
-import { useHandoffDelayedLoading } from "../shared/composables/useSkeletonHandoff";
+import { useHandoffDelayedLoadingState } from "../shared/composables/useSkeletonHandoff";
 import UiSkeletonHandoff from "../shared/ui/UiSkeletonHandoff.vue";
 
 const route = useRoute();
 const router = useRouter();
 const gameId = computed(() => typeof route.params.id === "string" ? route.params.id : null);
-const session = useGameSession("arcade", gameId, () => void router.replace({ name: "home" }));
-const guestLoginPrompt = useGuestLoginPrompt(computed(() => session.game.value?.gameState ?? null));
-const skeletonVisible = useHandoffDelayedLoading(session.loading);
 const openedFromHistory = computed(() => route.query.from === "arcade-history");
+const replayAvailable = computed(() => !openedFromHistory.value);
+const session = useGameSession(
+  "arcade",
+  gameId,
+  () => void router.replace({ name: "home" }),
+  replayAvailable,
+);
+const guestLoginPrompt = useGuestLoginPrompt(computed(() => session.game.value?.gameState ?? null));
+const loadingState = useHandoffDelayedLoadingState(session.loading);
 const actions = {
   submitGuess: session.submitGuess,
   surrender: session.surrenderGame,
@@ -47,7 +53,7 @@ function replay() {
 
 <template>
   <h1 class="visually-hidden">Случайное слово</h1>
-  <UiSkeletonHandoff :skeleton-visible="skeletonVisible" :content-visible="!!session.game.value">
+  <UiSkeletonHandoff :skeleton-visible="loadingState.visible" :content-visible="loadingState.ready">
     <template #skeleton>
       <GameBoardSkeleton />
     </template>
