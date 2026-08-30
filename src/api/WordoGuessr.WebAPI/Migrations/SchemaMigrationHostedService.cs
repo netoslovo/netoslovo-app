@@ -18,7 +18,10 @@ internal sealed class SchemaMigrationHostedService : IHostedService
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _appLifetime = appLifetime ?? throw new ArgumentNullException(nameof(appLifetime));
 
-        var deployerConfig = new DeployerConfiguration(options.Value.ConnectionString, true, options.Value.ScriptsSources)
+        var deployerConfig = new DeployerConfiguration(
+            options.Value.ConnectionString,
+            options.Value.EnsureDatabase,
+            options.Value.ScriptsSources)
         {
             JournalTableName = new PostgresqlJournalTable(options.Value.JournalSchema, options.Value.JournalTable),
             UpgrageLogger = new MSUpgradeLogger(_loggerFactory.CreateLogger<Deployer>())

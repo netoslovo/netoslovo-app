@@ -11,6 +11,8 @@ internal sealed class SchemaMigratorOptions : INamedOptions
     [Required]
     public required string ConnectionString { get; set; }
 
+    public bool EnsureDatabase { get; set; }
+
     public string? JournalSchema { get; set; }
 
     [Required]

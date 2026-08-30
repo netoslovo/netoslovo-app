@@ -16,6 +16,7 @@ services:
         condition: service_started
     environment:
       ConnectionStrings__PostgreSql: "Host=postgres;port=5432;Database=wordoguessr;Username=admin;Password=changeme;GSS Encryption Mode=Disable"
+      SchemaMigrator__EnsureDatabase: true,
       OpenTelemetry__OtlpEndpoint: "http://otel-collector:4317"
       OpenTelemetry__OtlpProtocol: "Grpc"
       OpenTelemetry__ExportInterval: "00:00:05"
