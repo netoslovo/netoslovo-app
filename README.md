@@ -60,7 +60,8 @@ Affero General Public License версии 3 (`AGPL-3.0-only`). Полный т�
 На следующие изображения лицензия не предоставляется; все права защищены:
 
 - `src/ui/public/logo.svg`;
-- `src/ui/public/wg.png`.
+- `src/ui/public/favicon.svg`.
 
 Сторонние зависимости и другие сторонние материалы сохраняют собственные
 лицензии.
+
