@@ -18,7 +18,6 @@ const props = withDefaults(
     failed: boolean;
     retryLoading: boolean;
     refreshSkeletonVisible: boolean;
-    transitionEnabled: boolean;
     transitionKey: string;
     tableLabel?: string;
     metricNavigation?: boolean;
@@ -53,9 +52,10 @@ const tableStyle = computed(() => ({
       'leaderboard-table__stage--compact-place-player-gap': compactPlacePlayerGap,
     }"
     :style="tableStyle"
+    :aria-busy="skeletonVisible || retryLoading"
   >
-    <Transition name="ui-skeleton-handoff-skeleton" appear>
-      <div v-if="skeletonVisible" class="leaderboard-table__wrap" aria-hidden="true">
+    <Transition name="leaderboard-table-swap" mode="out-in" appear>
+      <div v-if="skeletonVisible" key="skeleton" class="leaderboard-table__wrap" aria-hidden="true">
         <table class="leaderboard-table__table">
           <thead>
             <tr>
@@ -102,17 +102,15 @@ const tableStyle = computed(() => ({
           </tbody>
         </table>
       </div>
-    </Transition>
 
-    <div v-if="failed" class="leaderboard-table__state">
-      <p>Не удалось загрузить таблицу лидеров.</p>
-      <UiButton size="md" variant="outlined" :loading="retryLoading" @click="$emit('retry')">
-        Повторить
-      </UiButton>
-    </div>
+      <div v-else-if="failed" key="error" class="leaderboard-table__state">
+        <p>Не удалось загрузить таблицу лидеров.</p>
+        <UiButton size="md" variant="outlined" :loading="retryLoading" @click="$emit('retry')">
+          Повторить
+        </UiButton>
+      </div>
 
-    <Transition name="ui-skeleton-handoff-content" mode="out-in" appear :css="transitionEnabled">
-      <div v-if="rows" :key="transitionKey" class="leaderboard-table__data">
+      <div v-else-if="rows" :key="`data:${transitionKey}`" class="leaderboard-table__data">
         <div
           class="leaderboard-table__wrap"
           :aria-label="tableLabel"
@@ -181,6 +179,23 @@ const tableStyle = computed(() => ({
 
 .leaderboard-table__stage > * {
   grid-area: 1 / 1;
+}
+
+.leaderboard-table-swap-enter-active,
+.leaderboard-table-swap-leave-active {
+  transition:
+    opacity 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.leaderboard-table-swap-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.leaderboard-table-swap-leave-to {
+  opacity: 0;
+  transform: translateY(-2px);
 }
 
 .leaderboard-table__state {
@@ -419,6 +434,19 @@ const tableStyle = computed(() => ({
   .leaderboard-table__metric-nav-slot :deep(.p-button) {
     width: 22px;
     height: 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaderboard-table-swap-enter-active,
+  .leaderboard-table-swap-leave-active {
+    transition: none;
+  }
+
+  .leaderboard-table-swap-enter-from,
+  .leaderboard-table-swap-leave-to {
+    opacity: 1;
+    transform: none;
   }
 }
 </style>

@@ -3,7 +3,7 @@ import Button from "primevue/button";
 import Tab from "primevue/tab";
 import TabList from "primevue/tablist";
 import Tabs from "primevue/tabs";
-import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref } from "vue";
 import {
   getArcadeGameTopPlayers,
   getDifficulties,
@@ -25,7 +25,6 @@ import {
   createLeaderboardRows,
   type LeaderboardPlayerRow,
 } from "../features/games/leaderboard/leaderboardRows";
-import { useLeaderboardDataTransition } from "../features/games/leaderboard/useLeaderboardDataTransition";
 import { formatDurationInMinutes } from "../features/games/lib/formatDuration";
 
 const topN = 10;
@@ -86,8 +85,6 @@ const tableSkeletonVisible = computed(
     subsequentTableLoadingState.visible,
 );
 
-const dataTransition = useLeaderboardDataTransition(tableSkeletonVisible);
-
 const refreshLoadingState = useHandoffDelayedLoadingState(
   () => !!activeTopState.value?.loading,
 );
@@ -140,10 +137,6 @@ const displayedRows = computed(() => {
   );
 });
 
-watch(tableSkeletonVisible, (visible) => {
-  if (visible && !activeTop.value) displayedDifficultyCode.value = null;
-});
-
 void loadDifficulties();
 
 onBeforeUnmount(() => {
@@ -159,17 +152,18 @@ async function loadDifficulties() {
   const generation = ++loadGeneration;
 
   loadingDifficulties.value = true;
-  difficultiesFailed.value = false;
+  difficulties.value = [];
+  activeDifficultyCode.value = null;
   displayedDifficultyCode.value = null;
   initialLoadPending.value = true;
   topByDifficulty.value = {};
-  dataTransition.startLoad();
 
   try {
     const loadedDifficulties = await getDifficulties({ signal: controller.signal });
     if (!isCurrentLoad(generation, controller.signal)) return;
 
     difficulties.value = loadedDifficulties;
+    difficultiesFailed.value = false;
     loadingDifficulties.value = false;
 
     const firstDifficulty = loadedDifficulties[0];
@@ -179,9 +173,7 @@ async function loadDifficulties() {
       if (!isCurrentLoad(generation, controller.signal)) return;
 
       if (topByDifficulty.value[firstDifficulty.code]?.data) {
-        dataTransition.revealData(() => {
-          displayedDifficultyCode.value = firstDifficulty.code;
-        });
+        displayedDifficultyCode.value = firstDifficulty.code;
       }
     }
   } catch (error) {
@@ -201,7 +193,6 @@ function selectDifficulty(difficultyCode: string | number) {
 
   const state = topByDifficulty.value[difficultyCode];
   activeDifficultyCode.value = difficultyCode;
-  activeMetricIndex.value = 0;
   scrollActiveTabIntoView();
 
   if (state?.data) {
@@ -209,7 +200,6 @@ function selectDifficulty(difficultyCode: string | number) {
     return;
   }
 
-  dataTransition.startLoad();
   void loadTop(difficultyCode);
 }
 
@@ -236,16 +226,12 @@ async function loadTop(difficultyCode: string, generation = loadGeneration) {
   const previousState = topByDifficulty.value[difficultyCode];
   if (previousState?.loading) return;
 
-  if (difficultyCode === activeDifficultyCode.value && !previousState?.data) {
-    dataTransition.startLoad();
-  }
-
   topByDifficulty.value = {
     ...topByDifficulty.value,
     [difficultyCode]: {
       data: previousState?.data ?? null,
       loading: true,
-      failed: false,
+      failed: previousState?.failed ?? false,
     },
   };
 
@@ -261,9 +247,7 @@ async function loadTop(difficultyCode: string, generation = loadGeneration) {
     };
 
     if (difficultyCode === activeDifficultyCode.value && !initialLoadPending.value) {
-      dataTransition.revealData(() => {
-        displayedDifficultyCode.value = difficultyCode;
-      });
+      displayedDifficultyCode.value = difficultyCode;
     }
   } catch (error) {
     if (isApiRequestCanceled(error) || !isCurrentLoad(generation, signal)) return;
@@ -391,8 +375,8 @@ function formatAverageScore(value: number) {
       narrow-metric-column-width="120px" :metric-skeleton-width="metricSkeletonWidth()"
       :skeleton-visible="tableSkeletonVisible" :failed="activeTopState?.failed ?? false"
       :retry-loading="activeTopState?.loading ?? false" :refresh-skeleton-visible="refreshSkeletonVisible"
-      :transition-enabled="dataTransition.enabled.value" :transition-key="displayedDifficultyCode ?? ''"
-      metric-navigation compact-place-player-gap @retry="retryActiveTop">
+      :transition-key="displayedDifficultyCode ?? ''" metric-navigation compact-place-player-gap
+      @retry="retryActiveTop">
       <template #metric-skeleton-after>
         <Button icon="pi pi-chevron-right" severity="secondary" text rounded size="small"
           aria-label="Следующий показатель" disabled tabindex="-1" />

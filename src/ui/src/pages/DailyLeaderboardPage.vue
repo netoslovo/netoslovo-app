@@ -18,7 +18,6 @@ import {
   createLeaderboardRows,
   type LeaderboardPlayerRow,
 } from "../features/games/leaderboard/leaderboardRows";
-import { useLeaderboardDataTransition } from "../features/games/leaderboard/useLeaderboardDataTransition";
 import { isApiRequestCanceled } from "../shared/api/apiError";
 import { useHandoffDelayedLoadingState } from "../shared/composables/useSkeletonHandoff";
 
@@ -51,8 +50,6 @@ const initialSkeletonVisible = computed(() =>
 const refreshSkeletonVisible = computed(() =>
   loadingState.visible && !!top.value,
 );
-
-const dataTransition = useLeaderboardDataTransition(initialSkeletonVisible);
 
 const displayedRows = computed(() => {
   const displayedTop = top.value;
@@ -98,9 +95,7 @@ async function load() {
   const abortController = new AbortController();
   controller = abortController;
   const currentRequest = ++requestId;
-  dataTransition.startLoad();
   loading.value = true;
-  loadFailed.value = false;
 
   try {
     const [current, longest] = await Promise.all([
@@ -109,9 +104,8 @@ async function load() {
     ]);
 
     if (currentRequest !== requestId) return;
-    dataTransition.revealData(() => {
-      tops.value = { current, longest };
-    });
+    loadFailed.value = false;
+    tops.value = { current, longest };
   } catch (error) {
     if (isApiRequestCanceled(error) || currentRequest !== requestId) return;
     loadFailed.value = true;
@@ -174,8 +168,7 @@ function shouldEmphasizePlayerName(
     <LeaderboardTable :rows="displayedRows" metric-label="Серия" metric-column-width="82px"
       narrow-metric-column-width="64px" metric-skeleton-width="28px" :skeleton-visible="initialSkeletonVisible"
       :failed="loadFailed" :retry-loading="loading" :refresh-skeleton-visible="refreshSkeletonVisible"
-      :transition-enabled="dataTransition.enabled.value" :transition-key="mode" :table-label="modeTitle"
-      dense-on-short-viewport @retry="load" />
+      :transition-key="mode" :table-label="modeTitle" dense-on-short-viewport @retry="load" />
   </LeaderboardShell>
 </template>
 
