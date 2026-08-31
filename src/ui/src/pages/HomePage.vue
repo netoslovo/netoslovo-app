@@ -144,6 +144,10 @@ const contentVisible = computed(() =>
 }
 
 @media (max-width: 480px) {
+  .home-skeleton {
+    padding: 2px 0 8px;
+  }
+
   .home-skeleton__card {
     border-radius: 12px;
     padding: 12px;
