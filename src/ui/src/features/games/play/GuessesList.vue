@@ -40,30 +40,20 @@ function getFeedback(guess: Guess) {
 
 <template>
   <div class="guesses-list">
-    <div
-      v-if="guesses.length > 0"
-      class="guesses-list__section"
-      :class="{ 'guesses-list__section--restored': revealRestoredGuesses }"
-    >
+    <div v-if="guesses.length > 0" class="guesses-list__section"
+      :class="{ 'guesses-list__section--restored': revealRestoredGuesses }">
       <p class="guesses-list__label">
         Попыток: {{ guesses.length }}
       </p>
       <div class="guesses-list__items">
-        <GuessBar
-          v-for="guess in guesses"
-          :key="getGuessKey(guess)"
-          :word="guess.word"
-          :value="guess.distance"
-          :fill-percentage="guess.fillPercentage"
-          :hint="guess.source === 'hint'"
-          :animate-hint-reveal="guess.word === animatedHintWord"
-          :feedback="getFeedback(guess)"
-          :highlighted="guess.word === currentGuess?.word"
-        />
+        <GuessBar v-for="guess in guesses" :key="getGuessKey(guess)" :word="guess.word" :value="guess.distance"
+          :fill-percentage="guess.fillPercentage" :hint="guess.source === 'hint'"
+          :animate-hint-reveal="guess.word === animatedHintWord" :feedback="getFeedback(guess)"
+          :highlighted="guess.word === currentGuess?.word" />
       </div>
     </div>
     <p v-else class="guesses-list__empty">
-      Нет попыток
+      Пока нет попыток
     </p>
   </div>
 </template>
@@ -108,6 +98,12 @@ function getFeedback(guess: Guess) {
   text-align: center;
 }
 
+@media (max-width: 1024px) {
+  .guesses-list__empty {
+    display: none;
+  }
+}
+
 @media (min-width: 768px) {
   .guesses-list__items {
     gap: 3px;
@@ -129,6 +125,4 @@ function getFeedback(guess: Guess) {
     transform: translateY(0) scale(1);
   }
 }
-
 </style>
-

@@ -6,19 +6,17 @@ import UiButton from "../../../shared/ui/UiButton.vue";
 const props = defineProps<{
   visible: boolean;
   disabled: boolean;
-  submitting: boolean;
   infoOpen: boolean;
 }>();
 
 const disabledVisible = useDelayedLoading(() => props.disabled);
-const submittingVisible = useDelayedLoading(() => props.submitting);
 
 const emit = defineEmits<{
   append: [character: string];
   removeLast: [];
-  submit: [];
   show: [];
   hide: [];
+  close: [event: MouseEvent];
   "update:infoOpen": [value: boolean];
 }>();
 
@@ -37,57 +35,79 @@ function setInfoOpen(value: boolean) {
   <div class="compact-keyboard" :class="{ 'compact-keyboard--collapsed': !visible }" role="group"
     aria-label="Экранная клавиатура">
     <template v-if="visible">
+      <div class="compact-keyboard__controls-row">
+        <div class="compact-keyboard__toolbar" role="group" aria-label="Управление экранной клавиатурой">
+          <button class="compact-keyboard__key compact-keyboard__toolbar-button compact-keyboard__toolbar-button--close"
+            type="button" aria-label="Закрыть экранную клавиатуру" title="Закрыть" @click="emit('close', $event)">
+            <i class="pi pi-times" aria-hidden="true"></i>
+          </button>
+          <button class="compact-keyboard__key compact-keyboard__toolbar-button" type="button"
+            aria-label="Свернуть экранную клавиатуру" title="Свернуть" @click="emit('hide')">
+            <i class="pi pi-chevron-down" aria-hidden="true"></i>
+          </button>
+          <button class="compact-keyboard__key compact-keyboard__toolbar-button" type="button"
+            aria-label="Справка об экранной клавиатуре" title="Справка" @click="setInfoOpen(true)">
+            <i class="pi pi-question" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
       <div class="compact-keyboard__row">
-        <button v-for="character in keyboardRows[0]" :key="character" class="compact-keyboard__key" type="button"
-          :disabled="disabledVisible" @click="emit('append', character)">{{ character }}</button>
+        <button v-for="character in keyboardRows[0]" :key="character"
+          class="compact-keyboard__key compact-keyboard__key--character" type="button" :disabled="disabledVisible"
+          @click="emit('append', character)">
+          <span class="compact-keyboard__key-preview" aria-hidden="true">{{ character }}</span>
+          <span>{{ character }}</span>
+        </button>
       </div>
 
       <div class="compact-keyboard__row compact-keyboard__row--middle">
-        <button v-for="character in keyboardRows[1]" :key="character" class="compact-keyboard__key" type="button"
-          :disabled="disabledVisible" @click="emit('append', character)">{{ character }}</button>
+        <button v-for="character in keyboardRows[1]" :key="character"
+          class="compact-keyboard__key compact-keyboard__key--character" type="button" :disabled="disabledVisible"
+          @click="emit('append', character)">
+          <span class="compact-keyboard__key-preview" aria-hidden="true">{{ character }}</span>
+          <span>{{ character }}</span>
+        </button>
       </div>
 
       <div class="compact-keyboard__row compact-keyboard__row--lower">
-        <button class="compact-keyboard__key" type="button" :disabled="disabledVisible" @click="emit('append', 'ё')">ё</button>
-        <button v-for="character in keyboardRows[2]" :key="character" class="compact-keyboard__key" type="button"
-          :disabled="disabledVisible" @click="emit('append', character)">{{ character }}</button>
-        <button class="compact-keyboard__key" type="button" :disabled="disabledVisible" @click="emit('append', '-')">-</button>
+        <button class="compact-keyboard__key compact-keyboard__key--character" type="button"
+          :disabled="disabledVisible" @click="emit('append', 'ё')">
+          <span class="compact-keyboard__key-preview" aria-hidden="true">ё</span>
+          <span>ё</span>
+        </button>
+        <button v-for="character in keyboardRows[2]" :key="character"
+          class="compact-keyboard__key compact-keyboard__key--character" type="button" :disabled="disabledVisible"
+          @click="emit('append', character)">
+          <span class="compact-keyboard__key-preview" aria-hidden="true">{{ character }}</span>
+          <span>{{ character }}</span>
+        </button>
+        <button class="compact-keyboard__key compact-keyboard__key--character" type="button"
+          :disabled="disabledVisible" @click="emit('append', '-')">
+          <span class="compact-keyboard__key-preview" aria-hidden="true">-</span>
+          <span>-</span>
+        </button>
         <button class="compact-keyboard__key compact-keyboard__key--action compact-keyboard__key--backspace"
           type="button" :disabled="disabledVisible" aria-label="Удалить последнюю букву" @click="emit('removeLast')">
           <i class="pi pi-delete-left" aria-hidden="true"></i>
         </button>
       </div>
 
-      <div class="compact-keyboard__controls-row">
-        <div class="compact-keyboard__utility-keys">
-          <button class="compact-keyboard__key compact-keyboard__key--action compact-keyboard__key--toggle"
-            type="button" aria-label="Свернуть экранную клавиатуру" @click="emit('hide')">
-            <i class="pi pi-chevron-down" aria-hidden="true"></i>
-          </button>
-          <button class="compact-keyboard__key compact-keyboard__key--action compact-keyboard__key--help"
-            type="button" aria-label="Об экранной клавиатуре" @click="setInfoOpen(true)">
-            <span aria-hidden="true">?</span>
-          </button>
-        </div>
-        <div class="compact-keyboard__special-keys">
-          <UiButton class="compact-keyboard__key compact-keyboard__key--action compact-keyboard__key--submit"
-            type="button" :loading="submittingVisible" :disabled="disabledVisible" loading-label="Отправка" aria-label="Отправить слово"
-            title="Отправить слово" @click="emit('submit')">
-            <i class="pi pi-arrow-right" aria-hidden="true"></i>
-          </UiButton>
-        </div>
-      </div>
     </template>
 
     <div v-else class="compact-keyboard__collapsed-row">
-      <div class="compact-keyboard__utility-keys">
-        <button class="compact-keyboard__key compact-keyboard__key--action compact-keyboard__key--toggle"
-          type="button" aria-label="Раскрыть экранную клавиатуру" @click="emit('show')">
+      <div class="compact-keyboard__toolbar" role="group" aria-label="Управление экранной клавиатурой">
+        <button class="compact-keyboard__key compact-keyboard__toolbar-button compact-keyboard__toolbar-button--close"
+          type="button" aria-label="Закрыть экранную клавиатуру" title="Закрыть" @click="emit('close', $event)">
+          <i class="pi pi-times" aria-hidden="true"></i>
+        </button>
+        <button class="compact-keyboard__key compact-keyboard__toolbar-button" type="button"
+          aria-label="Развернуть экранную клавиатуру" title="Развернуть" @click="emit('show')">
           <i class="pi pi-chevron-up" aria-hidden="true"></i>
         </button>
-        <button class="compact-keyboard__key compact-keyboard__key--action compact-keyboard__key--help" type="button"
-          aria-label="Об экранной клавиатуре" @click="setInfoOpen(true)">
-          <span aria-hidden="true">?</span>
+        <button class="compact-keyboard__key compact-keyboard__toolbar-button" type="button"
+          aria-label="Справка об экранной клавиатуре" title="Справка" @click="setInfoOpen(true)">
+          <i class="pi pi-question" aria-hidden="true"></i>
         </button>
       </div>
     </div>
@@ -103,7 +123,7 @@ function setInfoOpen(value: boolean) {
         для игры.
       </p>
       <p class="game-dialog__text">
-        При нажатии в поле ввода откроется ваша обычная клавиатура.
+        Пока экранная клавиатура включена, поле ввода показывает набранное слово, но не открывает обычную клавиатуру.
       </p>
       <p class="game-dialog__text">
         Экранную клавиатуру можно в любой момент включить или выключить через пункт «Экранная клавиатура» в меню
@@ -123,30 +143,17 @@ function setInfoOpen(value: boolean) {
 
 <style scoped>
 .compact-keyboard {
-  position: fixed;
-  z-index: 20;
-  bottom: 0;
-  left: 50%;
-  width: min(100%, var(--container-sm));
-  transform: translateX(-50%);
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--color-gray-300);
+  border-inline: 1px solid var(--color-gray-300);
   border-radius: 10px 10px 0 0;
   background: var(--color-gray-100);
 }
 
-:global(.game-board:has(.compact-keyboard)) {
-  padding-bottom: calc(166px + env(safe-area-inset-bottom));
-}
-
-:global(.game-board:has(.compact-keyboard--collapsed)) {
-  padding-bottom: calc(50px + env(safe-area-inset-bottom));
-}
-
-.compact-keyboard__collapsed-row,
 .compact-keyboard__row {
   --compact-keyboard-gap: 3px;
   min-width: 0;
@@ -159,8 +166,14 @@ function setInfoOpen(value: boolean) {
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 3px;
+  justify-content: flex-start;
+}
+
+.compact-keyboard__collapsed-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .compact-keyboard__row--middle {
@@ -170,7 +183,7 @@ function setInfoOpen(value: boolean) {
 .compact-keyboard__key {
   flex: 1 1 0;
   min-width: 0;
-  height: 34px;
+  height: 36px;
   padding: 0;
   border: 1px solid var(--color-gray-300);
   border-radius: 6px;
@@ -185,6 +198,42 @@ function setInfoOpen(value: boolean) {
   text-transform: uppercase;
   cursor: pointer;
   touch-action: manipulation;
+}
+
+.compact-keyboard__key--character {
+  position: relative;
+}
+
+.compact-keyboard__key-preview {
+  position: absolute;
+  z-index: 1;
+  bottom: calc(100% - 7px);
+  left: 50%;
+  width: calc(100% + 16px);
+  height: 54px;
+  border: 1px solid var(--color-primary-300);
+  border-radius: 9px 9px 11px 11px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  transform: translateX(-50%);
+  background: var(--color-primary-50);
+  box-shadow: 0 3px 9px rgb(0 0 0 / 18%);
+  color: var(--color-primary-700);
+  font-size: 24px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.compact-keyboard__key--character:active {
+  z-index: 2;
+  border-color: var(--color-primary-500);
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+}
+
+.compact-keyboard__key--character:active .compact-keyboard__key-preview {
+  display: inline-flex;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -217,69 +266,49 @@ function setInfoOpen(value: boolean) {
   flex: 1 1 0;
 }
 
-.compact-keyboard__special-keys {
-  width: calc(25% - 2.25px);
-  height: 34px;
+.compact-keyboard__toolbar {
   display: flex;
+  justify-content: flex-start;
   gap: 3px;
 }
 
-.compact-keyboard__utility-keys {
-  flex: 0 0 calc(33.333333% - 2px);
-  height: 34px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 3px;
+.compact-keyboard__key.compact-keyboard__toolbar-button {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-color: transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-gray-600);
 }
 
-.compact-keyboard__key--toggle {
-  grid-column: span 1;
-  width: auto;
+.compact-keyboard__toolbar-button .pi {
+  font-size: 13px;
 }
 
-.compact-keyboard__key--help {
-  grid-column: span 1;
+.compact-keyboard__toolbar-button:active {
+  border-color: var(--color-gray-300);
+  background: white;
+  color: var(--color-gray-800);
 }
 
-.compact-keyboard__key--help>span {
-  font-size: 1.35em;
-  font-weight: 500;
-  line-height: 1;
-}
-
-.compact-keyboard__key--submit {
-  flex: 1 1 0;
-  border-color: var(--p-primary-color);
-  background: var(--p-primary-color);
-  color: var(--p-primary-contrast-color);
-}
-
-.compact-keyboard__key--submit.p-button {
-  min-width: 0;
-  min-height: 0;
-  padding: 0;
-  font-weight: 500;
-}
-
-.compact-keyboard__key--submit.p-button:disabled {
-  opacity: 0.75;
-}
-
-.compact-keyboard__key--submit.p-button:not(:disabled):active {
-  border-color: var(--p-primary-active-color);
-  background: var(--p-primary-active-color);
-  color: var(--p-primary-contrast-color);
-}
-
-.compact-keyboard__key--submit.p-button:focus-visible {
-  color: var(--p-primary-contrast-color);
+.compact-keyboard__toolbar-button--close:active {
+  border-color: var(--color-red-200);
+  background: var(--color-red-100);
+  color: var(--color-red-700);
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .compact-keyboard__key--submit.p-button:not(:disabled):hover {
-    border-color: var(--p-primary-hover-color);
-    background: var(--p-primary-hover-color);
-    color: var(--p-primary-contrast-color);
+  .compact-keyboard__toolbar-button:hover {
+    border-color: var(--color-gray-300);
+    background: white;
+    color: var(--color-gray-800);
+  }
+
+  .compact-keyboard__toolbar-button--close:hover {
+    border-color: var(--color-red-200);
+    background: var(--color-red-100);
+    color: var(--color-red-700);
   }
 }
 
@@ -334,123 +363,60 @@ function setInfoOpen(value: boolean) {
 
 @media (max-width: 480px) {
   .compact-keyboard {
-    gap: 5px;
-    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+    gap: 4px;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
   }
 
-  :global(.game-board:has(.compact-keyboard)) {
-    padding-bottom: calc(194px + env(safe-area-inset-bottom));
-  }
-
-  :global(.game-board:has(.compact-keyboard--collapsed)) {
-    padding-bottom: calc(56px + env(safe-area-inset-bottom));
-  }
-
-  .compact-keyboard__collapsed-row,
   .compact-keyboard__row {
     --compact-keyboard-gap: 2px;
     gap: 2px;
   }
 
-  .compact-keyboard__controls-row,
-  .compact-keyboard__special-keys,
-  .compact-keyboard__utility-keys {
+  .compact-keyboard__toolbar {
     gap: 2px;
-  }
-
-  .compact-keyboard__special-keys {
-    width: calc(25% - 1.5px);
   }
 
   .compact-keyboard__row--middle {
     padding-inline: calc(4.166667% + 0.083333px);
   }
 
-  .compact-keyboard__key,
-  .compact-keyboard__special-keys,
-  .compact-keyboard__utility-keys {
-    height: 40px;
-  }
-
   .compact-keyboard__key {
+    height: 42px;
     font-size: 15px;
   }
 
-  .compact-keyboard__key--toggle {
-    padding-inline: 0;
-  }
-
-  .compact-keyboard__utility-keys {
-    flex-basis: calc(33.333333% - 1.333333px);
-  }
 }
 
 @media (min-width: 481px) and (max-width: 767px) {
-  :global(.game-board:has(.compact-keyboard)) {
-    padding-bottom: calc(198px + env(safe-area-inset-bottom));
-  }
-
-  :global(.game-board:has(.compact-keyboard--collapsed)) {
-    padding-bottom: calc(60px + env(safe-area-inset-bottom));
-  }
-
-  .compact-keyboard__key,
-  .compact-keyboard__special-keys,
-  .compact-keyboard__utility-keys {
-    height: 42px;
-  }
-
   .compact-keyboard__key {
+    height: 44px;
     font-size: 16px;
   }
 
-  .compact-keyboard__utility-keys {
-    flex-basis: calc(33.333333% - 2px);
-  }
 }
 
 @media (min-width: 768px) {
   .compact-keyboard {
-    gap: 6px;
-    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    gap: 5px;
+    padding: 8px 14px calc(8px + env(safe-area-inset-bottom));
     border-radius: 12px 12px 0 0;
   }
 
-  :global(.game-board:has(.compact-keyboard)) {
-    padding-bottom: calc(210px + env(safe-area-inset-bottom));
-  }
-
-  :global(.game-board:has(.compact-keyboard--collapsed)) {
-    padding-bottom: calc(62px + env(safe-area-inset-bottom));
-  }
-
-  .compact-keyboard__collapsed-row,
   .compact-keyboard__row {
     --compact-keyboard-gap: 4px;
     gap: 4px;
   }
 
-  .compact-keyboard__controls-row,
-  .compact-keyboard__special-keys,
-  .compact-keyboard__utility-keys {
+  .compact-keyboard__toolbar {
     gap: 4px;
-  }
-
-  .compact-keyboard__special-keys {
-    width: calc(25% - 3px);
   }
 
   .compact-keyboard__row--middle {
     padding-inline: calc(4.166667% + 0.166667px);
   }
 
-  .compact-keyboard__key,
-  .compact-keyboard__special-keys,
-  .compact-keyboard__utility-keys {
-    height: 42px;
-  }
-
   .compact-keyboard__key {
+    height: 44px;
     border-radius: 8px;
     font-size: 16px;
   }
@@ -460,12 +426,9 @@ function setInfoOpen(value: boolean) {
     font-size: 17px;
   }
 
-  .compact-keyboard__key--toggle {
-    width: auto;
-  }
+}
 
-  .compact-keyboard__utility-keys {
-    flex-basis: calc(33.333333% - 2.666667px);
-  }
+.compact-keyboard.compact-keyboard--collapsed {
+  padding: 3px 8px calc(3px + env(safe-area-inset-bottom));
 }
 </style>

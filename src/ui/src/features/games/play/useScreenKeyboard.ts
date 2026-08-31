@@ -1,20 +1,22 @@
-import { computed, onMounted, ref, type Ref } from "vue";
+import { computed, ref, type Ref } from "vue";
 
 const preferenceKey = "netoslovo:screenKeyboardEnabled:v1";
 
+function getInitialPreference() {
+  if (typeof window === "undefined") return false;
+
+  const storedPreference = localStorage.getItem(preferenceKey);
+  return storedPreference === null
+    ? window.matchMedia("(max-width: 1024px)").matches
+    : storedPreference === "true";
+}
+
 export function useScreenKeyboard(word: Ref<string>, isLoading: () => boolean) {
-  const preferred = ref(false);
-  const visible = ref(false);
+  const initialPreference = getInitialPreference();
+  const preferred = ref(initialPreference);
+  const visible = ref(initialPreference);
   const infoOpen = ref(false);
   const toggleDescription = computed(() => preferred.value ? "Выключить" : "Включить");
-
-  onMounted(() => {
-    const storedPreference = localStorage.getItem(preferenceKey);
-    preferred.value = storedPreference === null
-      ? window.matchMedia("(max-width: 1024px)").matches
-      : storedPreference === "true";
-    visible.value = preferred.value;
-  });
 
   function append(character: string) {
     if (!isLoading() && word.value.length < 25) word.value += character;
@@ -32,6 +34,12 @@ export function useScreenKeyboard(word: Ref<string>, isLoading: () => boolean) {
     visible.value = false;
   }
 
+  function close() {
+    preferred.value = false;
+    visible.value = false;
+    localStorage.setItem(preferenceKey, "false");
+  }
+
   function toggle(closeMenu?: () => void) {
     closeMenu?.();
     preferred.value = !preferred.value;
@@ -39,5 +47,5 @@ export function useScreenKeyboard(word: Ref<string>, isLoading: () => boolean) {
     localStorage.setItem(preferenceKey, String(preferred.value));
   }
 
-  return { preferred, visible, infoOpen, toggleDescription, append, removeLast, show, hide, toggle };
+  return { preferred, visible, infoOpen, toggleDescription, append, removeLast, show, hide, close, toggle };
 }

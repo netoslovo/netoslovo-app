@@ -159,7 +159,7 @@ const fillStyle = computed(() => ({
 }
 
 .guess-bar--current {
-  height: 48px;
+  height: 50px;
   border-width: 2px;
 }
 
@@ -263,7 +263,7 @@ const fillStyle = computed(() => ({
 
 @media (max-width: 480px) {
   .guess-bar--current {
-    height: 44px;
+    height: 48px;
   }
 
   .guess-bar--current .guess-bar__word,
@@ -274,7 +274,7 @@ const fillStyle = computed(() => ({
 
 @media (max-width: 359px) {
   .guess-bar--current {
-    height: 42px;
+    height: 44px;
   }
 
   .guess-bar--current .guess-bar__word,
@@ -301,7 +301,7 @@ const fillStyle = computed(() => ({
   }
 
   .guess-bar--current {
-    height: 48px;
+    height: 50px;
   }
 
   .guess-bar--highlighted {
@@ -355,4 +355,3 @@ const fillStyle = computed(() => ({
 }
 
 </style>
-
