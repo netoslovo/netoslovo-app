@@ -180,7 +180,7 @@ function validateWord(value: string, showRequired: boolean) {
 
   <Popover ref="lockedInputPopover" class="guess-form__locked-popover info-popover">
     <p class="guess-form__locked-popover-text">
-      В режиме экранной клавиатуры поле ввода заблокировано. Используйте клавиши ниже или закройте экранную клавиатуру.
+      Используйте клавиши ниже для ввода. Чтобы печатать с обычной клавиатуры, закройте экранную.
     </p>
   </Popover>
 </template>
