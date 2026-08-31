@@ -158,9 +158,8 @@ function validateWord(value: string, showRequired: boolean) {
 <template>
   <form class="guess-form" autocomplete="off" @submit.prevent="onSubmit">
     <UiInput ref="inputField" :model-value="modelValue" class="guess-form__input" label="Введите слово"
-      label-visually-hidden name="word" placeholder="Введите слово" :error="error"
-      :disabled="loading || localSubmitting" autocomplete="off" autocorrect="off" autocapitalize="none"
-      :spellcheck="false" :input-mode="inputLocked ? 'none' : 'text'" error-presentation="popover"
+      label-visually-hidden name="word" placeholder="Введите слово" :error="error" autocomplete="off" autocorrect="off"
+      autocapitalize="none" :spellcheck="false" :input-mode="inputLocked ? 'none' : 'text'" error-presentation="popover"
       :shake-key="invalidSubmitCount" :readonly="inputLocked" :tab-index="inputLocked ? -1 : undefined"
       @pointerdown="showLockedInputInfo" @update:model-value="emit('update:modelValue', $event)">
       <template #right="{ error: inputError, errorVisible, showError, hideError }">
@@ -171,7 +170,7 @@ function validateWord(value: string, showRequired: boolean) {
           <span class="guess-form__error-icon">!</span>
         </button>
         <UiIconButton v-else class="guess-form__submit" type="submit" label="Отправить слово" loading-label="Отправка"
-          :loading="localSubmitting" :disabled="loading || localSubmitting || !modelValue.trim()">
+          :loading="localSubmitting" :disabled="loading || localSubmitting || !modelValue.trim()" @pointerdown.prevent>
           <i class="pi pi-arrow-right" aria-hidden="true"></i>
         </UiIconButton>
       </template>
