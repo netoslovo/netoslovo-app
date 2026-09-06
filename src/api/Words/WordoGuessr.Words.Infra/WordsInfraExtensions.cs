@@ -55,6 +55,7 @@ public static class WordsInfraExtensions
 
         services
             .AddFusionCache(name)
+            //.WithOptions(options => options.IncludeTagsInMetrics = true) TODO: когда будет работать в либе
             .WithCacheKeyPrefix(name)
             .WithMemoryCache(new MemoryCache(new MemoryCacheOptions
             {
