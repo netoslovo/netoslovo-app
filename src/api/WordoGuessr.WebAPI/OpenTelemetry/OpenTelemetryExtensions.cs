@@ -49,6 +49,11 @@ internal static class OpenTelemetryExtensions
                 .AddMeter("Microsoft.AspNetCore.Identity")
                 .AddMeter("Microsoft.AspNetCore.Authentication")
                 .AddMeter("Wolverine*")
+                .AddFusionCacheInstrumentation(options =>
+                {
+                    options.IncludeMemoryLevel = true;
+                    options.IncludeDistributedLevel = true;
+                })
                 .AddAspNetCoreInstrumentation()
                 .AddRuntimeInstrumentation();
         });

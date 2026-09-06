@@ -23,6 +23,7 @@
     <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="WolverineFx.EntityFrameworkCore" />
     <PackageReference Include="WolverineFx.Postgresql" />
+    <PackageReference Include="ZiggyCreatures.FusionCache.OpenTelemetry" />
   </ItemGroup>
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <PackageReference Include="WolverineFx.RuntimeCompilation" />

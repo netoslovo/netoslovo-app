@@ -1,0 +1,170 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "description": "Navigate back to the overview dashboard.",
+      "gridPos": {"h": 3, "w": 24, "x": 0, "y": 0},
+      "id": 13,
+      "options": {"content": "[← Back to WordoGuessr Overview](/d/wordoguessr-overview)", "mode": "markdown"},
+      "title": "FusionCache - Navigation",
+      "type": "text"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "Share of high-level cache lookups served from either cache level in the selected time range.",
+      "fieldConfig": {"defaults": {"min": 0, "max": 1, "unit": "percentunit"}},
+      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 3},
+      "id": 1,
+      "options": {"colorMode": "value", "graphMode": "area", "reduceOptions": {"calcs": ["lastNotNull"], "values": false}},
+      "targets": [{"expr": "sum(increase({__name__=\"fusioncache.cache.hit\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__range])) / clamp_min(sum(increase({__name__=~\"fusioncache.cache.(hit|miss)\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__range])), 1e-9)", "instant": true, "legendFormat": "Hit ratio", "refId": "A"}],
+      "title": "Overall hit ratio",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "Share of memory-level lookups served by the in-process cache in the selected time range.",
+      "fieldConfig": {"defaults": {"min": 0, "max": 1, "unit": "percentunit"}},
+      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 3},
+      "id": 2,
+      "options": {"colorMode": "value", "graphMode": "area", "reduceOptions": {"calcs": ["lastNotNull"], "values": false}},
+      "targets": [{"expr": "sum(increase({__name__=\"fusioncache.memory.hit\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__range])) / clamp_min(sum(increase({__name__=~\"fusioncache.memory.(hit|miss)\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__range])), 1e-9)", "instant": true, "legendFormat": "L1 hit ratio", "refId": "A"}],
+      "title": "Memory hit ratio",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "Share of distributed-cache lookups served by Valkey after an L1 miss in the selected time range.",
+      "fieldConfig": {"defaults": {"min": 0, "max": 1, "unit": "percentunit"}},
+      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 3},
+      "id": 3,
+      "options": {"colorMode": "value", "graphMode": "area", "reduceOptions": {"calcs": ["lastNotNull"], "values": false}},
+      "targets": [{"expr": "sum(increase({__name__=\"fusioncache.distributed.hit\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__range])) / clamp_min(sum(increase({__name__=~\"fusioncache.distributed.(hit|miss)\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__range])), 1e-9)", "instant": true, "legendFormat": "L2 hit ratio", "refId": "A"}],
+      "title": "Distributed hit ratio",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "Factory, serialization, and deserialization failures in the selected range.",
+      "fieldConfig": {"defaults": {"decimals": 0, "unit": "short"}},
+      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 3},
+      "id": 4,
+      "options": {"colorMode": "value", "graphMode": "area", "reduceOptions": {"calcs": ["lastNotNull"], "values": false}},
+      "targets": [{"expr": "sum(increase({__name__=~\"fusioncache.(factory.error|serialize_error|deserialize_error)\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__range]))", "instant": true, "legendFormat": "Failures", "refId": "A"}],
+      "title": "Cache failures",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "High-level FusionCache hit and miss rates.",
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "id": 5,
+      "targets": [
+        {"expr": "sum(rate({__name__=\"fusioncache.cache.hit\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "hit", "refId": "A"},
+        {"expr": "sum(rate({__name__=\"fusioncache.cache.miss\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "miss", "refId": "B"}
+      ],
+      "title": "Overall lookup outcomes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "L1 lookup outcomes by application instance.",
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "id": 6,
+      "targets": [
+        {"expr": "sum by (service\\.instance\\.id) (rate({__name__=\"fusioncache.memory.hit\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "{{service.instance.id}} hit", "refId": "A"},
+        {"expr": "sum by (service\\.instance\\.id) (rate({__name__=\"fusioncache.memory.miss\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "{{service.instance.id}} miss", "refId": "B"}
+      ],
+      "title": "Memory lookup outcomes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "L2 Valkey lookup outcomes after memory misses.",
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+      "id": 7,
+      "targets": [
+        {"expr": "sum(rate({__name__=\"fusioncache.distributed.hit\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "hit", "refId": "A"},
+        {"expr": "sum(rate({__name__=\"fusioncache.distributed.miss\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "miss", "refId": "B"}
+      ],
+      "title": "Distributed lookup outcomes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "Successful, failed, and timed-out value factories.",
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+      "id": 8,
+      "targets": [
+        {"expr": "sum(rate({__name__=\"fusioncache.factory.success\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "success", "refId": "A"},
+        {"expr": "sum(rate({__name__=\"fusioncache.factory.error\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "error", "refId": "B"},
+        {"expr": "sum(rate({__name__=\"fusioncache.factory.synthetic_timeout\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "synthetic timeout", "refId": "C"}
+      ],
+      "title": "Factory outcomes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "High-level cache operations split by the bounded words-version tag.",
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+      "id": 9,
+      "targets": [{"expr": "sum by (fusioncache\\.operation\\.tag) (rate({__name__=\"fusioncache.cache.get_or_set\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\", fusioncache\\.operation\\.tag=~\"${cache_tag:regex}\"}[$__rate_interval]))", "legendFormat": "{{fusioncache.operation.tag}}", "refId": "A"}],
+      "title": "Get-or-set rate by cache tag",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "Memory evictions grouped by the FusionCache eviction reason.",
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+      "id": 10,
+      "targets": [{"expr": "sum by (fusioncache\\.memory\\.evict_reason) (rate({__name__=\"fusioncache.memory.evict\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "{{fusioncache.memory.evict_reason}}", "refId": "A"}],
+      "title": "Memory evictions by reason",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "Memory and distributed cache reads, writes, removals, expirations, and evictions.",
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32},
+      "id": 11,
+      "targets": [
+        {"expr": "sum by (__name__) (rate({__name__=~\"fusioncache.memory.(get|set|remove|expire|evict)\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "{{__name__}}", "refId": "A"},
+        {"expr": "sum by (__name__) (rate({__name__=~\"fusioncache.distributed.(get|set|remove)\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "{{__name__}}", "refId": "B"}
+      ],
+      "title": "Low-level operation rates",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "victoriametrics"},
+      "description": "Resilience and data-format events that should normally remain near zero, except eager refresh.",
+      "fieldConfig": {"defaults": {"unit": "ops"}},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32},
+      "id": 12,
+      "targets": [{"expr": "sum by (__name__) (rate({__name__=~\"fusioncache.(failsafe_activate|eager_refresh|serialize_error|deserialize_error|distributed.circuit_breaker_change)\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\"}[$__rate_interval]))", "legendFormat": "{{__name__}}", "refId": "A"}],
+      "title": "Resilience and error events",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 42,
+  "tags": ["wordoguessr", "fusioncache", "cache"],
+  "templating": {
+    "list": [
+      {"allValue": ".*", "current": {"selected": true, "text": "All", "value": "$__all"}, "datasource": {"type": "prometheus", "uid": "victoriametrics"}, "definition": "query_result(max by (service\\.instance\\.id) (max_over_time({__name__=\"dotnet.process.memory.working_set\", service\\.name=\"WordoGuessr.WebAPI\"}[$__range])))", "description": "API instances with a runtime heartbeat in the selected dashboard time range.", "includeAll": true, "label": "API instance", "multi": true, "name": "instance", "query": {"query": "query_result(max by (service\\.instance\\.id) (max_over_time({__name__=\"dotnet.process.memory.working_set\", service\\.name=\"WordoGuessr.WebAPI\"}[$__range])))", "refId": "InstanceVariableQuery"}, "refresh": 2, "regex": "/service\\.instance\\.id=\"([^\"]+)\"/", "sort": 1, "type": "query"},
+      {"allValue": ".*", "current": {"selected": true, "text": "All", "value": "$__all"}, "datasource": {"type": "prometheus", "uid": "victoriametrics"}, "definition": "query_result(count by (fusioncache\\.operation\\.tag) (count_over_time({__name__=\"fusioncache.cache.get_or_set\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\", fusioncache\\.operation\\.tag!=\"\"}[$__range])))", "description": "FusionCache operation tags observed for the selected API instances and time range.", "includeAll": true, "label": "Cache tag", "multi": true, "name": "cache_tag", "query": {"query": "query_result(count by (fusioncache\\.operation\\.tag) (count_over_time({__name__=\"fusioncache.cache.get_or_set\", service\\.name=\"WordoGuessr.WebAPI\", service\\.instance\\.id=~\"${instance:regex}\", fusioncache\\.operation\\.tag!=\"\"}[$__range])))", "refId": "CacheTagVariableQuery"}, "refresh": 2, "regex": "/fusioncache\\.operation\\.tag=\"([^\"]+)\"/", "sort": 1, "type": "query"}
+    ]
+  },
+  "time": {"from": "now-6h", "to": "now"},
+  "timezone": "browser",
+  "title": "WordoGuessr FusionCache",
+  "uid": "wordoguessr-cache",
+  "version": 1
+}
