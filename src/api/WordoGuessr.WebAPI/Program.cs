@@ -91,7 +91,7 @@ internal sealed partial class Program
 
         app.UseExceptionHandler();
 
-        if (app.Configuration.IsHostingFeatureEnabled(d => d.ForwardedHeaders))
+        if (builder.Configuration.GetForwardedHeadersFeature().Enabled)
         {
             app.UseForwardedHeaders();
         }
