@@ -46,7 +46,9 @@ services:
 
       HostingFeatures__EmbeddedMigrations: "false"
       HostingFeatures__OpenApi: "true"
-      HostingFeatures__ForwardedHeaders: "true"
+      HostingFeatures__ForwardedHeaders__Enabled: "true"
+      HostingFeatures__ForwardedHeaders__ForwardLimit: 1
+      HostingFeatures__ForwardedHeaders__KnownIPNetworks__1: "0.0.0.0/0"
       HostingFeatures__WolverineDynamicCodeGeneration: "false"
 
       ConnectionStrings__PostgreSql: "Host=postgres;port=5432;Database=wordoguessr;Username=admin;Password=changeme;GSS Encryption Mode=Disable;"

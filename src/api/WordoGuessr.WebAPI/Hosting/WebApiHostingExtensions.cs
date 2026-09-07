@@ -21,10 +21,17 @@ internal static class WebApiHostingExtensions
 
         builder.Services.AddHealthChecks();
 
-        if (builder.Configuration.IsHostingFeatureEnabled(d => d.ForwardedHeaders))
+        var forwardedHeadersFeature = builder.Configuration.GetForwardedHeadersFeature();
+        if (forwardedHeadersFeature.Enabled)
         {
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
+                options.ForwardLimit = forwardedHeadersFeature.ForwardLimit;
+                foreach (var network in forwardedHeadersFeature.GetKnownIPNetworks())
+                {
+                    options.KnownIPNetworks.Add(network);
+                }
+
                 options.ForwardedHeaders =
                     ForwardedHeaders.XForwardedFor |
                     ForwardedHeaders.XForwardedProto |
