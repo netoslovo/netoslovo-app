@@ -28,6 +28,11 @@ public static class WordsInfraExtensions
             (sp, con) => ActivatorUtilities.CreateInstance<WordsDbContext>(sp, con),
             sp => ActivatorUtilities.CreateInstance<WordsDbContext>(sp, dbConnectionString));
 
+        services.AddOptions<PgWordsDistanceStoreLoaderOptions>()
+            .BindNamedConfiguration()
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         services.AddScoped<IWordsDistanceStore, CachedWordsDistanceStore>();
         services.AddScoped<IWordsDistanceStoreLoader, PgWordsDistanceStoreLoader>();
         services.AddScoped<IDistancesPersistenceCacheAdapter, EfDbPersistenceCacheAdapter>();
