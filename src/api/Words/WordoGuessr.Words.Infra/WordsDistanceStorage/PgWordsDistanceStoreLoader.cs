@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Npgsql;
 using NpgsqlTypes;
 using WordoGuessr.Words.App.Abstractions;
@@ -14,11 +15,18 @@ public sealed class PgWordsDistanceStoreLoader : IWordsDistanceStoreLoader
     private const string WordsDistanceMapsTableName = "word_distance_maps";
     private readonly WordsDbContext _wordsDbContext;
     private readonly NpgsqlConnection _connection;
+    private readonly int? _distancesLoadingBatchSize;
 
     private readonly TimeProvider _timeProvider;
 
-    public PgWordsDistanceStoreLoader(WordsDbContext wordsDbContext, TimeProvider timeProvider)
+    public PgWordsDistanceStoreLoader(
+        WordsDbContext wordsDbContext,
+        IOptions<PgWordsDistanceStoreLoaderOptions> options,
+        TimeProvider timeProvider)
     {
+        ArgumentNullException.ThrowIfNull(options);
+        _distancesLoadingBatchSize = options.Value.DistanceLoadingBatchSize;
+
         _wordsDbContext = wordsDbContext ?? throw new ArgumentNullException(nameof(wordsDbContext));
 
         if (wordsDbContext.Database.GetDbConnection() is not NpgsqlConnection npgsqlConnection)
@@ -143,28 +151,58 @@ public sealed class PgWordsDistanceStoreLoader : IWordsDistanceStoreLoader
 
         await CreateTableFromParent(WordsDistanceMapsTableName, partitionName, version, ct);
 
-        await using (var importer = await _connection.BeginBinaryImportAsync(
-            $"""
-            COPY {SchemaName}.{partitionName}
-                (version, word_id, words_ids_by_distance, distances_by_words_ids)
-            FROM STDIN (FORMAT BINARY)
-            """,
-            ct))
+        NpgsqlBinaryImporter? importer = null;
+        var counter = 0;
+
+        try
         {
             await foreach (var row in wordDistanceMaps.WithCancellation(ct))
             {
+                importer ??= await CreateImporter(partitionName, ct);
+
                 await importer.StartRowAsync(ct);
                 await importer.WriteAsync(row.Version, NpgsqlDbType.Integer, ct);
                 await importer.WriteAsync(row.WordId, NpgsqlDbType.Integer, ct);
                 await importer.WriteAsync(row.WordsIdsByDistance, NpgsqlDbType.Bytea, ct);
                 await importer.WriteAsync(row.DistancesByWordsIds, NpgsqlDbType.Bytea, ct);
+
+                if (!_distancesLoadingBatchSize.HasValue) continue;
+
+                counter++;
+                if (counter >= _distancesLoadingBatchSize.Value)
+                {
+                    await importer.CompleteAsync(ct);
+                    await importer.DisposeAsync();
+
+                    importer = null;
+                    counter = 0;
+                }
             }
 
-            await importer.CompleteAsync(ct);
+            if (importer is not null)
+            {
+                await importer.CompleteAsync(ct);
+            }
+        }
+        finally
+        {
+            if (importer is not null)
+            {
+                await importer.DisposeAsync();
+            }
         }
 
         await AttachPartition(WordsDistanceMapsTableName, partitionName, version, ct);
     }
+
+    private Task<NpgsqlBinaryImporter> CreateImporter(string partitionName, CancellationToken ct) =>
+        _connection.BeginBinaryImportAsync(
+            $"""
+            COPY {SchemaName}.{partitionName}
+                (version, word_id, words_ids_by_distance, distances_by_words_ids)
+            FROM STDIN (FORMAT BINARY)
+            """,
+            ct);
 
     private static string GetPartitionName(string tableName, int version)
     {

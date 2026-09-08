@@ -1,6 +1,12 @@
-using System.Globalization;
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Options;
+using JasperFx;
+using JasperFx.CodeGeneration;
 using Wolverine.Attributes;
+using Wolverine.Configuration;
+using Wolverine.Runtime.Handlers;
+using WordoGuessr.API.BuildingBlocks.Configuration;
 using WordoGuessr.API.BuildingBlocks.ObjectStorage;
 using WordoGuessr.Words.App.Abstractions;
 using WordoGuessr.Words.Contract.Commands;
@@ -8,9 +14,34 @@ using WordoGuessr.Words.Contract.Events;
 
 namespace WordoGuessr.Words.App.IntegrationHandlers;
 
+public class InsertWordDistanceMapsHandlerOptions : INamedOptions
+{
+    public static string Name => "Words:InsertWordDistanceMapsHandler";
+
+    [Range(typeof(TimeSpan), "00:00:30", "1.00:00:00")]
+    public TimeSpan Timeout { get; set; } = TimeSpan.FromMinutes(10);
+}
+
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
+public sealed class InsertWordDistanceMapsTimeoutAttribute : ModifyChainAttribute
+{
+    public override void Modify(
+        IChain chain,
+        GenerationRules rules,
+        IServiceContainer container)
+    {
+        var options = container
+            .GetInstance<IOptions<InsertWordDistanceMapsHandlerOptions>>()
+            .Value;
+
+        ((HandlerChain)chain).ExecutionTimeoutInSeconds =
+            checked((int)Math.Ceiling(options.Timeout.TotalSeconds));
+    }
+}
+
+[InsertWordDistanceMapsTimeout]
 public static class InsertWordDistanceMapsHandler
 {
-    [MessageTimeout(10 * 60)]
     public static async Task<WordDistanceMapsInserted> Handle(
         InsertWordDistanceMaps command,
         IWordsDistanceStoreLoader wordsDistanceStoreLoader,
