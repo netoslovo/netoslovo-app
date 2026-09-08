@@ -94,6 +94,27 @@
       "problemMatcher": []
     },
     {
+      "label": "docker:debug-stack-down-with-data",
+      "type": "process",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-p",
+        "wordoguessr-debug",
+        "-f",
+        "compose.infra.yaml",
+        "-f",
+        "compose.proxy.host.yaml",
+        "down",
+        "--volumes",
+        "--remove-orphans"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/deployment/docker"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "build:webapi",
       "type": "process",
       "command": "dotnet",
