@@ -5,14 +5,15 @@ import UiButton from "../../shared/ui/UiButton.vue";
 import UiSkeleton from "../../shared/ui/UiSkeleton.vue";
 import UiSkeletonHandoff from "../../shared/ui/UiSkeletonHandoff.vue";
 import { useAdminModeration } from "../../features/admin/moderation/useAdminModeration";
+import ModerationClosestWord from "../../features/admin/moderation/ModerationClosestWord.vue";
 
 const {
   closestWordsCountOptions, difficulties, difficultyCode, closestWordsCount,
   source, sourceMode, manualReviewStatus,
   searchWord, searchError, searching, loading, neighborsLoading, saving,
-  queueCompleted, error, dragOffset, canReview,
+  queueCompleted, error, canReview,
   loadSource, searchSource, changeDifficulty, decide: decideSource, reloadClosestWords,
-  skipSource, onPointerDown, onPointerMove, onPointerEnd,
+  skipSource,
 } = useAdminModeration();
 
 const pendingDecision = ref<boolean | null>(null);
@@ -36,7 +37,6 @@ async function decide(approved: boolean) {
       <div>
         <p class="admin-page__eyebrow">Слова дня</p>
         <h1>Модерация</h1>
-        <p class="admin-page__description">Свайп влево отклоняет, вправо одобряет.</p>
       </div>
     </header>
 
@@ -138,13 +138,7 @@ async function decide(approved: boolean) {
           <h2>Очередь закончилась</h2>
           <p>Для выбранной сложности больше нет нерассмотренных слов.</p>
         </div>
-        <div v-else-if="source" class="moderation-state"><article class="moderation-card" :class="{ 'moderation-card--saving': saving }"
-          :style="{ transform: `translateX(${dragOffset}px) rotate(${dragOffset / 25}deg)` }" @pointerdown="onPointerDown"
-          @pointermove="onPointerMove" @pointerup="onPointerEnd" @pointercancel="onPointerEnd">
-        <div class="moderation-card__decision moderation-card__decision--reject"
-          :style="{ opacity: Math.max(0, -dragOffset / 90) }">Отклонить</div>
-        <div class="moderation-card__decision moderation-card__decision--approve"
-          :style="{ opacity: Math.max(0, dragOffset / 90) }">Одобрить</div>
+        <div v-else-if="source" class="moderation-state"><article class="moderation-card" :class="{ 'moderation-card--saving': saving }">
         <span class="moderation-card__difficulty">{{ source.gameSource.difficulty.name }}</span>
         <span v-if="sourceMode === 'manual'" class="moderation-card__status"
           :class="{ 'moderation-card__status--approved': manualReviewStatus === true, 'moderation-card__status--rejected': manualReviewStatus === false }">{{
@@ -155,8 +149,8 @@ async function decide(approved: boolean) {
           <span class="closest-words__title">Ближайшие слова</span>
           <ol>
             <li v-for="(word, index) in source.closestWords" :key="`${word}-${index}`">
-              <span>{{ index + 1 }}</span>
-              <b>{{ word }}</b>
+              <span class="closest-words__rank">{{ index + 1 }}</span>
+              <ModerationClosestWord :word="word" />
             </li>
           </ol>
         </div>
@@ -370,15 +364,12 @@ async function decide(approved: boolean) {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  overflow: clip;
   padding: 8px 0;
 }
 
 .moderation-card {
   width: 100%;
   min-height: 340px;
-  position: relative;
   border: 1px solid var(--color-gray-200);
   border-radius: 8px;
   padding: 24px;
@@ -388,9 +379,6 @@ async function decide(approved: boolean) {
   justify-content: center;
   gap: 10px;
   background: white;
-  touch-action: pan-y;
-  user-select: none;
-  transition: transform .15s ease;
 }
 
 .moderation-card--saving {
@@ -438,28 +426,6 @@ async function decide(approved: boolean) {
 .moderation-card__status--rejected {
   background: var(--color-red-100);
   color: var(--color-red-700);
-}
-
-.moderation-card__decision {
-  position: absolute;
-  top: 18px;
-  border: 2px solid currentColor;
-  border-radius: 8px;
-  padding: 5px 8px;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.moderation-card__decision--reject {
-  left: 22px;
-  color: var(--color-red-600);
-  transform: rotate(-8deg);
-}
-
-.moderation-card__decision--approve {
-  right: 22px;
-  color: var(--color-primary-600);
-  transform: rotate(8deg);
 }
 
 .closest-words {
@@ -517,7 +483,7 @@ async function decide(approved: boolean) {
   background: var(--color-gray-50);
 }
 
-.closest-words li span {
+.closest-words__rank {
   min-width: 24px;
   height: 22px;
   border-radius: 999px;
@@ -530,14 +496,13 @@ async function decide(approved: boolean) {
   font-weight: 500;
 }
 
-.closest-words li b {
+.closest-words li .moderation-closest-word {
+  flex: 1;
   min-width: 0;
   overflow: hidden;
   color: var(--color-gray-800);
   font-size: 14px;
   font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .moderation-actions {
@@ -564,9 +529,24 @@ async function decide(approved: boolean) {
   font-size: 25px;
 }
 
-.decision-button--reject {
-  border-color: var(--color-red-200);
-  color: var(--color-red-700);
+.decision-button--reject.ui-button.p-button {
+  border-color: var(--color-red-600);
+  background: var(--color-red-600);
+  color: white;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .decision-button--reject.ui-button.p-button:not(:disabled):hover {
+    border-color: var(--color-red-700);
+    background: var(--color-red-700);
+    color: white;
+  }
+}
+
+.decision-button--reject.ui-button.p-button:not(:disabled):active {
+  border-color: var(--color-red-700);
+  background: var(--color-red-700);
+  color: white;
 }
 
 .decision-button--skip {

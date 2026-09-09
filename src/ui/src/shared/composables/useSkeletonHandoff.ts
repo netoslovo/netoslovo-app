@@ -18,7 +18,7 @@ const skeletonHandoffKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol(
 );
 
 export function provideSkeletonHandoff(
-  genericSkeletonVisible: MaybeRefOrGetter<boolean>,
+  globalLoadingVisible: MaybeRefOrGetter<boolean>,
 ) {
   const handoffActive = ref(false);
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -40,7 +40,7 @@ export function provideSkeletonHandoff(
   }
 
   watch(
-    () => toValue(genericSkeletonVisible),
+    () => toValue(globalLoadingVisible),
     (visible, wasVisible) => {
       if (!visible && wasVisible) {
         armHandoff();

@@ -74,7 +74,7 @@ const listAction = ref<"reset" | "apply" | "retry" | null>(null);
 const mobileFiltersOpen = ref(false);
 let difficultyAbortController: AbortController | null = null;
 
-const { reviews, loading, initialLoading, loadError, load, retryLoadMore } =
+const { reviews, loading, initialLoading, loadError, sentinel, load, retryLoadMore } =
   useAdminReviews(() => ({
     sortBy: appliedSortBy.value,
     sortDirection: appliedSortDirection.value,

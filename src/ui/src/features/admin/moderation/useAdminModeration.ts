@@ -8,7 +8,6 @@ import { adminPermissions, hasPermission } from "../../auth/model/permissions";
 import { authState } from "../../auth/model/authSession";
 import { showToast } from "../../../shared/notifications/toastStore";
 import { useAdminSourceSearch } from "../common/useAdminSourceSearch";
-import { useModerationSwipe } from "./useModerationSwipe";
 
 export function useAdminModeration() {
 
@@ -45,13 +44,6 @@ export function useAdminModeration() {
   const canReview = computed(() =>
     hasPermission(authState.value, adminPermissions.setSourceReview),
   );
-  const {
-    dragOffset,
-    reset: resetSwipe,
-    onPointerDown,
-    onPointerMove,
-    onPointerEnd,
-  } = useModerationSwipe((approved) => void decide(approved));
   const {
     searchWord,
     searchError,
@@ -142,7 +134,6 @@ export function useAdminModeration() {
     manualReviewStatus.value = approved;
     queueCompleted.value = false;
     error.value = null;
-    resetSwipe();
   }
 
   function restoreQueue() {
@@ -154,7 +145,6 @@ export function useAdminModeration() {
     error.value = queueState?.error ?? null;
     manualReviewStatus.value = null;
     savedQueueState.value = null;
-    resetSwipe();
   }
 
   function changeDifficulty() {
@@ -175,7 +165,6 @@ export function useAdminModeration() {
       if (decidedMode === "manual") {
         restoreQueue();
       } else {
-        resetSwipe();
         await loadSource();
       }
       if (decisionChanged) {
@@ -294,8 +283,8 @@ export function useAdminModeration() {
     closestWordsCountOptions, difficulties, difficultyCode, closestWordsCount,
     source, sourceMode, manualReviewStatus,
     searchWord, searchError, searching, loading, neighborsLoading, saving,
-    queueCompleted, error, dragOffset, canReview,
+    queueCompleted, error, canReview,
     loadSource, searchSource, changeDifficulty, decide, reloadClosestWords,
-    skipSource, onPointerDown, onPointerMove, onPointerEnd,
+    skipSource,
   };
 }
