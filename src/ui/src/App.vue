@@ -11,12 +11,9 @@
           :content-visible="appContentLoadingState.ready"
         >
           <template #skeleton>
-            <div class="global-loading">
-              <div class="global-loading__content" aria-hidden="true">
-                <UiSkeleton width="52%" height="20px" />
-                <UiSkeleton height="78px" border-radius="8px" />
-                <UiSkeleton height="160px" border-radius="8px" />
-              </div>
+            <div class="global-loading" role="status">
+              <span class="global-loading__spinner" aria-hidden="true"></span>
+              <span class="visually-hidden">Загрузка страницы</span>
             </div>
           </template>
           <template #default>
@@ -34,7 +31,6 @@ import { RouterView, useRoute, useRouter } from "vue-router";
 import { getRoutePageIdentity, getRoutePageTitle, routeNavigationLoading } from "./app/router";
 import AppHeader from "./app/components/AppHeader.vue";
 import ToastStack from "./app/components/ToastStack.vue";
-import UiSkeleton from "./shared/ui/UiSkeleton.vue";
 import UiSkeletonHandoff from "./shared/ui/UiSkeletonHandoff.vue";
 import { useDelayedLoadingState } from "./shared/composables/useDelayedLoading";
 import { provideSkeletonHandoff } from "./shared/composables/useSkeletonHandoff";
@@ -123,11 +119,25 @@ if (authBootstrapState.value !== "ready") {
   background: var(--color-gray-50);
 }
 
-.global-loading__content {
-  width: min(100%, 520px);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+.global-loading__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-gray-200);
+  border-top-color: var(--color-gray-500);
+  border-radius: 50%;
+  animation: global-loading-spin .75s linear infinite;
+}
+
+@keyframes global-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .global-loading__spinner {
+    animation-duration: 1.5s;
+  }
 }
 
 @media (min-width: 768px) {
