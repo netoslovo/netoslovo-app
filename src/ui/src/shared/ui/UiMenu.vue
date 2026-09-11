@@ -6,8 +6,6 @@ export type UiMenuItem = {
   icon?: string;
   description?: string;
   tone?: "neutral" | "danger";
-  checkable?: boolean;
-  checked?: boolean;
   disabled?: boolean;
   loading?: boolean;
   separator?: boolean;
@@ -19,11 +17,10 @@ export type UiMenuItem = {
 </script>
 
 <script setup lang="ts">
-import { computed, ref, useId } from "vue";
+import { computed, onBeforeUnmount, ref, useId } from "vue";
 import { RouterLink } from "vue-router";
 import Button from "primevue/button";
 import Menu from "primevue/menu";
-import type { MenuPassThroughOptions } from "primevue/menu";
 import type { MenuItem } from "primevue/menuitem";
 
 const props = withDefaults(
@@ -57,25 +54,21 @@ const menu = ref<MenuRef | null>(null);
 const open = ref(false);
 const menuId = `ui-menu-${useId()}`;
 const buttonIcon = computed(() =>
-  props.icon === "dots" ? "pi pi-ellipsis-v" : "pi pi-bars",
+  props.icon === "dots"
+    ? "pi pi-ellipsis-v"
+    : props.icon === "burger"
+      ? "pi pi-bars"
+      : undefined,
 );
 const buttonSeverity = computed(() =>
   props.tone === "neutral" ? "secondary" : undefined,
 );
 const menuItems = computed(() => props.items.map(normalizeItem));
-const menuPt: MenuPassThroughOptions = {
-  item: ({ context }) => {
-    const item = context.item as UiMenuItem;
-
-    return item.checkable
-      ? {
-          role: "menuitemcheckbox",
-          "aria-checked": item.checked ? "true" : "false",
-          "aria-busy": item.loading ? "true" : undefined,
-        }
-      : {
-          "aria-busy": item.loading ? "true" : undefined,
-        };
+const menuPt = {
+  item: ({ context }: { context: { item: UiMenuItem } }) => {
+    return {
+      "aria-busy": context.item.loading ? "true" : undefined,
+    };
   },
 };
 
@@ -97,7 +90,25 @@ function close() {
 
 function onShow() {
   open.value = true;
+  bindViewportListeners();
   emit("open");
+}
+
+function onHide() {
+  open.value = false;
+  unbindViewportListeners();
+}
+
+function bindViewportListeners() {
+  window.addEventListener("resize", close);
+  window.visualViewport?.addEventListener("resize", close);
+  window.visualViewport?.addEventListener("scroll", close);
+}
+
+function unbindViewportListeners() {
+  window.removeEventListener("resize", close);
+  window.visualViewport?.removeEventListener("resize", close);
+  window.visualViewport?.removeEventListener("scroll", close);
 }
 
 function isPlainPrimaryClick(event: MouseEvent) {
@@ -111,13 +122,15 @@ function isPlainPrimaryClick(event: MouseEvent) {
 }
 
 function onActionClick(event: MouseEvent, menuItem: MenuItem) {
-  event.stopPropagation();
   const item = menuItem as UiMenuItem;
 
   if (item.disabled || item.loading) {
+    event.stopPropagation();
     event.preventDefault();
     return;
   }
+
+  event.stopPropagation();
 
   item.activate?.(event, close);
 
@@ -153,6 +166,8 @@ function onLinkClick(
 }
 
 defineExpose({ close });
+
+onBeforeUnmount(unbindViewportListeners);
 </script>
 
 <template>
@@ -185,8 +200,11 @@ defineExpose({ close });
       :aria-label="props.buttonLabel"
       popup
       @show="onShow"
-      @hide="open = false"
+      @hide="onHide"
     >
+      <template v-if="$slots.header" #start>
+        <slot name="header"></slot>
+      </template>
       <template #item="{ item, props: itemProps }">
         <RouterLink v-if="item.to" v-slot="{ href, navigate }" custom :to="item.to">
           <a
@@ -194,23 +212,21 @@ defineExpose({ close });
             class="ui-menu__action"
             :class="[
               `ui-menu__action--${item.tone ?? 'neutral'}`,
-              { 'ui-menu__action--checkable': item.checkable },
+              {
+                'ui-menu__action--without-icon': !item.icon && !item.loading,
+              },
             ]"
             :href="href"
             @click="onLinkClick($event, item, navigate)"
           >
             <i v-if="item.loading" class="ui-menu__spinner pi pi-spinner pi-spin" aria-hidden="true"></i>
-            <i v-else class="ui-menu__icon" :class="item.icon" aria-hidden="true"></i>
+            <i v-else-if="item.icon" class="ui-menu__icon" :class="item.icon" aria-hidden="true"></i>
 
             <span class="ui-menu__content">
               <span class="ui-menu__title">{{ item.label }}</span>
               <span v-if="item.description" class="ui-menu__description">
                 {{ item.description }}
               </span>
-            </span>
-
-            <span v-if="item.checkable" class="ui-menu__checkbox" aria-hidden="true">
-              <i v-if="item.checked" class="pi pi-check"></i>
             </span>
           </a>
         </RouterLink>
@@ -220,22 +236,20 @@ defineExpose({ close });
           class="ui-menu__action"
           :class="[
             `ui-menu__action--${item.tone ?? 'neutral'}`,
-            { 'ui-menu__action--checkable': item.checkable },
+            {
+              'ui-menu__action--without-icon': !item.icon && !item.loading,
+            },
           ]"
           @click="onActionClick($event, item)"
         >
           <i v-if="item.loading" class="ui-menu__spinner pi pi-spinner pi-spin" aria-hidden="true"></i>
-          <i v-else class="ui-menu__icon" :class="item.icon" aria-hidden="true"></i>
+          <i v-else-if="item.icon" class="ui-menu__icon" :class="item.icon" aria-hidden="true"></i>
 
           <span class="ui-menu__content">
             <span class="ui-menu__title">{{ item.label }}</span>
             <span v-if="item.description" class="ui-menu__description">
               {{ item.description }}
             </span>
-          </span>
-
-          <span v-if="item.checkable" class="ui-menu__checkbox" aria-hidden="true">
-            <i v-if="item.checked" class="pi pi-check"></i>
           </span>
         </a>
       </template>
@@ -438,8 +452,8 @@ defineExpose({ close });
   cursor: pointer;
 }
 
-.ui-menu__action--checkable {
-  grid-template-columns: 28px minmax(0, 1fr) 22px;
+.ui-menu__action--without-icon {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 :global(.ui-menu__list.p-menu .p-menu-item[data-p-disabled="true"]) .ui-menu__action {
@@ -484,24 +498,6 @@ defineExpose({ close });
   line-height: 1.3;
 }
 
-.ui-menu__checkbox {
-  width: 20px;
-  height: 20px;
-  border: 1px solid var(--color-gray-300);
-  border-radius: 5px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  color: var(--color-primary-600);
-  font-size: 12px;
-}
-
-.ui-menu__checkbox .pi {
-  font-size: 12px;
-  font-weight: 700;
-}
-
 .ui-menu__action--danger .ui-menu__title {
   color: var(--color-red-600);
 }
@@ -534,8 +530,8 @@ defineExpose({ close });
     gap: clamp(8px, 2.7vw, 10px);
   }
 
-  .ui-menu__action--checkable {
-    grid-template-columns: 28px minmax(0, 1fr) 22px;
+  .ui-menu__action--without-icon {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .ui-menu__title {

@@ -98,12 +98,6 @@ function getFeedback(guess: Guess) {
   text-align: center;
 }
 
-@media (max-width: 1024px) {
-  .guesses-list__empty {
-    display: none;
-  }
-}
-
 @media (min-width: 768px) {
   .guesses-list__items {
     gap: 3px;

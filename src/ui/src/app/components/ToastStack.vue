@@ -255,7 +255,7 @@ onBeforeUnmount(() => {
 :global(.toast-stack.p-toast) {
   width: min(400px, calc(100vw - 24px));
   max-width: calc(100vw - 24px);
-  top: calc(12px + env(safe-area-inset-top)) !important;
+  top: calc(var(--app-visual-viewport-top) + 12px + env(safe-area-inset-top)) !important;
   left: 0 !important;
   right: 0 !important;
   bottom: auto !important;
@@ -489,7 +489,7 @@ onBeforeUnmount(() => {
 @media (max-width: 480px) {
   :global(.toast-stack.p-toast) {
     width: min(370px, calc(100vw - 16px));
-    top: calc(8px + env(safe-area-inset-top)) !important;
+    top: calc(var(--app-visual-viewport-top) + 8px + env(safe-area-inset-top)) !important;
   }
 
   .toast {

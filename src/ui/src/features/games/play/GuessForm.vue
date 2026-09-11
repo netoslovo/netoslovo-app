@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import Popover from "primevue/popover";
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import UiIconButton from "../../../shared/ui/UiIconButton.vue";
 import UiInput from "../../../shared/ui/UiInput.vue";
@@ -7,18 +6,11 @@ import UiInput from "../../../shared/ui/UiInput.vue";
 type InputRef = {
   $el?: HTMLElement;
   focusInput: () => void;
-  blurInput: () => void;
-};
-
-type PopoverRef = {
-  show: (event: Event, target?: HTMLElement) => void;
-  hide: () => void;
 };
 
 const props = defineProps<{
   modelValue: string;
   loading: boolean;
-  inputLocked: boolean;
   submit: (word: string) => Promise<{ clear: boolean }>;
 }>();
 
@@ -27,7 +19,6 @@ const emit = defineEmits<{
 }>();
 
 const inputField = ref<InputRef | null>(null);
-const lockedInputPopover = ref<PopoverRef | null>(null);
 const error = ref<string | null>(null);
 const hasInvalidSubmitAttempt = ref(false);
 const invalidSubmitCount = ref(0);
@@ -42,18 +33,9 @@ watch(() => props.modelValue, (value) => {
   if (error.value === null) hasInvalidSubmitAttempt.value = false;
 });
 
-watch(() => props.inputLocked, (locked) => {
-  if (locked) {
-    inputField.value?.blurInput();
-    return;
-  }
-
-  lockedInputPopover.value?.hide();
-});
-
 onMounted(() => {
   document.addEventListener("pointerdown", clearRequiredErrorOutsideInput);
-  if (!props.inputLocked) void focusInput();
+  void focusInput();
 });
 
 onBeforeUnmount(() => {
@@ -72,10 +54,7 @@ function clearRequiredErrorOutsideInput(event: PointerEvent) {
 }
 
 async function focusInput() {
-  if (props.inputLocked) return;
-
   await nextTick();
-  if (props.inputLocked) return;
   inputField.value?.focusInput();
 }
 
@@ -139,14 +118,6 @@ function toggleInputError(
   showInputError(event, showError);
 }
 
-function showLockedInputInfo(event: PointerEvent) {
-  if (!props.inputLocked) return;
-
-  event.preventDefault();
-  const target = getCurrentTargetElement(event);
-  if (target) lockedInputPopover.value?.show(event, target);
-}
-
 function validateWord(value: string, showRequired: boolean) {
   if (!value) return showRequired ? "Введите слово" : null;
   if (!/^[а-яА-ЯёЁ-]+$/.test(value)) return "Введите слово на русском языке";
@@ -158,10 +129,11 @@ function validateWord(value: string, showRequired: boolean) {
 <template>
   <form class="guess-form" autocomplete="off" @submit.prevent="onSubmit">
     <UiInput ref="inputField" :model-value="modelValue" class="guess-form__input" label="Введите слово"
-      label-visually-hidden name="word" placeholder="Введите слово" :error="error" autocomplete="off" autocorrect="off"
-      autocapitalize="none" :spellcheck="false" :input-mode="inputLocked ? 'none' : 'text'" error-presentation="popover"
-      :shake-key="invalidSubmitCount" :readonly="inputLocked" :tab-index="inputLocked ? -1 : undefined"
-      @pointerdown="showLockedInputInfo" @update:model-value="emit('update:modelValue', $event)">
+      label-visually-hidden name="game-guess" type="text" placeholder="Введите слово" :error="error" autocomplete="off"
+      autocorrect="on" autocapitalize="none" :spellcheck="true" input-mode="text"
+      enter-key-hint="send"
+      error-presentation="popover"
+      :shake-key="invalidSubmitCount" @update:model-value="emit('update:modelValue', $event)">
       <template #right="{ error: inputError, errorVisible, showError, hideError }">
         <button v-if="inputError" type="button" class="guess-form__submit guess-form__submit--error"
           :aria-label="inputError" @mouseenter="showInputError($event, showError)" @mouseleave="hideError"
@@ -175,13 +147,9 @@ function validateWord(value: string, showRequired: boolean) {
         </UiIconButton>
       </template>
     </UiInput>
+
   </form>
 
-  <Popover ref="lockedInputPopover" class="guess-form__locked-popover info-popover">
-    <p class="guess-form__locked-popover-text">
-      Используйте клавиши ниже для ввода. Чтобы печатать с обычной клавиатуры, закройте экранную.
-    </p>
-  </Popover>
 </template>
 
 <style scoped>
@@ -190,13 +158,12 @@ function validateWord(value: string, showRequired: boolean) {
   min-width: 0;
 }
 
-.guess-form :deep(.ui-input) {
-  padding-inline-start: 10px;
+.guess-form__input {
+  min-width: 0;
 }
 
-.guess-form__input :deep(.ui-input[readonly]) {
-  caret-color: transparent;
-  cursor: help;
+.guess-form :deep(.ui-input) {
+  padding-inline-start: 10px;
 }
 
 .guess-form :deep(.ui-input-wrap__addon--right.p-inputgroupaddon) {
@@ -270,6 +237,7 @@ function validateWord(value: string, showRequired: boolean) {
 }
 
 .guess-form__submit--error {
+  background: transparent;
   color: var(--color-red-600);
   cursor: help;
 }
@@ -297,18 +265,6 @@ function validateWord(value: string, showRequired: boolean) {
 
 .guess-form__submit--error:hover .guess-form__error-icon {
   background: #983737;
-}
-
-.guess-form__locked-popover-text {
-  max-width: 280px;
-  margin: 0;
-  color: var(--color-gray-700);
-  font-size: var(--info-popover-font-size);
-  line-height: 1.45;
-}
-
-:global(.guess-form__locked-popover.p-popover) {
-  max-width: min(310px, calc(100vw - 24px));
 }
 
 @media (hover: hover) and (pointer: fine) {

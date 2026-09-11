@@ -10,7 +10,7 @@ import {
   type MaybeRefOrGetter,
   type Ref,
 } from "vue";
-import { useDelayedLoading, useDelayedLoadingState } from "./useDelayedLoading";
+import { useDelayedLoadingState } from "./useDelayedLoading";
 
 const handoffDurationMs = 300;
 const skeletonHandoffKey: InjectionKey<Readonly<Ref<boolean>>> = Symbol(
@@ -50,17 +50,6 @@ export function provideSkeletonHandoff(
 
   onBeforeUnmount(clearTimer);
   provide(skeletonHandoffKey, readonly(handoffActive));
-}
-
-export function useHandoffDelayedLoading(
-  loading: MaybeRefOrGetter<boolean>,
-  delayMs?: number,
-) {
-  return useDelayedLoading(
-    loading,
-    delayMs,
-    inject(skeletonHandoffKey) ?? false,
-  );
 }
 
 export function useHandoffDelayedLoadingState(

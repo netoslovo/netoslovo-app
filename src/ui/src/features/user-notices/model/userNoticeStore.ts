@@ -8,6 +8,7 @@ import type { UserNoticeCode } from "./userNoticeCodes";
 
 const cachedVisibility = new Map<UserNoticeCode, boolean>();
 const pendingVisibility = new Map<UserNoticeCode, Promise<boolean>>();
+const pendingOneTimeViews = new Map<UserNoticeCode, Promise<void>>();
 let cacheOwnerId: string | null = null;
 let cacheRevision = 0;
 
@@ -21,6 +22,7 @@ function syncCacheOwner() {
   cacheRevision += 1;
   cachedVisibility.clear();
   pendingVisibility.clear();
+  pendingOneTimeViews.clear();
   return ownerId;
 }
 
@@ -45,11 +47,13 @@ async function shouldShowUserNotice(code: UserNoticeCode): Promise<boolean> {
     .then((shouldShow) => {
       syncCacheOwner();
       if (
-        cacheOwnerId === ownerId &&
-        cacheRevision === requestRevision
+        cacheOwnerId !== ownerId ||
+        cacheRevision !== requestRevision
       ) {
-        cachedVisibility.set(code, shouldShow);
+        return false;
       }
+
+      cachedVisibility.set(code, shouldShow);
       return shouldShow;
     })
     .catch(() => false)
@@ -65,9 +69,18 @@ async function shouldShowUserNotice(code: UserNoticeCode): Promise<boolean> {
 
 function saveOneTimeUserNoticeView(code: UserNoticeCode): void {
   const ownerId = syncCacheOwner();
-  void saveOneTimeUserNoticeViewRequest(code)
+  if (cachedVisibility.get(code) === false || pendingOneTimeViews.has(code)) return;
+
+  cachedVisibility.set(code, false);
+  const request = saveOneTimeUserNoticeViewRequest(code)
     .then(() => markHiddenForOwner(code, ownerId))
-    .catch(() => undefined);
+    .catch(() => undefined)
+    .finally(() => {
+      if (pendingOneTimeViews.get(code) === request) {
+        pendingOneTimeViews.delete(code);
+      }
+    });
+  pendingOneTimeViews.set(code, request);
 }
 
 function saveRecurringUserNoticeView(

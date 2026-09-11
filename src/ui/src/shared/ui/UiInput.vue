@@ -40,7 +40,6 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   "update:modelValue": [value: string];
-  pointerdown: [event: PointerEvent];
 }>();
 
 type PrimeInputRef = {
@@ -70,18 +69,8 @@ function focusInput() {
   input.value?.$el?.focus();
 }
 
-function blurInput() {
-  input.value?.$el?.blur();
-}
-
-function isFocused() {
-  return document.activeElement === input.value?.$el;
-}
-
 defineExpose({
   focusInput,
-  blurInput,
-  isFocused
 });
 
 function isPopoverError() {
@@ -233,7 +222,6 @@ onBeforeUnmount(() => {
           :aria-invalid="error ? 'true' : undefined"
           :aria-describedby="errorDescriptionId"
           fluid
-          @pointerdown="emit('pointerdown', $event)"
           @update:model-value="emit('update:modelValue', $event ?? '')"
         />
         <InputGroupAddon
