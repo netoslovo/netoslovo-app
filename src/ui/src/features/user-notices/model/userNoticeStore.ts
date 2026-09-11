@@ -47,11 +47,13 @@ async function shouldShowUserNotice(code: UserNoticeCode): Promise<boolean> {
     .then((shouldShow) => {
       syncCacheOwner();
       if (
-        cacheOwnerId === ownerId &&
-        cacheRevision === requestRevision
+        cacheOwnerId !== ownerId ||
+        cacheRevision !== requestRevision
       ) {
-        cachedVisibility.set(code, shouldShow);
+        return false;
       }
+
+      cachedVisibility.set(code, shouldShow);
       return shouldShow;
     })
     .catch(() => false)

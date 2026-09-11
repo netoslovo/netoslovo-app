@@ -2,7 +2,7 @@
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import Popover from "primevue/popover";
-import { computed, ref, useId } from "vue";
+import { computed, onBeforeUnmount, ref, useId } from "vue";
 import { showToast } from "../../../shared/notifications/toastStore";
 import UiMenu, { type UiMenuItem } from "../../../shared/ui/UiMenu.vue";
 import { useGuessHints } from "./useGuessHints";
@@ -155,6 +155,26 @@ function closeHintsPopover() {
   hintsPopover.value?.hide();
 }
 
+function onHintsPopoverShow() {
+  hintsOpen.value = true;
+  window.addEventListener("resize", closeHintsPopover);
+  window.visualViewport?.addEventListener("resize", closeHintsPopover);
+  window.visualViewport?.addEventListener("scroll", closeHintsPopover);
+}
+
+function onHintsPopoverHide() {
+  hintsOpen.value = false;
+  removeHintsViewportListeners();
+}
+
+function removeHintsViewportListeners() {
+  window.removeEventListener("resize", closeHintsPopover);
+  window.visualViewport?.removeEventListener("resize", closeHintsPopover);
+  window.visualViewport?.removeEventListener("scroll", closeHintsPopover);
+}
+
+onBeforeUnmount(removeHintsViewportListeners);
+
 async function confirmSurrender() {
   if (props.loading) return;
 
@@ -226,7 +246,7 @@ function requestRandomLetterHint(closeMenu?: () => void) {
           severity="secondary" outlined @click="toggleHintsPopover" />
 
         <Popover :id="hintsPopoverId" ref="hintsPopover" class="gameplay-controls__hints-popover"
-          :aria-labelledby="hintsTitleId" @show="hintsOpen = true" @hide="hintsOpen = false">
+          :aria-labelledby="hintsTitleId" @show="onHintsPopoverShow" @hide="onHintsPopoverHide">
           <div :id="hintsTitleId" class="gameplay-controls__hints-title">Подсказки</div>
           <HintMenuItem title="Промежуточное слово" icon="pi pi-sort-amount-up" :description="halfwayWordDescription"
             :remaining="remainingNeighbourHints" :total="totalNeighbourHints" :score-penalty="nextHalfwayWordPenalty"
