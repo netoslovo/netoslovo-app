@@ -2,7 +2,7 @@
 import Dialog from "primevue/dialog";
 import Popover from "primevue/popover";
 import Select from "primevue/select";
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useInfoPopover } from "../../../shared/composables/useInfoPopover";
 import type { Difficulty, Game, Guess } from "../model/game";
 import type { DailyGameResultStatsState } from "./useDailyGameResultStats";
@@ -26,7 +26,6 @@ type ArcadeReplayConfig = {
   selectDifficulty: (value: string) => void;
   replay: () => void;
 };
-
 export type GameBoardModeConfig =
   | { mode: "arcade"; title: string; detail: string | null; replay: ArcadeReplayConfig | null }
   | {
@@ -65,6 +64,9 @@ const resultConfig = {
 const gameSourceRemovedDialogOpen = ref(false);
 const dailyStatsDialogOpen = ref(false);
 const celebrateGuessed = ref(false);
+const gameBoard = ref<HTMLElement | null>(null);
+const gameplayDock = ref<HTMLElement | null>(null);
+const guessWord = ref("");
 const emptyDailyGameStats: DailyGameResultStatsState = {
   aggregate: { status: "loading" },
   player: { status: "idle" },
@@ -79,6 +81,48 @@ const dailyStatsLoading = computed(() =>
 const dailyResultState = computed((): Extract<Game["gameState"], "guessed" | "surrendered"> | null => {
   if (!dailyConfig.value) return null;
   return props.game.gameState === "guessed" || props.game.gameState === "surrendered" ? props.game.gameState : null;
+});
+let dockResizeObserver: ResizeObserver | null = null;
+let mobileDockMedia: MediaQueryList | null = null;
+let dockHeight = 0;
+
+function applyDockSpacing() {
+  const board = gameBoard.value;
+  if (!board) return;
+
+  board.style.paddingBottom = mobileDockMedia?.matches && gameplayDock.value
+    ? `calc(${dockHeight}px + max(16px, calc(env(safe-area-inset-bottom) + 8px)))`
+    : "";
+}
+
+watch(gameplayDock, (current, previous) => {
+  if (!dockResizeObserver) return;
+  if (previous) dockResizeObserver.unobserve(previous);
+
+  if (current) {
+    dockResizeObserver.observe(current);
+    dockHeight = current.offsetHeight;
+  } else {
+    dockHeight = 0;
+  }
+  applyDockSpacing();
+}, { flush: "post" });
+
+onMounted(async () => {
+  await nextTick();
+  mobileDockMedia = window.matchMedia("(max-width: 1024px)");
+  mobileDockMedia.addEventListener("change", applyDockSpacing);
+  dockResizeObserver = new ResizeObserver(() => {
+    dockHeight = gameplayDock.value?.offsetHeight ?? 0;
+    applyDockSpacing();
+  });
+  if (gameplayDock.value) dockResizeObserver.observe(gameplayDock.value);
+  applyDockSpacing();
+});
+
+onBeforeUnmount(() => {
+  dockResizeObserver?.disconnect();
+  mobileDockMedia?.removeEventListener("change", applyDockSpacing);
 });
 
 const {
@@ -119,7 +163,7 @@ watch(
 </script>
 
 <template>
-  <div class="game-board">
+  <div ref="gameBoard" class="game-board">
     <div class="game-board__main">
       <div v-if="game.gameState !== 'active'" class="game-board__win">
         <DisplayWordTiles :display-word="game.displayWord" :difficulty-name="game.difficulty.name"
@@ -167,22 +211,22 @@ watch(
         <DisplayWordTiles :display-word="game.displayWord" :difficulty-name="game.difficulty.name"
           :mode-label="modeConfig.title" :mode-detail="modeConfig.detail" :mode-variant="modeConfig.mode"
           :game-state="game.gameState" />
-        <div class="guess-card">
-          <GameScoreCard class="guess-card__score" :score="game.score" :score-details="game.scoreDetails" embedded />
-          <GameplayControls class="guess-card__controls" :loading="guessing"
-            :word-length="game.displayWord.cells?.length ?? null"
-            :hints-info="game.hintsInfo" :actions="actions"
-            :show-statistics="dailyConfig ? showDailyStatsDialog : undefined" />
-          <div v-if="currentGuess" class="guess-card__latest">
-            <p class="guess-card__label">Последняя попытка</p>
-            <GuessBar :key="guessPresentationEvent?.id ?? 0" :word="currentGuess.word" :value="currentGuess.distance"
-              :fill-percentage="currentGuess.fillPercentage" :hint="currentGuess.source === 'hint'" current
-              animate-fill-on-mount
-              :fill-animation-start="guessPresentationEvent?.previousFillPercentage ?? 0" />
-          </div>
-          <div v-else class="guess-card__latest guess-card__latest--placeholder" aria-hidden="true">
-            <p class="guess-card__label">Последняя попытка</p>
-            <div class="guess-card__latest-placeholder">Пока нет попыток</div>
+        <div ref="gameplayDock" class="gameplay-dock">
+          <div class="guess-card">
+            <GameScoreCard class="guess-card__score" :score="game.score" :score-details="game.scoreDetails" embedded />
+            <GameplayControls v-model="guessWord" class="guess-card__controls" :loading="guessing"
+              :word-length="game.displayWord.cells?.length ?? null" :hints-info="game.hintsInfo" :actions="actions"
+              :show-statistics="dailyConfig ? showDailyStatsDialog : undefined">
+              <template v-if="currentGuess" #latest>
+                <div class="guess-card__latest">
+                  <p class="guess-card__label">Последняя попытка</p>
+                  <GuessBar :key="guessPresentationEvent?.id ?? 0" :word="currentGuess.word"
+                    :value="currentGuess.distance" :fill-percentage="currentGuess.fillPercentage"
+                    :hint="currentGuess.source === 'hint'" animate-fill-on-mount
+                    :fill-animation-start="guessPresentationEvent?.previousFillPercentage ?? 0" />
+                </div>
+              </template>
+            </GameplayControls>
           </div>
         </div>
       </div>
@@ -255,27 +299,17 @@ watch(
   box-shadow: 0 4px 14px rgba(25, 32, 43, 0.05);
 }
 
+.gameplay-dock {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .guess-card__latest {
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.guess-card__latest--placeholder {
-  display: none;
-}
-
-.guess-card__latest-placeholder {
-  width: 100%;
-  height: 50px;
-  border: 1px solid var(--color-gray-300);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-gray-50);
-  color: var(--p-text-muted-color);
-  font-size: 14px;
 }
 
 .guess-card__label {
@@ -283,47 +317,6 @@ watch(
   color: var(--p-text-muted-color);
   font-size: 12px;
   line-height: 1.3;
-}
-
-@media (max-width: 1024px) {
-  .guess-card {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-  }
-
-  .guess-card__score {
-    grid-column: 1 / -1;
-  }
-
-  .guess-card__controls {
-    width: auto;
-    grid-column: 2;
-    grid-row: 2;
-  }
-
-  .guess-card__latest {
-    min-width: 0;
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  .guess-card__latest--placeholder {
-    display: flex;
-  }
-}
-
-@media (max-width: 480px) {
-  .guess-card__latest-placeholder {
-    height: 48px;
-    font-size: 13px;
-  }
-}
-
-@media (max-width: 359px) {
-  .guess-card__latest-placeholder {
-    height: 44px;
-  }
 }
 
 .game-result-summary-card {
@@ -515,6 +508,48 @@ watch(
   .daily-stats-dialog__actions>.ui-button {
     width: auto;
     font-size: 16px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .gameplay-dock {
+    position: fixed;
+    z-index: 20;
+    left: max(8px, env(safe-area-inset-left));
+    right: max(8px, env(safe-area-inset-right));
+    bottom: calc(var(--app-visual-viewport-bottom) + max(8px, env(safe-area-inset-bottom)));
+    width: auto;
+    max-width: calc(var(--container-sm) - 16px);
+    margin-inline: auto;
+    gap: 6px;
+  }
+
+  .guess-card {
+    position: static;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    display: flex;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .guess-card__controls {
+    width: 100%;
+  }
+
+  .guess-card__latest {
+    width: 100%;
+    min-width: 0;
+  }
+
+}
+
+@media (max-width: 359px) {
+  .gameplay-dock {
+    left: max(5px, env(safe-area-inset-left));
+    right: max(5px, env(safe-area-inset-right));
+    bottom: calc(var(--app-visual-viewport-bottom) + max(5px, env(safe-area-inset-bottom)));
   }
 }
 </style>

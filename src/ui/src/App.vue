@@ -34,6 +34,7 @@ import ToastStack from "./app/components/ToastStack.vue";
 import UiSkeletonHandoff from "./shared/ui/UiSkeletonHandoff.vue";
 import { useDelayedLoadingState } from "./shared/composables/useDelayedLoading";
 import { provideSkeletonHandoff } from "./shared/composables/useSkeletonHandoff";
+import { useVisualViewportCssVariables } from "./shared/composables/useVisualViewportCssVariables";
 import { authBootstrapState, bootstrapAuthState } from "./features/auth/model/authSession";
 
 const route = useRoute();
@@ -56,6 +57,8 @@ const headerActionsDisabled = computed(
   () => logoutPending.value || authBootstrapState.value !== "ready" || contentLoading.value || routeNavigationLoading.value,
 );
 const appBusy = computed(() => appContentBlocked.value || logoutPending.value);
+
+useVisualViewportCssVariables();
 
 watch(
   () => getRoutePageIdentity(route),

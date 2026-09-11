@@ -23,7 +23,6 @@ import { computed, ref, useId } from "vue";
 import { RouterLink } from "vue-router";
 import Button from "primevue/button";
 import Menu from "primevue/menu";
-import type { MenuPassThroughOptions } from "primevue/menu";
 import type { MenuItem } from "primevue/menuitem";
 
 const props = withDefaults(
@@ -57,14 +56,18 @@ const menu = ref<MenuRef | null>(null);
 const open = ref(false);
 const menuId = `ui-menu-${useId()}`;
 const buttonIcon = computed(() =>
-  props.icon === "dots" ? "pi pi-ellipsis-v" : "pi pi-bars",
+  props.icon === "dots"
+    ? "pi pi-ellipsis-v"
+    : props.icon === "burger"
+      ? "pi pi-bars"
+      : undefined,
 );
 const buttonSeverity = computed(() =>
   props.tone === "neutral" ? "secondary" : undefined,
 );
 const menuItems = computed(() => props.items.map(normalizeItem));
-const menuPt: MenuPassThroughOptions = {
-  item: ({ context }) => {
+const menuPt = {
+  item: ({ context }: { context: { item: UiMenuItem } }) => {
     const item = context.item as UiMenuItem;
 
     return item.checkable
@@ -111,13 +114,15 @@ function isPlainPrimaryClick(event: MouseEvent) {
 }
 
 function onActionClick(event: MouseEvent, menuItem: MenuItem) {
-  event.stopPropagation();
   const item = menuItem as UiMenuItem;
 
   if (item.disabled || item.loading) {
+    event.stopPropagation();
     event.preventDefault();
     return;
   }
+
+  event.stopPropagation();
 
   item.activate?.(event, close);
 
@@ -187,6 +192,9 @@ defineExpose({ close });
       @show="onShow"
       @hide="open = false"
     >
+      <template v-if="$slots.header" #start>
+        <slot name="header"></slot>
+      </template>
       <template #item="{ item, props: itemProps }">
         <RouterLink v-if="item.to" v-slot="{ href, navigate }" custom :to="item.to">
           <a
@@ -194,13 +202,16 @@ defineExpose({ close });
             class="ui-menu__action"
             :class="[
               `ui-menu__action--${item.tone ?? 'neutral'}`,
-              { 'ui-menu__action--checkable': item.checkable },
+              {
+                'ui-menu__action--checkable': item.checkable,
+                'ui-menu__action--without-icon': !item.icon && !item.loading,
+              },
             ]"
             :href="href"
             @click="onLinkClick($event, item, navigate)"
           >
             <i v-if="item.loading" class="ui-menu__spinner pi pi-spinner pi-spin" aria-hidden="true"></i>
-            <i v-else class="ui-menu__icon" :class="item.icon" aria-hidden="true"></i>
+            <i v-else-if="item.icon" class="ui-menu__icon" :class="item.icon" aria-hidden="true"></i>
 
             <span class="ui-menu__content">
               <span class="ui-menu__title">{{ item.label }}</span>
@@ -220,12 +231,15 @@ defineExpose({ close });
           class="ui-menu__action"
           :class="[
             `ui-menu__action--${item.tone ?? 'neutral'}`,
-            { 'ui-menu__action--checkable': item.checkable },
+            {
+              'ui-menu__action--checkable': item.checkable,
+              'ui-menu__action--without-icon': !item.icon && !item.loading,
+            },
           ]"
           @click="onActionClick($event, item)"
         >
           <i v-if="item.loading" class="ui-menu__spinner pi pi-spinner pi-spin" aria-hidden="true"></i>
-          <i v-else class="ui-menu__icon" :class="item.icon" aria-hidden="true"></i>
+          <i v-else-if="item.icon" class="ui-menu__icon" :class="item.icon" aria-hidden="true"></i>
 
           <span class="ui-menu__content">
             <span class="ui-menu__title">{{ item.label }}</span>
@@ -442,6 +456,14 @@ defineExpose({ close });
   grid-template-columns: 28px minmax(0, 1fr) 22px;
 }
 
+.ui-menu__action--without-icon {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ui-menu__action--checkable.ui-menu__action--without-icon {
+  grid-template-columns: minmax(0, 1fr) 22px;
+}
+
 :global(.ui-menu__list.p-menu .p-menu-item[data-p-disabled="true"]) .ui-menu__action {
   opacity: 0.5;
   cursor: default;
@@ -536,6 +558,14 @@ defineExpose({ close });
 
   .ui-menu__action--checkable {
     grid-template-columns: 28px minmax(0, 1fr) 22px;
+  }
+
+  .ui-menu__action--without-icon {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ui-menu__action--checkable.ui-menu__action--without-icon {
+    grid-template-columns: minmax(0, 1fr) 22px;
   }
 
   .ui-menu__title {

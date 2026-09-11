@@ -2,16 +2,12 @@
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import Popover from "primevue/popover";
-import { computed, nextTick, ref, useId } from "vue";
+import { computed, ref, useId } from "vue";
 import { showToast } from "../../../shared/notifications/toastStore";
 import UiMenu, { type UiMenuItem } from "../../../shared/ui/UiMenu.vue";
-import { userNoticeCodes } from "../../user-notices/model/userNoticeCodes";
-import { useUserNoticeStore } from "../../user-notices/model/userNoticeStore";
 import { useGuessHints } from "./useGuessHints";
-import { useScreenKeyboard } from "./useScreenKeyboard";
 import type { GameActionResult } from "../lib/gameActionOutcomes";
 import type { HintsInfo } from "../model/game";
-import CompactScreenKeyboard from "./CompactScreenKeyboard.vue";
 import DictionaryChangedDialog from "./DictionaryChangedDialog.vue";
 import GameGuide from "../components/GameGuide.vue";
 import GuessForm from "./GuessForm.vue";
@@ -19,10 +15,11 @@ import HintMenuItem from "./HintMenuItem.vue";
 import SurrenderDialog from "./SurrenderDialog.vue";
 import WordNotFoundInfoDialog from "./WordNotFoundInfoDialog.vue";
 
-type MenuRef = { close: () => void };
+type MenuRef = {
+  close: () => void;
+};
 type PopoverRef = {
   toggle: (event: Event) => void;
-  show: (event: Event, target?: HTMLElement) => void;
   hide: () => void;
 };
 
@@ -35,6 +32,7 @@ export type GameplayActions = {
 };
 
 const props = defineProps<{
+  modelValue: string;
   loading: boolean;
   wordLength?: number | null;
   hintsInfo: HintsInfo;
@@ -42,14 +40,17 @@ const props = defineProps<{
   showStatistics?: () => void;
 }>();
 
-const word = ref("");
-const userNotices = useUserNoticeStore();
+const emit = defineEmits<{
+  "update:modelValue": [value: string];
+}>();
+
+const word = computed({
+  get: () => props.modelValue,
+  set: (value: string) => emit("update:modelValue", value),
+});
 const hintsPopover = ref<PopoverRef | null>(null);
-const keyboardRestorePopover = ref<PopoverRef | null>(null);
-const actionsMenuAnchor = ref<HTMLElement | null>(null);
 const actionsMenu = ref<MenuRef | null>(null);
 const hintsOpen = ref(false);
-const keyboardRestorePopoverVisible = ref(false);
 const hintsPopoverId = `guess-hints-${useId()}`;
 const hintsTitleId = `${hintsPopoverId}-title`;
 const pendingHint = ref<"halfway" | "length" | "letter" | null>(null);
@@ -59,20 +60,6 @@ const surrenderDialogOpen = ref(false);
 const wordNotFoundInfoOpen = ref(false);
 const dictionaryChangedDialogOpen = ref(false);
 const dictionaryChangedAction = ref<"guess" | "hint">("guess");
-let keyboardRestoreHintShown = false;
-
-const {
-  preferred: compactKeyboardPreferred,
-  visible: compactKeyboardVisible,
-  infoOpen: compactKeyboardInfoOpen,
-  toggleDescription: compactKeyboardToggleDescription,
-  append: appendKeyboardCharacter,
-  removeLast: removeKeyboardCharacter,
-  show: showCompactKeyboard,
-  hide: hideCompactKeyboard,
-  close: closeCompactKeyboard,
-  toggle: toggleCompactKeyboard,
-} = useScreenKeyboard(word, () => props.loading);
 
 const {
   remainingNeighbourHints,
@@ -105,29 +92,20 @@ const actionMenuItems = computed<UiMenuItem[]>(() => {
     });
   }
 
-  items.push(
-    {
-      label: "Экранная клавиатура",
-      icon: "pi pi-th-large",
-      description: compactKeyboardToggleDescription.value,
-      checkable: true,
-      checked: compactKeyboardPreferred.value,
-      activate: (_event, close) => toggleCompactKeyboard(close),
-    },
-    {
-      label: "Как играть",
-      icon: "pi pi-question-circle",
-      description: "Показать правила игры.",
-      activate: (_event, close) => showHowToPlay(close),
-    },
-    {
-      label: "Сдаться",
-      icon: "pi pi-flag",
-      description: "Откроет слово и завершит текущую игру.",
-      tone: "danger",
-      activate: (_event, close) => requestSurrender(close),
-    },
-  );
+  items.push({
+    label: "Как играть",
+    icon: "pi pi-question-circle",
+    description: "Показать правила игры.",
+    activate: (_event, close) => showHowToPlay(close),
+  });
+
+  items.push({
+    label: "Сдаться",
+    icon: "pi pi-flag",
+    description: "Откроет слово и завершит текущую игру.",
+    tone: "danger",
+    activate: (_event, close) => requestSurrender(close),
+  });
 
   return [{ label: "Меню", items }];
 });
@@ -175,35 +153,6 @@ function toggleHintsPopover(event: Event) {
 
 function closeHintsPopover() {
   hintsPopover.value?.hide();
-}
-
-function openActionsMenu() {
-  closeHintsPopover();
-  keyboardRestorePopover.value?.hide();
-}
-
-function closeScreenKeyboard(event: Event) {
-  closeCompactKeyboard();
-  void showKeyboardRestoreHint(event);
-}
-
-async function showKeyboardRestoreHint(event: Event) {
-  if (keyboardRestoreHintShown) return;
-
-  const shouldShow = await userNotices.shouldShowUserNotice(
-    userNoticeCodes.screenKeyboardRestoreHint,
-  );
-  if (!shouldShow || compactKeyboardPreferred.value) return;
-
-  await nextTick();
-  const target = actionsMenuAnchor.value;
-  if (!target || compactKeyboardPreferred.value) return;
-
-  keyboardRestoreHintShown = true;
-  keyboardRestorePopover.value?.show(event, target);
-  userNotices.saveOneTimeUserNoticeView(
-    userNoticeCodes.screenKeyboardRestoreHint,
-  );
 }
 
 async function confirmSurrender() {
@@ -267,56 +216,42 @@ function requestRandomLetterHint(closeMenu?: () => void) {
 </script>
 
 <template>
-  <div class="gameplay-controls" :class="{
-    'gameplay-controls--keyboard-enabled': compactKeyboardPreferred,
-    'gameplay-controls--keyboard-collapsed': compactKeyboardPreferred && !compactKeyboardVisible,
-  }">
-    <div class="gameplay-controls__dock">
-      <div class="gameplay-controls__dock-form">
-        <GuessForm v-model="word" :loading="loading" :input-locked="compactKeyboardPreferred" :submit="submitGuess" />
-      </div>
+  <div class="gameplay-controls">
+    <div class="gameplay-controls__input-row">
+      <GuessForm v-model="word" class="gameplay-controls__form" :loading="loading" :submit="submitGuess" />
 
-      <CompactScreenKeyboard v-if="compactKeyboardPreferred" v-model:info-open="compactKeyboardInfoOpen"
-        :visible="compactKeyboardVisible" :disabled="loading" @append="appendKeyboardCharacter"
-        @remove-last="removeKeyboardCharacter" @show="showCompactKeyboard" @hide="hideCompactKeyboard"
-        @close="closeScreenKeyboard" />
+      <div class="gameplay-controls__actions">
+        <Button class="gameplay-controls__hints-button" type="button" aria-label="Подсказки" aria-haspopup="dialog"
+          :aria-expanded="hintsOpen ? 'true' : 'false'" :aria-controls="hintsPopoverId" icon="pi pi-lightbulb"
+          severity="secondary" outlined @click="toggleHintsPopover" />
+
+        <Popover :id="hintsPopoverId" ref="hintsPopover" class="gameplay-controls__hints-popover"
+          :aria-labelledby="hintsTitleId" @show="hintsOpen = true" @hide="hintsOpen = false">
+          <div :id="hintsTitleId" class="gameplay-controls__hints-title">Подсказки</div>
+          <HintMenuItem title="Промежуточное слово" icon="pi pi-sort-amount-up" :description="halfwayWordDescription"
+            :remaining="remainingNeighbourHints" :total="totalNeighbourHints" :score-penalty="nextHalfwayWordPenalty"
+            :disabled="loading" :unavailable="!canRevealHalfwayWord" :loading="pendingHint === 'halfway'"
+            :disabled-reason="halfwayWordHintDisabledReason" @activate="requestHalfwayWordHint(closeHintsPopover)" />
+          <HintMenuItem title="Показать длину слова" icon="pi pi-eye" :description="wordLengthDescription"
+            :score-penalty="nextWordLengthPenalty" :disabled="loading" :unavailable="!canRevealWordLength"
+            :loading="pendingHint === 'length'" :disabled-reason="wordLengthHintDisabledReason"
+            @activate="requestWordLengthHint(closeHintsPopover)" />
+          <HintMenuItem title="Открыть случайную букву" icon="pi pi-question" :description="randomLetterDescription"
+            :remaining="remainingRevealLetterHints" :total="totalRevealLetterHints"
+            :score-penalty="nextRandomLetterPenalty" :disabled="loading" :unavailable="!canRevealRandomLetter"
+            :loading="pendingHint === 'letter'" :disabled-reason="randomLetterHintDisabledReason"
+            @activate="requestRandomLetterHint(closeHintsPopover)" />
+        </Popover>
+
+        <div class="gameplay-controls__menu-anchor">
+          <UiMenu ref="actionsMenu" :items="actionMenuItems" button-label="Меню" icon="dots" tone="neutral" wide
+            @open="closeHintsPopover" />
+        </div>
+      </div>
     </div>
 
-    <div class="gameplay-controls__actions">
-      <Button class="gameplay-controls__hints-button" type="button" aria-label="Подсказки" aria-haspopup="dialog"
-        :aria-expanded="hintsOpen ? 'true' : 'false'" :aria-controls="hintsPopoverId" icon="pi pi-lightbulb"
-        severity="secondary" outlined @click="toggleHintsPopover" />
-
-      <Popover :id="hintsPopoverId" ref="hintsPopover" class="gameplay-controls__hints-popover"
-        :aria-labelledby="hintsTitleId" @show="hintsOpen = true" @hide="hintsOpen = false">
-        <div :id="hintsTitleId" class="gameplay-controls__hints-title">Подсказки</div>
-        <HintMenuItem title="Промежуточное слово" icon="pi pi-sort-amount-up" :description="halfwayWordDescription"
-          :remaining="remainingNeighbourHints" :total="totalNeighbourHints" :score-penalty="nextHalfwayWordPenalty"
-          :disabled="loading" :unavailable="!canRevealHalfwayWord" :loading="pendingHint === 'halfway'"
-          :disabled-reason="halfwayWordHintDisabledReason" @activate="requestHalfwayWordHint(closeHintsPopover)" />
-        <HintMenuItem title="Показать длину слова" icon="pi pi-eye" :description="wordLengthDescription"
-          :score-penalty="nextWordLengthPenalty" :disabled="loading" :unavailable="!canRevealWordLength"
-          :loading="pendingHint === 'length'" :disabled-reason="wordLengthHintDisabledReason"
-          @activate="requestWordLengthHint(closeHintsPopover)" />
-        <HintMenuItem title="Открыть случайную букву" icon="pi pi-question" :description="randomLetterDescription"
-          :remaining="remainingRevealLetterHints" :total="totalRevealLetterHints"
-          :score-penalty="nextRandomLetterPenalty" :disabled="loading" :unavailable="!canRevealRandomLetter"
-          :loading="pendingHint === 'letter'" :disabled-reason="randomLetterHintDisabledReason"
-          @activate="requestRandomLetterHint(closeHintsPopover)" />
-      </Popover>
-
-      <div ref="actionsMenuAnchor" class="gameplay-controls__menu-anchor"
-        :class="{ 'gameplay-controls__menu-anchor--restore-hint': keyboardRestorePopoverVisible }">
-        <UiMenu ref="actionsMenu" :items="actionMenuItems" button-label="Меню" icon="dots" tone="neutral" wide
-          @open="openActionsMenu" />
-      </div>
-
-      <Popover ref="keyboardRestorePopover" class="gameplay-controls__keyboard-restore-popover info-popover"
-        @show="keyboardRestorePopoverVisible = true" @hide="keyboardRestorePopoverVisible = false">
-        <p class="gameplay-controls__keyboard-restore-text">
-          Включить клавиатуру снова: Меню → Экранная клавиатура
-        </p>
-      </Popover>
+    <div v-if="$slots.latest" class="gameplay-controls__latest">
+      <slot name="latest"></slot>
     </div>
 
     <Dialog v-model:visible="howToPlayOpen" modal dismissable-mask header="Об игре" class="game-dialog">
@@ -333,38 +268,22 @@ function requestRandomLetterHint(closeMenu?: () => void) {
 <style scoped>
 .gameplay-controls {
   --guess-control-height: 50px;
+  --guess-submit-background: var(--p-primary-color);
+  --guess-submit-color: var(--p-primary-contrast-color);
+  --guess-submit-hover-background: var(--p-primary-hover-color);
+  --guess-submit-hover-color: var(--p-primary-contrast-color);
+  --guess-submit-active-background: var(--p-primary-active-color);
+  --guess-submit-active-color: var(--p-primary-contrast-color);
   width: 100%;
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
   gap: 8px;
 }
 
-.gameplay-controls__dock {
-  position: fixed;
-  z-index: 20;
-  bottom: 0;
-  left: 50%;
-  width: min(100%, var(--container-sm));
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.gameplay-controls__dock-form {
-  width: 100%;
-  padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--color-gray-300);
-  border-inline: 1px solid var(--color-gray-300);
-  border-radius: 10px 10px 0 0;
-  background: var(--color-gray-100);
-}
-
 .gameplay-controls__actions {
-  grid-column: 2;
-  grid-row: 1;
+  grid-area: actions;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -372,64 +291,6 @@ function requestRandomLetterHint(closeMenu?: () => void) {
 
 .gameplay-controls__menu-anchor {
   display: flex;
-}
-
-.gameplay-controls__menu-anchor--restore-hint :deep(.ui-menu__button.p-button) {
-  border-color: var(--color-gray-500);
-  background: var(--color-gray-100);
-  color: var(--color-gray-800);
-}
-
-.gameplay-controls__keyboard-restore-text {
-  max-width: 240px;
-  margin: 0;
-  color: var(--color-gray-700);
-  font-size: var(--info-popover-font-size);
-  line-height: 1.45;
-}
-
-:global(.gameplay-controls__keyboard-restore-popover.p-popover) {
-  max-width: min(270px, calc(100vw - 24px));
-}
-
-@media (min-width: 1025px) {
-  .gameplay-controls__dock {
-    position: static;
-    z-index: auto;
-    width: auto;
-    transform: none;
-    display: block;
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .gameplay-controls__dock-form {
-    width: 100%;
-    padding: 0;
-    margin: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .gameplay-controls__dock :deep(.compact-keyboard) {
-    position: fixed;
-    z-index: 20;
-    bottom: 0;
-    left: 50%;
-    width: min(100%, var(--container-sm));
-    transform: translateX(-50%);
-  }
-
-  :global(.game-board:has(.gameplay-controls--keyboard-enabled)) {
-    --gameplay-dock-space: 206px;
-    padding-bottom: calc(var(--gameplay-dock-space) + env(safe-area-inset-bottom));
-  }
-
-  :global(.game-board:has(.gameplay-controls--keyboard-collapsed)) {
-    --gameplay-dock-space: 49px;
-  }
 }
 
 .gameplay-controls__hints-button.p-button,
@@ -539,80 +400,6 @@ function requestRandomLetterHint(closeMenu?: () => void) {
     font-size: clamp(14px, 4vw, 15px);
   }
 
-  :global(.game-board:has(.gameplay-controls)) {
-    --gameplay-dock-space: 72px;
-    padding-bottom: calc(var(--gameplay-dock-space) + env(safe-area-inset-bottom));
-  }
-
-  :global(.game-board:has(.gameplay-controls--keyboard-enabled)) {
-    --gameplay-dock-space: 254px;
-  }
-
-  :global(.game-board:has(.gameplay-controls--keyboard-collapsed)) {
-    --gameplay-dock-space: 110px;
-  }
-}
-
-@media (max-width: 1024px) {
-  .gameplay-controls {
-    width: auto;
-    display: block;
-  }
-
-  .gameplay-controls__dock :deep(.compact-keyboard) {
-    border-radius: 0;
-  }
-
-  .gameplay-controls__dock-form {
-    --guess-submit-background: var(--p-primary-color);
-    --guess-submit-color: var(--p-primary-contrast-color);
-    --guess-submit-hover-background: var(--p-primary-hover-color);
-    --guess-submit-hover-color: var(--p-primary-contrast-color);
-    --guess-submit-active-background: var(--p-primary-active-color);
-    --guess-submit-active-color: var(--p-primary-contrast-color);
-  }
-
-  .gameplay-controls--keyboard-enabled .gameplay-controls__dock-form {
-    padding-bottom: 10px;
-  }
-}
-
-@media (min-width: 481px) and (max-width: 767px) {
-  :global(.game-board:has(.gameplay-controls)) {
-    --gameplay-dock-space: 74px;
-    padding-bottom: calc(var(--gameplay-dock-space) + env(safe-area-inset-bottom));
-  }
-
-  :global(.game-board:has(.gameplay-controls--keyboard-enabled)) {
-    --gameplay-dock-space: 264px;
-  }
-
-  :global(.game-board:has(.gameplay-controls--keyboard-collapsed)) {
-    --gameplay-dock-space: 114px;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1024px) {
-  .gameplay-controls__dock-form {
-    padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
-  }
-
-  .gameplay-controls--keyboard-enabled .gameplay-controls__dock-form {
-    padding-bottom: 12px;
-  }
-
-  :global(.game-board:has(.gameplay-controls)) {
-    --gameplay-dock-space: 75px;
-    padding-bottom: calc(var(--gameplay-dock-space) + env(safe-area-inset-bottom));
-  }
-
-  :global(.game-board:has(.gameplay-controls--keyboard-enabled)) {
-    --gameplay-dock-space: 272px;
-  }
-
-  :global(.game-board:has(.gameplay-controls--keyboard-collapsed)) {
-    --gameplay-dock-space: 114px;
-  }
 }
 
 @media (max-width: 359px) {
@@ -628,5 +415,45 @@ function requestRandomLetterHint(closeMenu?: () => void) {
     min-width: 44px;
     height: var(--guess-control-height);
   }
+}
+
+.gameplay-controls__input-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "form actions";
+  align-items: center;
+  gap: 8px;
+}
+
+.gameplay-controls__form {
+  grid-area: form;
+}
+
+.gameplay-controls__latest {
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .gameplay-controls {
+    width: 100%;
+    gap: 6px;
+  }
+
+  .gameplay-controls__actions,
+  .gameplay-controls__input-row {
+    gap: 6px;
+  }
+
+  .gameplay-controls__input-row {
+    order: 2;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "actions form";
+  }
+
+  .gameplay-controls__latest {
+    order: 1;
+  }
+
 }
 </style>

@@ -2,6 +2,11 @@
   box-sizing: border-box;
 }
 
+:root {
+  --app-visual-viewport-top: 0px;
+  --app-visual-viewport-bottom: 0px;
+}
+
 html {
   min-height: 100%;
   -webkit-text-size-adjust: 100%;
