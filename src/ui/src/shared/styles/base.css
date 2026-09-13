@@ -4,7 +4,7 @@
 
 :root {
   --app-visual-viewport-top: 0px;
-  --app-visual-viewport-bottom: 0px;
+  --app-visual-viewport-safe-bottom: env(safe-area-inset-bottom);
 }
 
 html {
@@ -24,6 +24,7 @@ body {
   color: var(--color-black);
   background: var(--color-gray-50);
 }
+
 
 button,
 input,

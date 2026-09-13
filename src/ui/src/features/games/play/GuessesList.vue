@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { watch } from "vue";
 import type { Guess } from "../model/game";
 import type { GuessPresentationEvent } from "./useGameSession";
 import GuessBar from "./GuessBar.vue";
@@ -13,19 +12,14 @@ const props = defineProps<{
 }>();
 
 function getGuessKey(guess: Guess) {
-  return `${props.gameId}:${guess.word}:${feedbackEventIds.get(guess.word) ?? 0}`;
+  return `${props.gameId}:${guess.word}`;
+}
+
+function getScrollAnchorKey(guess: Guess) {
+  return `${props.gameId}:${guess.word}`;
 }
 
 const revealRestoredGuesses = props.guesses.length > 0;
-const feedbackEventIds = new Map<string, number>();
-
-watch(
-  () => props.presentationEvent,
-  (event) => {
-    if (event) feedbackEventIds.set(event.word, event.id);
-  },
-  { immediate: true },
-);
 
 function getFeedback(guess: Guess) {
   if (props.presentationEvent) {
@@ -46,8 +40,12 @@ function getFeedback(guess: Guess) {
         Попыток: {{ guesses.length }}
       </p>
       <div class="guesses-list__items">
-        <GuessBar v-for="guess in guesses" :key="getGuessKey(guess)" :word="guess.word" :value="guess.distance"
+        <GuessBar v-for="guess in guesses" :key="getGuessKey(guess)"
+          :data-game-scroll-anchor="getScrollAnchorKey(guess)" :word="guess.word" :value="guess.distance"
           :fill-percentage="guess.fillPercentage" :hint="guess.source === 'hint'"
+          :animate-fill-on-mount="presentationEvent?.word === guess.word && presentationEvent.kind === 'insert'"
+          :fill-animation-key="presentationEvent?.word === guess.word ? presentationEvent.id : 0"
+          :fill-animation-start="0"
           :animate-hint-reveal="guess.word === animatedHintWord" :feedback="getFeedback(guess)"
           :highlighted="guess.word === currentGuess?.word" />
       </div>

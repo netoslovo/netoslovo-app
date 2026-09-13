@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import UiIconButton from "../../../shared/ui/UiIconButton.vue";
 import UiInput from "../../../shared/ui/UiInput.vue";
 
@@ -18,8 +18,16 @@ const emit = defineEmits<{
   "update:modelValue": [value: string];
 }>();
 
+const mobileLayoutMedia = window.matchMedia("(width < 1024px)");
+const mobileLayout = ref(mobileLayoutMedia.matches);
+function updateMobileLayout() {
+  mobileLayout.value = mobileLayoutMedia.matches;
+}
+
 const inputField = ref<InputRef | null>(null);
 const error = ref<string | null>(null);
+const hasInput = computed(() => Boolean(props.modelValue.trim()));
+const displayedError = computed(() => mobileLayout.value && !hasInput.value ? null : error.value);
 const hasInvalidSubmitAttempt = ref(false);
 const invalidSubmitCount = ref(0);
 const localSubmitting = ref(false);
@@ -34,11 +42,13 @@ watch(() => props.modelValue, (value) => {
 });
 
 onMounted(() => {
+  mobileLayoutMedia.addEventListener("change", updateMobileLayout);
   document.addEventListener("pointerdown", clearRequiredErrorOutsideInput);
   void focusInput();
 });
 
 onBeforeUnmount(() => {
+  mobileLayoutMedia.removeEventListener("change", updateMobileLayout);
   document.removeEventListener("pointerdown", clearRequiredErrorOutsideInput);
 });
 
@@ -62,6 +72,12 @@ async function onSubmit() {
   if (props.loading || localSubmitting.value) return;
 
   const normalizedWord = props.modelValue.trim();
+  if (mobileLayout.value && !normalizedWord) {
+    error.value = null;
+    hasInvalidSubmitAttempt.value = false;
+    await focusInput();
+    return;
+  }
 
   if (!normalizedWord && suppressClearedEmptySubmit.value) {
     suppressClearedEmptySubmit.value = false;
@@ -129,12 +145,13 @@ function validateWord(value: string, showRequired: boolean) {
 <template>
   <form class="guess-form" autocomplete="off" @submit.prevent="onSubmit">
     <UiInput ref="inputField" :model-value="modelValue" class="guess-form__input" label="Введите слово"
-      label-visually-hidden name="game-guess" type="text" placeholder="Введите слово" :error="error" autocomplete="off"
+      label-visually-hidden name="game-guess" type="text" placeholder="Введите слово" :error="displayedError" autocomplete="off"
       autocorrect="on" autocapitalize="none" :spellcheck="true" input-mode="text"
       enter-key-hint="send"
       error-presentation="popover"
       :shake-key="invalidSubmitCount" @update:model-value="emit('update:modelValue', $event)">
       <template #right="{ error: inputError, errorVisible, showError, hideError }">
+        <slot name="before-submit"></slot>
         <button v-if="inputError" type="button" class="guess-form__submit guess-form__submit--error"
           :aria-label="inputError" @mouseenter="showInputError($event, showError)" @mouseleave="hideError"
           @pointerdown.prevent.stop="toggleInputError($event, errorVisible, showError, hideError)"
@@ -287,6 +304,21 @@ function validateWord(value: string, showRequired: boolean) {
   }
 }
 
+@media (width < 1024px) {
+  .guess-form :deep(.ui-input-wrap.p-inputgroup .ui-input.p-inputtext) {
+    min-height: 0;
+    height: 100%;
+    padding-block: 0;
+    line-height: normal;
+  }
+}
+
+@media (min-width: 481px) and (width < 1024px) {
+  .guess-form :deep(.ui-input-wrap.p-inputgroup) {
+    height: var(--guess-control-height);
+  }
+}
+
 @media (max-width: 480px) {
   .guess-form :deep(.ui-input-wrap.p-inputgroup) {
     height: var(--guess-control-height);
@@ -297,23 +329,95 @@ function validateWord(value: string, showRequired: boolean) {
     height: 100%;
     font-size: 17px;
   }
-
-  .guess-form :deep(.ui-input-wrap__addon--right.p-inputgroupaddon) {
-    flex-basis: 46px;
-    width: 46px;
-    min-width: 46px;
-  }
 }
 
 @media (max-width: 359px) {
   .guess-form :deep(.ui-input-wrap.p-inputgroup .ui-input.p-inputtext) {
     font-size: 16px;
   }
+}
+
+@media (width < 1024px) {
+  .guess-form :deep(.ui-input-wrap.p-inputgroup),
+  .guess-form :deep(.ui-input-wrap.p-inputgroup:is(:focus-within, .ui-input-wrap--invalid)) {
+    height: var(--guess-control-height);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
 
   .guess-form :deep(.ui-input-wrap__addon--right.p-inputgroupaddon) {
-    flex-basis: 42px;
-    width: 42px;
-    min-width: 42px;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
+    border: 0;
+  }
+
+  .guess-form .guess-form__submit,
+  .guess-form .guess-form__submit.ui-icon-button.p-button.p-button-outlined {
+    flex: 0 0 var(--guess-control-height);
+    width: var(--guess-control-height);
+  }
+
+  .guess-form .guess-form__submit--error:is(:hover, :active) {
+    background: transparent;
   }
 }
+
+@media (width < 1024px) {
+  .guess-form :deep(.ui-input.p-inputtext) {
+    padding-inline: 8px;
+  }
+
+  .guess-form__submit :deep(.p-button-label) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  .guess-form__submit :deep(.pi) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    font-size: 18px;
+    line-height: 1;
+  }
+}
+
+@media (width >= 1024px) {
+  .guess-form :deep(.ui-input-wrap.p-inputgroup) {
+    border-color: var(--color-gray-200);
+    border-radius: 10px;
+    box-shadow: inset 0 1px 2px rgb(25 32 43 / 3%);
+  }
+
+  .guess-form :deep(.ui-input-wrap.p-inputgroup:focus-within) {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--p-primary-color) 10%, transparent);
+  }
+
+  .guess-form :deep(.ui-input-wrap.ui-input-wrap--invalid.p-inputgroup),
+  .guess-form :deep(.ui-input-wrap.ui-input-wrap--invalid.p-inputgroup:focus-within) {
+    border-color: var(--color-red-600);
+    box-shadow: 0 0 0 2px rgb(177 70 70 / 10%);
+  }
+
+  .guess-form :deep(.ui-input-wrap__addon--right.p-inputgroupaddon) {
+    border-left-color: var(--color-gray-100);
+  }
+}
+
+@media (width < 1024px) {
+  .guess-form :deep(.ui-input-container),
+  .guess-form :deep(.ui-input-wrap.p-inputgroup .ui-input.p-inputtext),
+  .guess-form :deep(.ui-input-wrap.p-inputgroup .ui-input.p-inputtext:is(:enabled, :focus)),
+  .guess-form :deep(.ui-input-wrap.p-inputgroup .ui-input-wrap__addon.p-inputgroupaddon) {
+    background: transparent;
+  }
+}
+
 </style>

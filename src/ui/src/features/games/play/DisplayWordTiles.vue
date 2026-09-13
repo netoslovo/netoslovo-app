@@ -14,6 +14,7 @@ const props = defineProps<{
   gameState?: GameState | null;
   wordLoading?: boolean;
   celebrateGuessed?: boolean;
+  animationsEnabled?: boolean;
 }>();
 
 const cells = computed(() => props.displayWord?.cells ?? []);
@@ -118,7 +119,10 @@ const modeIcon = computed(() =>
 
   <section v-else class="word-tiles-panel" :class="[
     gameState ? `word-tiles-panel--status-${gameState}` : undefined,
-    { 'word-tiles-panel--celebrating': celebrateGuessed },
+    {
+      'word-tiles-panel--celebrating': celebrateGuessed,
+      'word-tiles-panel--animations-disabled': animationsEnabled === false,
+    },
   ]" aria-live="polite">
     <svg v-if="celebrateGuessed" class="word-tiles-panel__celebration" aria-hidden="true">
       <rect class="word-tiles-panel__celebration-border" x="0.5" y="0.5" width="calc(100% - 1px)"
@@ -228,6 +232,13 @@ const modeIcon = computed(() =>
 
 .word-tiles-panel--empty {
   display: none;
+}
+
+.word-tiles-panel--animations-disabled .word-tiles-panel__celebration-border,
+.word-tiles-panel--animations-disabled .word-tiles__result-icon,
+.word-tiles-panel--animations-disabled .word-tile__letter,
+.word-tiles-panel--animations-disabled .word-tile__skeleton {
+  animation: none !important;
 }
 
 .word-tiles-panel--status-active {

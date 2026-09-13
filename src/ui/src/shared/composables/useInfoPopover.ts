@@ -31,12 +31,15 @@ export function useInfoPopover() {
   }
 
   function show(event: Event) {
+    if (event.type === "mouseenter" && !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+
     if (event.currentTarget instanceof HTMLElement) {
       popover.value?.show(event, event.currentTarget);
     }
   }
 
-  function hide() {
+  function hide(event?: Event) {
+    if (event?.type === "mouseleave" && !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     popover.value?.hide();
   }
 
