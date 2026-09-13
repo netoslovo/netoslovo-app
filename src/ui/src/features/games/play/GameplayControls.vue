@@ -2,9 +2,10 @@
 import Button from "primevue/button";
 import Dialog from "primevue/dialog";
 import Popover from "primevue/popover";
-import { computed, onBeforeUnmount, onMounted, ref, useId } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, useId, watch } from "vue";
 import { showToast } from "../../../shared/notifications/toastStore";
-import { dismissKeyboardAndWaitForViewport } from "../../../shared/lib/dismissKeyboardAndWaitForViewport";
+import { useGameplayScroll } from "./useGameplayScroll";
+import type { GuessPresentationEvent } from "./useGameSession";
 import UiMenu, { type UiMenuItem } from "../../../shared/ui/UiMenu.vue";
 import { useGuessHints } from "./useGuessHints";
 import type { GameActionResult } from "../lib/gameActionOutcomes";
@@ -12,7 +13,7 @@ import type { HintsInfo } from "../model/game";
 import DictionaryChangedDialog from "./DictionaryChangedDialog.vue";
 import GameGuide from "../components/GameGuide.vue";
 import GuessForm from "./GuessForm.vue";
-import HintMenuItem from "./HintMenuItem.vue";
+import GuessHintsPanel from "./GuessHintsPanel.vue";
 import SurrenderDialog from "./SurrenderDialog.vue";
 import WordNotFoundInfoDialog from "./WordNotFoundInfoDialog.vue";
 
@@ -34,6 +35,9 @@ export type GameplayActions = {
 
 const props = defineProps<{
   modelValue: string;
+  gameId: string;
+  presentationEvent: GuessPresentationEvent | null;
+  dialogOpen: boolean;
   loading: boolean;
   wordLength?: number | null;
   hintsInfo: HintsInfo;
@@ -49,29 +53,17 @@ const word = computed({
   get: () => props.modelValue,
   set: (value: string) => emit("update:modelValue", value),
 });
-const showScrollTop = ref(false);
-
-function updateScrollTopVisibility() {
-  showScrollTop.value = window.scrollY > 1;
-}
-
-async function scrollToTop() {
-  actionsMenu.value?.close();
-  closeHintsPopover();
-  await dismissKeyboardAndWaitForViewport();
-  window.scrollTo({
-    top: 0,
-    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
-  });
-}
-
-onMounted(() => {
-  updateScrollTopVisibility();
-  window.addEventListener("scroll", updateScrollTopVisibility, { passive: true });
-});
-
-onBeforeUnmount(() => window.removeEventListener("scroll", updateScrollTopVisibility));
-
+const mobileMedia = window.matchMedia("(width < 1024px)");
+const mobile = ref(mobileMedia.matches);
+const view = ref<"game" | "hints" | "actions">("game");
+const scrollport = ref<HTMLElement | null>(null);
+const gameContent = ref<HTMLElement | null>(null);
+const mobilePanel = ref<HTMLElement | null>(null);
+const panelId = `game-panel-${useId()}`;
+let panelTrigger: HTMLElement | null = null;
+let savedGameScrollTop = 0;
+let viewSequence = 0;
+let hintViewSequence: number | null = null;
 const hintsPopover = ref<PopoverRef | null>(null);
 const actionsMenu = ref<MenuRef | null>(null);
 const hintsOpen = ref(false);
@@ -84,26 +76,113 @@ const surrenderDialogOpen = ref(false);
 const wordNotFoundInfoOpen = ref(false);
 const dictionaryChangedDialogOpen = ref(false);
 const dictionaryChangedAction = ref<"guess" | "hint">("guess");
-let hintsViewportListenersBound = false;
-let hintsToggleRequestId = 0;
+const dialogOpen = computed(() => props.dialogOpen || howToPlayOpen.value || surrenderDialogOpen.value
+  || wordNotFoundInfoOpen.value || dictionaryChangedDialogOpen.value);
+const { showScrollTop, updateScrollPosition, centerGuess, cancelCentering, scrollToTop: scrollGameToTop } = useGameplayScroll(
+  scrollport, gameContent, computed(() => mobile.value && view.value === "game" && !dialogOpen.value),
+);
+
+function updateMobileLayout() {
+  mobile.value = mobileMedia.matches;
+  hintsOpen.value = false;
+  void closePanel(false);
+  closeHintsPopover();
+  actionsMenu.value?.close();
+  cancelCentering();
+}
+
+function blurInput() {
+  const active = document.activeElement;
+  if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) active.blur();
+}
+
+async function togglePanel(kind: "hints" | "actions", event: Event) {
+  if (view.value === kind) {
+    void closePanel();
+    return;
+  }
+  const trigger = event.currentTarget;
+  if (!(trigger instanceof HTMLElement)) return;
+  if (view.value === "game") savedGameScrollTop = scrollport.value?.scrollTop ?? 0;
+  panelTrigger = trigger;
+  cancelCentering();
+  blurInput();
+  view.value = kind;
+  const sequence = ++viewSequence;
+  await nextTick();
+  if (sequence !== viewSequence) return;
+  scrollport.value?.scrollTo({ top: 0, behavior: "instant" });
+  mobilePanel.value?.focus({ preventScroll: true });
+}
+
+async function closePanel(restoreFocus = true) {
+  if (view.value === "game") return;
+  view.value = "game";
+  const sequence = ++viewSequence;
+  await nextTick();
+  if (sequence !== viewSequence) return;
+  scrollport.value?.scrollTo({ top: savedGameScrollTop, behavior: "instant" });
+  updateScrollPosition();
+  if (restoreFocus && !dialogOpen.value) panelTrigger?.focus({ preventScroll: true });
+}
+
+function onInputFocus(event: FocusEvent) {
+  if (event.target instanceof HTMLInputElement) void closePanel(false);
+}
+
+async function scrollToTop() {
+  cancelCentering();
+  actionsMenu.value?.close();
+  closeHintsPopover();
+  blurInput();
+  await closePanel(false);
+  if (mobile.value) scrollGameToTop();
+}
+
+function onScrollKey(event: KeyboardEvent) {
+  if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) cancelCentering();
+}
+
+function onEscape(event: KeyboardEvent) {
+  if (event.defaultPrevented || view.value === "game" || dialogOpen.value) return;
+  event.preventDefault();
+  void closePanel();
+}
+
+onMounted(() => {
+  mobileMedia.addEventListener("change", updateMobileLayout);
+  document.addEventListener("keydown", onEscape);
+});
+onBeforeUnmount(() => {
+  viewSequence += 1;
+  mobileMedia.removeEventListener("change", updateMobileLayout);
+  document.removeEventListener("keydown", onEscape);
+});
+
+watch(dialogOpen, (open) => {
+  if (open) {
+    cancelCentering();
+    blurInput();
+    void closePanel(false);
+  }
+});
+watch(() => props.presentationEvent, async (event) => {
+  if (!event || !mobile.value || dialogOpen.value) return;
+  // A hint publishes its attempt before its request finishes and closes the panel.
+  if (view.value !== "game") {
+    if (view.value !== "hints" || pendingHint.value !== "halfway" || hintViewSequence !== viewSequence) return;
+    await closePanel();
+  }
+  await nextTick();
+  if (event === props.presentationEvent && view.value === "game" && !dialogOpen.value) {
+    centerGuess(`${props.gameId}:${event.word}`);
+  }
+}, { flush: "post" });
 
 const {
-  remainingNeighbourHints,
-  totalNeighbourHints,
-  remainingRevealLetterHints,
-  totalRevealLetterHints,
-  canRevealHalfwayWord,
-  nextHalfwayWordPenalty,
-  halfwayWordHintDisabledReason,
-  canRevealWordLength,
-  nextWordLengthPenalty,
-  wordLengthHintDisabledReason,
-  canRevealRandomLetter,
-  nextRandomLetterPenalty,
-  halfwayWordDescription,
-  wordLengthDescription,
-  randomLetterDescription,
-  randomLetterHintDisabledReason,
+  canRevealHalfwayWord, halfwayWordHintDisabledReason,
+  canRevealWordLength, wordLengthHintDisabledReason,
+  canRevealRandomLetter, randomLetterHintDisabledReason,
 } = useGuessHints(props);
 
 const actionMenuItems = computed<UiMenuItem[]>(() => {
@@ -172,53 +251,35 @@ function showHowToPlay(closeMenu?: () => void) {
   howToPlayOpen.value = true;
 }
 
-async function toggleHintsPopover(event: Event) {
-  actionsMenu.value?.close();
-  if (hintsOpen.value) {
-    closeHintsPopover();
+function toggleHintsPopover(event: Event) {
+  if (mobile.value) {
+    void togglePanel("hints", event);
     return;
   }
-
-  const anchor = event.currentTarget;
-  if (!(anchor instanceof HTMLElement)) return;
-
-  const requestId = ++hintsToggleRequestId;
-  await dismissKeyboardAndWaitForViewport();
-  if (requestId !== hintsToggleRequestId || !anchor.isConnected || hintsOpen.value) return;
-  hintsPopover.value?.toggle({ currentTarget: anchor, target: anchor } as unknown as Event);
+  actionsMenu.value?.close();
+  hintsPopover.value?.toggle(event);
 }
 
 function closeHintsPopover() {
-  hintsToggleRequestId += 1;
   hintsPopover.value?.hide();
 }
 
-function onHintsPopoverShow() {
-  hintsOpen.value = true;
-  if (hintsViewportListenersBound) return;
-  hintsViewportListenersBound = true;
-  window.addEventListener("resize", closeHintsPopover);
-  window.visualViewport?.addEventListener("resize", closeHintsPopover);
-  window.visualViewport?.addEventListener("scroll", closeHintsPopover);
+function closeHintMenu() {
+  closeHintsPopover();
+  void closePanel();
 }
 
-function onHintsPopoverHide() {
-  hintsOpen.value = false;
-  removeHintsViewportListeners();
+function requestSelectedHint(kind: "halfway" | "length" | "letter") {
+  if (kind === "halfway") return requestHalfwayWordHint(closeHintMenu);
+  if (kind === "length") return requestWordLengthHint(closeHintMenu);
+  return requestRandomLetterHint(closeHintMenu);
 }
 
-function removeHintsViewportListeners() {
-  if (!hintsViewportListenersBound) return;
-  hintsViewportListenersBound = false;
-  window.removeEventListener("resize", closeHintsPopover);
-  window.visualViewport?.removeEventListener("resize", closeHintsPopover);
-  window.visualViewport?.removeEventListener("scroll", closeHintsPopover);
+function activateMobileAction(item: UiMenuItem, event: Event) {
+  if (item.disabled || item.loading) return;
+  item.activate?.(event, () => { void closePanel(false); });
+  if (!event.defaultPrevented && item.closeOnActivate !== false) void closePanel(false);
 }
-
-onBeforeUnmount(() => {
-  hintsToggleRequestId += 1;
-  removeHintsViewportListeners();
-});
 
 async function confirmSurrender() {
   if (props.loading) return;
@@ -242,13 +303,22 @@ async function requestHint(
   closeMenu?: () => void,
 ) {
   pendingHint.value = kind;
+  const requestViewSequence = viewSequence;
+  hintViewSequence = requestViewSequence;
   try {
     const result = await request();
     presentResult(result);
-    if (result.status === "success") word.value = "";
+    if (result.status === "success") {
+      word.value = "";
+      if (mobile.value && kind !== "halfway" && viewSequence === requestViewSequence && !dialogOpen.value) {
+        await closePanel();
+        scrollGameToTop();
+      }
+    }
   } finally {
     pendingHint.value = null;
-    closeMenu?.();
+    hintViewSequence = null;
+    if (viewSequence === requestViewSequence) closeMenu?.();
   }
 }
 
@@ -281,48 +351,74 @@ function requestRandomLetterHint(closeMenu?: () => void) {
 </script>
 
 <template>
-  <div class="gameplay-controls">
-    <div class="gameplay-controls__input-row">
-      <GuessForm v-model="word" class="gameplay-controls__form" :loading="loading" :submit="submitGuess">
-        <template #before-submit>
-          <Button class="gameplay-controls__hints-button gameplay-controls__hints-button--inline" type="button"
-            aria-label="Подсказки" aria-haspopup="dialog" :aria-expanded="hintsOpen ? 'true' : 'false'"
-            :aria-controls="hintsPopoverId" icon="pi pi-lightbulb" severity="secondary" outlined
-            @pointerdown.prevent @click="toggleHintsPopover" />
-        </template>
-      </GuessForm>
+  <div class="gameplay-layout">
+    <div ref="scrollport" class="gameplay-scrollport" :tabindex="mobile ? 0 : undefined" aria-label="Игра"
+      @scroll.passive="updateScrollPosition" @pointerdown.passive="cancelCentering"
+      @touchstart.passive="cancelCentering" @wheel.passive="cancelCentering" @keydown="onScrollKey">
+      <div v-show="view === 'game'" ref="gameContent" class="gameplay-content">
+        <slot name="word" />
+        <div v-if="mobile" class="gameplay-summary">
+          <slot name="summary" />
+        </div>
+        <slot name="guesses" />
+      </div>
+      <section v-if="mobile && view !== 'game'" :id="panelId" ref="mobilePanel" class="gameplay-panel"
+        tabindex="-1" :aria-labelledby="`${panelId}-title`">
+        <header class="gameplay-panel__header">
+          <h2 :id="`${panelId}-title`">{{ view === 'hints' ? 'Подсказки' : 'Действия' }}</h2>
+          <Button type="button" icon="pi pi-times" aria-label="Закрыть меню" text @click="closePanel()" />
+        </header>
+        <GuessHintsPanel v-if="view === 'hints'" :hints-info="hintsInfo" :word-length="wordLength"
+          :loading="loading" :pending-hint="pendingHint" @request="requestSelectedHint" />
+        <div v-else class="gameplay-panel__actions">
+          <button v-for="item in actionMenuItems[0]?.items" :key="item.label" type="button"
+            class="gameplay-panel__action" :class="{ 'gameplay-panel__action--danger': item.tone === 'danger' }"
+            :disabled="item.disabled || item.loading" @click="activateMobileAction(item, $event)">
+            <i :class="item.icon" aria-hidden="true"></i>
+            <span><strong>{{ item.label }}</strong><span>{{ item.description }}</span></span>
+          </button>
+        </div>
+      </section>
+    </div>
+    <div class="gameplay-composer">
+      <slot v-if="!mobile" name="summary" />
+      <div class="gameplay-controls">
+        <div class="gameplay-controls__input-row">
+          <GuessForm v-model="word" class="gameplay-controls__form" :loading="loading" :submit="submitGuess" @focusin="onInputFocus">
+            <template #before-submit>
+              <Button class="gameplay-controls__hints-button gameplay-controls__hints-button--inline" type="button"
+                aria-label="Подсказки" :aria-haspopup="mobile ? undefined : 'dialog'" :aria-expanded="(mobile ? view === 'hints' : hintsOpen) ? 'true' : 'false'"
+                :aria-controls="mobile ? panelId : hintsPopoverId" icon="pi pi-lightbulb" severity="secondary" outlined
+                @pointerdown.prevent @click="toggleHintsPopover" />
+            </template>
+          </GuessForm>
 
-      <div class="gameplay-controls__actions">
-        <Button class="gameplay-controls__hints-button" type="button" aria-label="Подсказки" aria-haspopup="dialog"
-          :aria-expanded="hintsOpen ? 'true' : 'false'" :aria-controls="hintsPopoverId" icon="pi pi-lightbulb"
-          severity="secondary" outlined @pointerdown.prevent @click="toggleHintsPopover" />
+          <div class="gameplay-controls__actions">
+            <Button class="gameplay-controls__hints-button" type="button" aria-label="Подсказки" aria-haspopup="dialog"
+              :aria-expanded="hintsOpen ? 'true' : 'false'" :aria-controls="mobile ? panelId : hintsPopoverId" icon="pi pi-lightbulb"
+              severity="secondary" outlined @pointerdown.prevent @click="toggleHintsPopover" />
 
-        <Popover :id="hintsPopoverId" ref="hintsPopover" class="gameplay-controls__hints-popover"
-          :aria-labelledby="hintsTitleId" @show="onHintsPopoverShow" @hide="onHintsPopoverHide">
-          <div>
-            <div :id="hintsTitleId" class="gameplay-controls__hints-title">Подсказки</div>
-            <HintMenuItem title="Промежуточное слово" icon="pi pi-sort-amount-up" :description="halfwayWordDescription"
-              :remaining="remainingNeighbourHints" :total="totalNeighbourHints" :score-penalty="nextHalfwayWordPenalty"
-              :disabled="loading" :unavailable="!canRevealHalfwayWord" :loading="pendingHint === 'halfway'"
-              :disabled-reason="halfwayWordHintDisabledReason" @activate="requestHalfwayWordHint(closeHintsPopover)" />
-            <HintMenuItem title="Показать длину слова" icon="pi pi-eye" :description="wordLengthDescription"
-              :score-penalty="nextWordLengthPenalty" :disabled="loading" :unavailable="!canRevealWordLength"
-              :loading="pendingHint === 'length'" :disabled-reason="wordLengthHintDisabledReason"
-              @activate="requestWordLengthHint(closeHintsPopover)" />
-            <HintMenuItem title="Открыть случайную букву" icon="pi pi-question" :description="randomLetterDescription"
-              :remaining="remainingRevealLetterHints" :total="totalRevealLetterHints"
-              :score-penalty="nextRandomLetterPenalty" :disabled="loading" :unavailable="!canRevealRandomLetter"
-              :loading="pendingHint === 'letter'" :disabled-reason="randomLetterHintDisabledReason"
-              @activate="requestRandomLetterHint(closeHintsPopover)" />
+            <Popover v-if="!mobile" :id="hintsPopoverId" ref="hintsPopover" class="gameplay-controls__hints-popover"
+              :aria-labelledby="hintsTitleId" @show="hintsOpen = true" @hide="hintsOpen = false">
+              <div>
+                <div :id="hintsTitleId" class="gameplay-controls__hints-title">Подсказки</div>
+                <GuessHintsPanel :hints-info="hintsInfo" :word-length="wordLength" :loading="loading"
+                  :pending-hint="pendingHint" @request="requestSelectedHint" />
+              </div>
+            </Popover>
+
+            <div class="gameplay-controls__menu-anchor">
+              <Button v-if="mobile && showScrollTop && view === 'game'" class="gameplay-controls__scroll-top" type="button"
+                aria-label="Наверх" icon="pi pi-arrow-up" severity="secondary" outlined
+                @pointerdown.prevent @click="scrollToTop" />
+              <Button v-if="mobile" type="button" class="gameplay-controls__hints-button"
+                aria-label="Меню" :aria-expanded="view === 'actions'" :aria-controls="panelId"
+                icon="pi pi-ellipsis-h" severity="secondary" outlined @pointerdown.prevent
+                @click="togglePanel('actions', $event)" />
+              <UiMenu v-else ref="actionsMenu" :items="actionMenuItems" button-label="Меню" icon="dots" tone="neutral" wide
+                @open="closeHintsPopover" />
+            </div>
           </div>
-        </Popover>
-
-        <div class="gameplay-controls__menu-anchor">
-          <Button v-if="showScrollTop" class="gameplay-controls__scroll-top" type="button"
-            aria-label="Наверх" icon="pi pi-arrow-up" severity="secondary" outlined
-            @pointerdown.prevent @click="scrollToTop" />
-          <UiMenu ref="actionsMenu" :items="actionMenuItems" button-label="Меню" icon="dots" tone="neutral" wide
-            :before-open="dismissKeyboardAndWaitForViewport" @open="closeHintsPopover" />
         </div>
       </div>
     </div>
@@ -339,6 +435,120 @@ function requestRandomLetterHint(closeMenu?: () => void) {
 </template>
 
 <style scoped>
+.gameplay-layout,
+.gameplay-scrollport,
+.gameplay-content {
+  display: contents;
+}
+
+.gameplay-composer,
+.gameplay-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 4px 14px rgba(25, 32, 43, 0.05);
+}
+
+.gameplay-composer {
+  order: 2;
+}
+
+@media (min-width: 768px) {
+  .gameplay-composer,
+  .gameplay-summary {
+    gap: 10px;
+    padding: 10px;
+  }
+}
+
+.gameplay-panel:focus,
+.gameplay-scrollport:focus {
+  outline: none;
+}
+
+.gameplay-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-inline: 6px;
+}
+
+.gameplay-panel__header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.gameplay-panel__actions {
+  display: grid;
+  gap: 8px;
+}
+
+.gameplay-panel__action {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-gray-200);
+  border-radius: 10px;
+  background: white;
+  color: var(--color-gray-800);
+  text-align: left;
+  cursor: pointer;
+}
+
+.gameplay-panel__action > span {
+  display: grid;
+  gap: 4px;
+}
+
+.gameplay-panel__action span span {
+  font-size: 14px;
+  color: var(--color-gray-600);
+}
+
+.gameplay-panel__action--danger {
+  color: var(--color-red-600);
+}
+
+@media (width < 1024px) {
+  .gameplay-layout {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+
+  .gameplay-scrollport {
+    display: block;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: none;
+    overflow-anchor: none;
+    padding-block: 8px;
+  }
+
+  .gameplay-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .gameplay-composer {
+    min-width: 0;
+    padding: 8px 0 max(8px, var(--app-visual-viewport-safe-bottom));
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--color-gray-50);
+  }
+}
+
 .gameplay-controls {
   --gameplay-glass-background: linear-gradient(120deg, rgb(255 255 255 / 90%), rgb(255 255 255 / 82%) 45%, rgb(255 255 255 / 88%));
   --gameplay-glass-filter: blur(6px) saturate(110%);
@@ -365,16 +575,14 @@ function requestRandomLetterHint(closeMenu?: () => void) {
 }
 
 .gameplay-controls__menu-anchor {
-  position: relative;
+  gap: 4px;
   display: flex;
 }
 
 .gameplay-controls__scroll-top.p-button {
   --scroll-top-background: var(--gameplay-glass-background);
   --scroll-top-shadow: inset 0 1px 0 rgb(255 255 255 / 60%), inset 0 -1px 0 rgb(25 32 43 / 3%), 0 2px 8px rgb(25 32 43 / 5%);
-  position: absolute;
-  bottom: calc(100% + 12px);
-  left: 0;
+  position: static;
   transform: none;
   width: 50px;
   min-width: 0;
@@ -427,13 +635,6 @@ function requestRandomLetterHint(closeMenu?: () => void) {
   line-height: 1;
 }
 
-@media (width < 1024px) {
-  .gameplay-controls__scroll-top.p-button {
-    left: -5px;
-    width: calc(var(--guess-control-height) + 2px);
-    height: calc(var(--guess-control-height) + 2px);
-  }
-}
 
 .gameplay-controls__hints-button.p-button,
 .gameplay-controls :deep(.ui-menu__button.p-button) {
@@ -696,4 +897,14 @@ function requestRandomLetterHint(closeMenu?: () => void) {
   }
 }
 
+@media (width < 1024px) {
+  .gameplay-controls__scroll-top.p-button {
+    width: 32px;
+    height: var(--guess-control-height);
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+}
 </style>

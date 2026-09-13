@@ -65,8 +65,8 @@ const errorDescriptionId = computed(() =>
 let shakeTimeoutId: number | null = null;
 let popoverEventCounter = 0;
 
-function focusInput() {
-  input.value?.$el?.focus();
+function focusInput(options?: FocusOptions) {
+  input.value?.$el?.focus(options);
 }
 
 defineExpose({

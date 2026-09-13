@@ -14,6 +14,7 @@ export function useVisualViewportCssVariables() {
     animationFrame = null;
 
     const viewport = window.visualViewport;
+    // Pinch zoom should magnify the layout, not make it reflow like a keyboard resize.
     if (!viewport || Math.abs(viewport.scale - 1) > 0.01) return;
 
     const viewportTop = Math.max(0, Math.round(viewport.offsetTop));
@@ -47,8 +48,9 @@ export function useVisualViewportCssVariables() {
   }
 
   onMounted(() => {
-    scheduleViewportUpdate();
+    updateViewportVariables();
     window.addEventListener("resize", scheduleViewportUpdate);
+    window.addEventListener("pageshow", scheduleViewportUpdate);
     window.visualViewport?.addEventListener("resize", scheduleViewportUpdate);
     window.visualViewport?.addEventListener("scroll", scheduleViewportUpdate);
   });
@@ -56,6 +58,7 @@ export function useVisualViewportCssVariables() {
   onBeforeUnmount(() => {
     if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
     window.removeEventListener("resize", scheduleViewportUpdate);
+    window.removeEventListener("pageshow", scheduleViewportUpdate);
     window.visualViewport?.removeEventListener("resize", scheduleViewportUpdate);
     window.visualViewport?.removeEventListener("scroll", scheduleViewportUpdate);
 

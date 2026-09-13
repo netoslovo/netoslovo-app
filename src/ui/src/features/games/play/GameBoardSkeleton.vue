@@ -145,4 +145,12 @@ import UiSkeleton from "../../../shared/ui/UiSkeleton.vue";
     gap: 10px;
   }
 }
+@media (width < 1024px) {
+  .game-board-skeleton {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: none;
+    padding-block: 8px;
+  }
+}
 </style>
