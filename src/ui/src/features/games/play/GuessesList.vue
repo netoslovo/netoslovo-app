@@ -40,14 +40,15 @@ function getFeedback(guess: Guess) {
         Попыток: {{ guesses.length }}
       </p>
       <div class="guesses-list__items">
-        <GuessBar v-for="guess in guesses" :key="getGuessKey(guess)"
-          :data-game-scroll-anchor="getScrollAnchorKey(guess)" :word="guess.word" :value="guess.distance"
-          :fill-percentage="guess.fillPercentage" :hint="guess.source === 'hint'"
-          :animate-fill-on-mount="presentationEvent?.word === guess.word && presentationEvent.kind === 'insert'"
-          :fill-animation-key="presentationEvent?.word === guess.word ? presentationEvent.id : 0"
-          :fill-animation-start="0"
-          :animate-hint-reveal="guess.word === animatedHintWord" :feedback="getFeedback(guess)"
-          :highlighted="guess.word === currentGuess?.word" />
+        <div v-for="guess in guesses" :key="getGuessKey(guess)" :data-game-scroll-anchor="getScrollAnchorKey(guess)">
+          <GuessBar :word="guess.word" :value="guess.distance"
+            :fill-percentage="guess.fillPercentage" :hint="guess.source === 'hint'"
+            :animate-fill-on-mount="presentationEvent?.word === guess.word && presentationEvent.kind === 'insert'"
+            :fill-animation-key="presentationEvent?.word === guess.word ? presentationEvent.id : 0"
+            :fill-animation-start="0"
+            :animate-hint-reveal="guess.word === animatedHintWord" :feedback="getFeedback(guess)"
+            :highlighted="guess.word === currentGuess?.word" />
+        </div>
       </div>
     </div>
     <p v-else class="guesses-list__empty">

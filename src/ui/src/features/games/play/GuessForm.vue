@@ -5,7 +5,7 @@ import UiInput from "../../../shared/ui/UiInput.vue";
 
 type InputRef = {
   $el?: HTMLElement;
-  focusInput: () => void;
+  focusInput: (options?: FocusOptions) => void;
 };
 
 const props = defineProps<{
@@ -65,7 +65,7 @@ function clearRequiredErrorOutsideInput(event: PointerEvent) {
 
 async function focusInput() {
   await nextTick();
-  inputField.value?.focusInput();
+  inputField.value?.focusInput({ preventScroll: true });
 }
 
 async function onSubmit() {
@@ -108,7 +108,6 @@ async function onSubmit() {
     }
   } finally {
     localSubmitting.value = false;
-    await focusInput();
   }
 }
 

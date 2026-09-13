@@ -1,6 +1,6 @@
 <template>
   <ToastStack />
-  <div class="app-shell" :aria-busy="appBusy">
+  <div class="app-shell" :class="{ 'app-shell--game': gameLayout }" :aria-busy="appBusy">
     <AppHeader :actions-disabled="headerActionsDisabled" :back-visible="headerBackVisible" @back="goBack"
       @logout-pending-change="logoutPending = $event" />
     <main ref="appMain" class="app-main" tabindex="-1" :aria-label="pageTitle">
@@ -26,7 +26,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { RouterView, useRoute, useRouter } from "vue-router";
 import { getRoutePageIdentity, getRoutePageTitle, routeNavigationLoading } from "./app/router";
 import AppHeader from "./app/components/AppHeader.vue";
@@ -37,7 +37,21 @@ import { provideSkeletonHandoff } from "./shared/composables/useSkeletonHandoff"
 import { useVisualViewportCssVariables } from "./shared/composables/useVisualViewportCssVariables";
 import { authBootstrapState, bootstrapAuthState } from "./features/auth/model/authSession";
 
+const gameMedia = window.matchMedia("(width < 1024px)");
+const mobileLayout = ref(gameMedia.matches);
 const route = useRoute();
+const gameLayout = computed(() => mobileLayout.value && (route.name === "daily" || route.name === "arcade-game"));
+function updateMobileLayout() {
+  mobileLayout.value = gameMedia.matches;
+}
+watch(gameLayout, (enabled) => {
+  document.documentElement.classList.toggle("mobile-game-layout", enabled);
+}, { immediate: true, flush: "sync" });
+onMounted(() => gameMedia.addEventListener("change", updateMobileLayout));
+onBeforeUnmount(() => {
+  gameMedia.removeEventListener("change", updateMobileLayout);
+  document.documentElement.classList.remove("mobile-game-layout");
+});
 const router = useRouter();
 const appMain = ref<HTMLElement | null>(null);
 const logoutPending = ref(false);
@@ -111,6 +125,25 @@ if (authBootstrapState.value !== "ready") {
 
 .app-container--wide {
   max-width: 1180px;
+}
+
+.app-shell--game {
+  position: fixed;
+  top: var(--app-visual-viewport-top);
+  inset-inline: 0;
+  height: var(--app-visual-viewport-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell--game > .app-header {
+  flex-shrink: 0;
+}
+
+.app-shell--game .app-container {
+  min-height: 0;
+  padding: 0 max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left));
+  overflow: hidden;
 }
 
 .global-loading {

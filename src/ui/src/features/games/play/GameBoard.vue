@@ -2,7 +2,7 @@
 import Dialog from "primevue/dialog";
 import Popover from "primevue/popover";
 import Select from "primevue/select";
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useInfoPopover } from "../../../shared/composables/useInfoPopover";
 import type { Difficulty, Game, Guess } from "../model/game";
 import type { DailyGameResultStatsState } from "./useDailyGameResultStats";
@@ -66,10 +66,7 @@ const dailyStatsDialogOpen = ref(false);
 const celebrateGuessed = ref(false);
 const resultAnimationsReady = ref(true);
 const gameBoard = ref<HTMLElement | null>(null);
-const gameGuesses = ref<HTMLElement | null>(null);
-const gameplayDock = ref<HTMLElement | null>(null);
 const guessWord = ref("");
-const displayedDisplayWord = ref(props.game.displayWord);
 const displayedPresentationEvent = ref<GuessPresentationEvent | null>(null);
 const displayedAnimatedHintWord = ref<string | null>(null);
 const emptyDailyGameStats: DailyGameResultStatsState = {
@@ -87,150 +84,17 @@ const dailyResultState = computed((): Extract<Game["gameState"], "guessed" | "su
   if (!dailyConfig.value) return null;
   return props.game.gameState === "guessed" || props.game.gameState === "surrendered" ? props.game.gameState : null;
 });
-let layoutResizeObserver: ResizeObserver | null = null;
-let displayWordSequence = 0;
 let resultSequence = 0;
-let cancelPendingScroll: (() => void) | null = null;
-let guessesFadeFrame: number | null = null;
 
 function usesMobileScrollLayout() {
   return window.matchMedia("(width < 1024px)").matches;
 }
 
-function updateDockHeight() {
-  const dock = gameplayDock.value;
-  gameBoard.value?.style.setProperty("--gameplay-dock-height", `${dock?.offsetHeight ?? 0}px`);
-  if (usesMobileScrollLayout()) updateGuessesClearance();
-  scheduleGuessesFade();
-}
-
-function getGuessesVisibleBottom() {
-  const dock = gameplayDock.value;
-  const viewport = window.visualViewport;
-  const viewportBottom = (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight);
-  const dockTop = dock?.getBoundingClientRect().top ?? viewportBottom;
-  const scrollTopButton = dock?.querySelector<HTMLElement>(".gameplay-controls__scroll-top");
-  const menuAnchor = dock?.querySelector<HTMLElement>(".gameplay-controls__menu-anchor");
-  const anchorRect = menuAnchor?.getBoundingClientRect();
-  // Reserve the button's space even at the top, before scrolling makes it appear.
-  const buttonTop = scrollTopButton?.getBoundingClientRect().top
-    ?? (anchorRect ? anchorRect.top - anchorRect.height - 2 - 12 : dockTop);
-  return Math.min(dockTop, buttonTop) - 8;
-}
-
-function updateGuessesClearance() {
-  const visibleBottom = getGuessesVisibleBottom();
-  const dockTop = gameplayDock.value?.getBoundingClientRect().top ?? visibleBottom;
-  gameBoard.value?.style.setProperty("--gameplay-scroll-top-clearance", `${Math.max(0, dockTop - visibleBottom)}px`);
-  return visibleBottom;
-}
-
-function scheduleGuessesFade() {
-  if (guessesFadeFrame !== null) return;
-  guessesFadeFrame = window.requestAnimationFrame(() => {
-    guessesFadeFrame = null;
-    const guesses = gameGuesses.value;
-    const inputRow = gameplayDock.value?.querySelector<HTMLElement>(".gameplay-controls__input-row");
-    if (!guesses || !inputRow || !usesMobileScrollLayout()) return;
-
-    const guessesTop = guesses.getBoundingClientRect().top;
-    updateGuessesClearance();
-    const row = inputRow.getBoundingClientRect();
-    const viewport = window.visualViewport;
-    const viewportBottom = (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight);
-    const fadeStart = Math.max(0, row.top + row.height / 2 - guessesTop);
-    const fadeEnd = Math.max(fadeStart, viewportBottom - guessesTop);
-    guesses.style.setProperty("--game-guesses-fade-start", `${fadeStart}px`);
-    guesses.style.setProperty("--game-guesses-fade-end", `${fadeEnd}px`);
-  });
-}
-
-async function scrollPageTo(top: number) {
-  cancelPendingScroll?.();
-  const maximumTop = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
-  const targetTop = Math.min(maximumTop, Math.max(0, top));
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  window.scrollTo({ top: targetTop, behavior: reducedMotion ? "instant" : "smooth" });
-  if (reducedMotion || Math.abs(window.scrollY - targetTop) < 1) return;
-
-  await new Promise<void>((resolve) => {
-    let frame: number | null = null;
-    let settledFrames = 0;
-    const timeout = window.setTimeout(finish, 700);
-
-    function finish() {
-      if (frame !== null) window.cancelAnimationFrame(frame);
-      window.clearTimeout(timeout);
-      if (cancelPendingScroll === finish) cancelPendingScroll = null;
-      resolve();
-    }
-
-    function checkPosition() {
-      settledFrames = Math.abs(window.scrollY - targetTop) < 1 ? settledFrames + 1 : 0;
-      if (settledFrames >= 2) finish();
-      else frame = window.requestAnimationFrame(checkPosition);
-    }
-
-    cancelPendingScroll = finish;
-    frame = window.requestAnimationFrame(checkPosition);
-  });
-}
-
-async function scrollActiveGameToTop() {
-  if (usesMobileScrollLayout()) await scrollPageTo(0);
-}
-
-function getGuessesVisibleTop() {
-  const viewportTop = window.visualViewport?.offsetTop ?? 0;
-  const toastStack = document.querySelector<HTMLElement>(".toast-stack");
-  if (!toastStack) return viewportTop;
-
-  const toastTop = Number.parseFloat(window.getComputedStyle(toastStack).top) || viewportTop;
-  const toastHeights = Array.from(toastStack.querySelectorAll<HTMLElement>(".toast"))
-    .map((toast) => toast.offsetHeight);
-  // Keep room for two notifications, including one that may appear after the scroll starts.
-  const toastHeight = Math.max(80, ...toastHeights);
-  return Math.max(viewportTop, toastTop + toastHeight * 2 + 12 + 8);
-}
-
-function scrollGuessIntoView(word: string) {
-  if (!usesMobileScrollLayout()) return;
-
-  const anchorKey = `${props.game.id}:${word}`;
-  const target = Array.from(gameGuesses.value?.querySelectorAll<HTMLElement>("[data-game-scroll-anchor]") ?? [])
-    .find((item) => item.dataset.gameScrollAnchor === anchorKey);
-  if (!target) return;
-
-  const viewport = window.visualViewport;
-  const visibleBottom = updateGuessesClearance();
-  const rect = target.getBoundingClientRect();
-  // With the keyboard open, two toasts can leave less room than a single guess needs.
-  const visibleTop = Math.min(
-    getGuessesVisibleTop(),
-    Math.max(viewport?.offsetTop ?? 0, visibleBottom - rect.height),
-  );
-  if (rect.top >= visibleTop && rect.bottom <= visibleBottom) return;
-
-  const scrollOffset = rect.top < visibleTop
-    ? rect.top - visibleTop
-    : rect.bottom - visibleBottom;
-  void scrollPageTo(window.scrollY + scrollOffset);
-}
-
-watch([gameplayDock, gameGuesses], () => {
-  layoutResizeObserver?.disconnect();
-  if (gameplayDock.value) layoutResizeObserver?.observe(gameplayDock.value);
-  if (gameGuesses.value) layoutResizeObserver?.observe(gameGuesses.value);
-  updateDockHeight();
-}, { flush: "post" });
-
 watch(
   () => props.game.id,
   () => {
-    displayWordSequence += 1;
     resultSequence += 1;
     resultAnimationsReady.value = true;
-    displayedDisplayWord.value = props.game.displayWord;
     displayedPresentationEvent.value = null;
     displayedAnimatedHintWord.value = null;
   },
@@ -239,56 +103,15 @@ watch(
 
 watch(
   [() => props.guessPresentationEvent, () => props.animatedHintWord],
-  async ([event, animatedHintWord]) => {
+  ([event, animatedHintWord]) => {
     displayedPresentationEvent.value = event;
     displayedAnimatedHintWord.value = animatedHintWord;
-    if (!event || props.game.gameState !== "active") return;
-
-    await nextTick();
-    if (event !== props.guessPresentationEvent || props.game.gameState !== "active") return;
-    scrollGuessIntoView(event.word);
   },
   { flush: "pre" },
 );
 
-watch(
-  () => props.game.displayWord,
-  async (displayWord) => {
-    if (props.game.gameState !== "active" || !usesMobileScrollLayout()) {
-      displayedDisplayWord.value = displayWord;
-      return;
-    }
-
-    const sequence = ++displayWordSequence;
-    await nextTick();
-    await scrollActiveGameToTop();
-    if (sequence !== displayWordSequence || props.game.gameState !== "active") return;
-    displayedDisplayWord.value = displayWord;
-  },
-  { flush: "post" },
-);
-
-onMounted(() => {
-  layoutResizeObserver = new ResizeObserver(updateDockHeight);
-  if (gameplayDock.value) layoutResizeObserver.observe(gameplayDock.value);
-  if (gameGuesses.value) layoutResizeObserver.observe(gameGuesses.value);
-  window.addEventListener("scroll", scheduleGuessesFade, { passive: true });
-  window.addEventListener("resize", scheduleGuessesFade);
-  window.visualViewport?.addEventListener("resize", scheduleGuessesFade);
-  window.visualViewport?.addEventListener("scroll", scheduleGuessesFade);
-  updateDockHeight();
-});
-
 onBeforeUnmount(() => {
-  displayWordSequence += 1;
   resultSequence += 1;
-  cancelPendingScroll?.();
-  layoutResizeObserver?.disconnect();
-  if (guessesFadeFrame !== null) window.cancelAnimationFrame(guessesFadeFrame);
-  window.removeEventListener("scroll", scheduleGuessesFade);
-  window.removeEventListener("resize", scheduleGuessesFade);
-  window.visualViewport?.removeEventListener("resize", scheduleGuessesFade);
-  window.visualViewport?.removeEventListener("scroll", scheduleGuessesFade);
 });
 
 const {
@@ -330,7 +153,7 @@ watch(
       displayedPresentationEvent.value = null;
       displayedAnimatedHintWord.value = null;
       await nextTick();
-      if (usesMobileScrollLayout() && gameBoard.value) await scrollPageTo(0);
+      if (usesMobileScrollLayout()) gameBoard.value?.scrollTo({ top: 0, behavior: "instant" });
       if (sequence === resultSequence) {
         resultAnimationsReady.value = true;
         if (props.game.gameState === "guessed") celebrateGuessed.value = true;
@@ -393,37 +216,37 @@ watch(
         :animated-hint-word="displayedAnimatedHintWord" :presentation-event="displayedPresentationEvent" />
     </template>
 
-    <div v-else class="game-board__active">
-      <div class="game-board__scrollport">
+    <GameplayControls v-else :key="game.id" v-model="guessWord"
+      :game-id="game.id" :presentation-event="guessPresentationEvent"
+      :dialog-open="dailyStatsDialogOpen || gameSourceRemovedDialogOpen"
+      :loading="guessing" :word-length="game.displayWord.cells?.length ?? null"
+      :hints-info="game.hintsInfo" :actions="actions"
+      :show-statistics="dailyConfig ? showDailyStatsDialog : undefined">
+      <template #word>
         <div class="game-board__word" data-game-scroll-anchor="word-card">
-          <DisplayWordTiles :display-word="displayedDisplayWord" :difficulty-name="game.difficulty.name"
+          <DisplayWordTiles :display-word="game.displayWord" :difficulty-name="game.difficulty.name"
             :mode-label="modeConfig.title" :mode-detail="modeConfig.detail" :mode-variant="modeConfig.mode"
             :game-state="game.gameState" />
         </div>
-        <div class="guess-card game-board__summary" data-game-scroll-anchor="game-summary">
-          <GameScoreCard class="guess-card__score" :score="game.score" :score-details="game.scoreDetails" embedded />
-          <div v-if="currentGuess" class="guess-card__latest">
-            <p class="guess-card__label">Последняя попытка</p>
-            <GuessBar :fill-animation-key="guessPresentationEvent?.id ?? 0" :word="currentGuess.word" :value="currentGuess.distance"
-              :fill-percentage="currentGuess.fillPercentage" :hint="currentGuess.source === 'hint'"
-              :animate-fill-on-mount="guessPresentationEvent?.word === currentGuess.word"
-              :fill-animation-start="guessPresentationEvent?.previousFillPercentage ?? 0" />
-          </div>
-          <div ref="gameplayDock" class="gameplay-dock">
-            <div class="guess-card guess-card--composer">
-              <GameplayControls v-model="guessWord" class="guess-card__controls" :loading="guessing"
-                :word-length="game.displayWord.cells?.length ?? null" :hints-info="game.hintsInfo" :actions="actions"
-                :show-statistics="dailyConfig ? showDailyStatsDialog : undefined" />
-            </div>
-          </div>
+      </template>
+      <template #summary>
+        <GameScoreCard class="guess-card__score" :score="game.score" :score-details="game.scoreDetails" embedded />
+        <div v-if="currentGuess" class="guess-card__latest">
+          <p class="guess-card__label">Последняя попытка</p>
+          <GuessBar :fill-animation-key="guessPresentationEvent?.id ?? 0" :word="currentGuess.word" :value="currentGuess.distance"
+            :fill-percentage="currentGuess.fillPercentage" :hint="currentGuess.source === 'hint'"
+            :animate-fill-on-mount="guessPresentationEvent?.word === currentGuess.word"
+            :fill-animation-start="guessPresentationEvent?.previousFillPercentage ?? 0" />
         </div>
-        <div ref="gameGuesses" class="game-board__guesses">
+      </template>
+      <template #guesses>
+        <div class="game-board__guesses">
           <GuessesList :key="game.id" :game-id="game.id" :current-guess="currentGuess"
             :guesses="game.allGuesses" :animated-hint-word="displayedAnimatedHintWord"
             :presentation-event="displayedPresentationEvent" />
         </div>
-      </div>
-    </div>
+      </template>
+    </GameplayControls>
 
     <GameSourceRemovedDialog :visible="gameSourceRemovedDialogOpen" @close="gameSourceRemovedDialogOpen = false" />
 
@@ -469,7 +292,6 @@ watch(
 
 <style scoped>
 .game-board,
-.game-board__active,
 .game-board__win {
   width: 100%;
   display: flex;
@@ -477,42 +299,12 @@ watch(
   gap: 8px;
 }
 
-.game-board__scrollport {
-  display: contents;
-}
-
 .game-board__word {
   order: 1;
 }
 
-.game-board__summary {
-  order: 2;
-}
-
-.gameplay-dock {
-  order: 3;
-}
-
 .game-board__guesses {
   order: 4;
-}
-
-.guess-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid var(--color-gray-200);
-  border-radius: 10px;
-  background: white;
-  box-shadow: 0 4px 14px rgba(25, 32, 43, 0.05);
-}
-
-.gameplay-dock {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .guess-card__latest {
@@ -689,14 +481,8 @@ watch(
 
 @media (min-width: 768px) {
 
-  .game-board,
-  .game-board__active {
+  .game-board {
     gap: 12px;
-  }
-
-  .guess-card {
-    gap: 10px;
-    padding: 10px;
   }
 
   .game-board__win {
@@ -719,99 +505,24 @@ watch(
   }
 }
 
-@media (width >= 1024px) {
-  .guess-card--composer {
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
-}
-
 @media (width < 1024px) {
-  .game-board:not(.game-board--active) {
-    padding-bottom: max(24px, calc(var(--app-visual-viewport-safe-bottom) + 8px));
+  .game-board {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: none;
+    padding: 8px 0 max(12px, var(--app-visual-viewport-safe-bottom));
   }
 
   .game-board--active {
-    padding-bottom: calc(var(--gameplay-dock-height, 120px) + var(--gameplay-scroll-top-clearance, 0px));
-  }
-
-  .game-board__scrollport {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    overflow: hidden;
+    padding: 0;
+    gap: 0;
   }
 
   .game-board__word,
-  .game-board__summary,
-  .game-board__guesses,
-  .gameplay-dock {
-    order: initial;
-  }
-
-  .gameplay-dock {
-    --gameplay-bottom-space: max(12px, calc(var(--app-visual-viewport-safe-bottom) + 12px));
-    position: fixed;
-    z-index: 20;
-    top: calc(var(--app-visual-viewport-top) + var(--app-visual-viewport-height, 100dvh));
-    transform: translateY(-100%);
-    left: 0;
-    right: 0;
-    width: auto;
-    max-width: 640px;
-    margin-inline: auto;
-    padding: 0 max(8px, env(safe-area-inset-right)) var(--gameplay-bottom-space) max(8px, env(safe-area-inset-left));
-    border-radius: 12px 12px 0 0;
-    background: transparent;
-    gap: 6px;
-  }
-
   .game-board__guesses {
-    /* Extend the fade mask without moving the bars' right edge. */
-    margin-right: -12px;
-    padding-right: 12px;
-    -webkit-mask-image: linear-gradient(to bottom, black var(--game-guesses-fade-start, 100%), transparent var(--game-guesses-fade-end, 100%));
-    mask-image: linear-gradient(to bottom, black var(--game-guesses-fade-start, 100%), transparent var(--game-guesses-fade-end, 100%));
-  }
-
-  .guess-card {
-    position: static;
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    display: flex;
-    align-items: stretch;
-    gap: 6px;
-  }
-
-  .guess-card--composer {
-    max-width: 624px;
-    margin-inline: auto;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .guess-card__controls {
-    width: 100%;
-  }
-
-  .guess-card__latest {
-    width: 100%;
-    min-width: 0;
-  }
-
-}
-
-@media (max-width: 359px) {
-  .gameplay-dock {
-    padding-left: max(5px, env(safe-area-inset-left));
-    padding-right: max(5px, env(safe-area-inset-right));
-    --gameplay-bottom-space: max(9px, calc(var(--app-visual-viewport-safe-bottom) + 9px));
-    padding-bottom: var(--gameplay-bottom-space);
+    order: initial;
   }
 }
 </style>
