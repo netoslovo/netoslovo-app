@@ -31,6 +31,7 @@ const props = withDefaults(
     icon?: "burger" | "dots";
     tone?: "header" | "neutral";
     wide?: boolean;
+    beforeOpen?: () => Promise<void>;
   }>(),
   {
     buttonLabel: "Открыть меню",
@@ -52,10 +53,12 @@ type MenuRef = {
 
 const menu = ref<MenuRef | null>(null);
 const open = ref(false);
+let viewportListenersBound = false;
+let toggleRequestId = 0;
 const menuId = `ui-menu-${useId()}`;
 const buttonIcon = computed(() =>
   props.icon === "dots"
-    ? "pi pi-ellipsis-v"
+    ? "pi pi-ellipsis-h"
     : props.icon === "burger"
       ? "pi pi-bars"
       : undefined,
@@ -65,6 +68,14 @@ const buttonSeverity = computed(() =>
 );
 const menuItems = computed(() => props.items.map(normalizeItem));
 const menuPt = {
+  itemContent: {
+    onMousemoveCapture: (event: MouseEvent) => {
+      // iOS synthesizes mousemove before click; menu hover must not consume a touch activation.
+      if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        event.stopImmediatePropagation();
+      }
+    },
+  },
   item: ({ context }: { context: { item: UiMenuItem } }) => {
     return {
       "aria-busy": context.item.loading ? "true" : undefined,
@@ -80,11 +91,28 @@ function normalizeItem(item: UiMenuItem): UiMenuItem {
   };
 }
 
-function toggle(event: Event) {
-  menu.value?.toggle(event);
+async function toggle(event: Event) {
+  if (open.value) {
+    close();
+    return;
+  }
+
+  const anchor = event.currentTarget;
+  if (!(anchor instanceof HTMLElement)) return;
+
+  const requestId = ++toggleRequestId;
+  await props.beforeOpen?.();
+  if (requestId !== toggleRequestId || open.value || !anchor.isConnected) return;
+
+  menu.value?.toggle({ currentTarget: anchor, target: anchor } as unknown as Event);
+}
+
+function onTriggerPointerDown(event: PointerEvent) {
+  if (props.beforeOpen) event.preventDefault();
 }
 
 function close() {
+  toggleRequestId += 1;
   menu.value?.hide();
 }
 
@@ -100,12 +128,16 @@ function onHide() {
 }
 
 function bindViewportListeners() {
+  if (viewportListenersBound) return;
+  viewportListenersBound = true;
   window.addEventListener("resize", close);
   window.visualViewport?.addEventListener("resize", close);
   window.visualViewport?.addEventListener("scroll", close);
 }
 
 function unbindViewportListeners() {
+  if (!viewportListenersBound) return;
+  viewportListenersBound = false;
   window.removeEventListener("resize", close);
   window.visualViewport?.removeEventListener("resize", close);
   window.visualViewport?.removeEventListener("scroll", close);
@@ -188,6 +220,7 @@ onBeforeUnmount(unbindViewportListeners);
       :disabled="props.disabled"
       :text="props.tone === 'header'"
       :outlined="props.tone === 'neutral'"
+      @pointerdown="onTriggerPointerDown"
       @click="toggle"
     />
     <Menu
@@ -426,9 +459,14 @@ onBeforeUnmount(unbindViewportListeners);
   background: transparent;
 }
 
-:global(.ui-menu__list.p-menu .p-menu-item-content:hover),
 :global(.ui-menu__list.p-menu .p-menu-item[data-p-focused="true"] > .p-menu-item-content) {
   background: var(--color-gray-50);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :global(.ui-menu__list.p-menu .p-menu-item-content:hover) {
+    background: var(--color-gray-50);
+  }
 }
 
 :global(.ui-menu__list.p-menu .p-menu-item[data-p-disabled="true"] > .p-menu-item-content:hover) {
@@ -450,6 +488,7 @@ onBeforeUnmount(unbindViewportListeners);
   text-align: left;
   text-decoration: none;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .ui-menu__action--without-icon {
@@ -542,4 +581,12 @@ onBeforeUnmount(unbindViewportListeners);
     font-size: clamp(12px, 3.5vw, 13px);
   }
 }
+@media (width < 1024px) {
+  :global(.ui-menu__list--wide.p-menu) {
+    width: min(320px, calc(100vw - 24px));
+    min-width: 0;
+    max-width: 320px;
+  }
+}
+
 </style>

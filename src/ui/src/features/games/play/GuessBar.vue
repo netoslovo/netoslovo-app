@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Popover from "primevue/popover";
-import { computed, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useInfoPopover } from "../../../shared/composables/useInfoPopover";
 
 const props = withDefaults(
@@ -14,6 +14,7 @@ const props = withDefaults(
     animateHintReveal?: boolean;
     animateFillOnMount?: boolean;
     fillAnimationStart?: number;
+    fillAnimationKey?: number;
     feedback?: "insert" | "repeat" | null;
   }>(),
   {
@@ -23,6 +24,7 @@ const props = withDefaults(
     animateHintReveal: false,
     animateFillOnMount: false,
     fillAnimationStart: 0,
+    fillAnimationKey: 0,
     feedback: null,
   },
 );
@@ -49,6 +51,31 @@ watch(
   },
 );
 
+const barShell = ref<HTMLElement | null>(null);
+let repeatAnimation: Animation | null = null;
+
+watch(
+  [() => props.feedback, () => props.fillAnimationKey],
+  () => {
+    repeatAnimation?.cancel();
+    repeatAnimation = null;
+    if (props.feedback !== "repeat" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    repeatAnimation = barShell.value?.animate(
+      [
+        { transform: "translateX(0)", offset: 0 },
+        { transform: "translateX(-3px)", offset: 0.35 },
+        { transform: "translateX(2px)", offset: 0.7 },
+        { transform: "translateX(0)", offset: 1 },
+      ],
+      { duration: 240, easing: "ease-out" },
+    ) ?? null;
+  },
+  { flush: "post" },
+);
+
+onBeforeUnmount(() => repeatAnimation?.cancel());
+
 const toneClass = computed(() =>
   props.fillPercentage < 25
     ? "guess-bar--red"
@@ -70,11 +97,10 @@ const fillStyle = computed(() => ({
 
 <template>
   <div
+    ref="barShell"
     class="guess-bar-shell"
     :class="{
       'guess-bar-shell--revealed': animateHintReveal && !feedback,
-      'guess-bar-shell--inserted': feedback === 'insert',
-      'guess-bar-shell--repeated': feedback === 'repeat',
     }"
   >
     <div
@@ -88,6 +114,7 @@ const fillStyle = computed(() => ({
       ]"
     >
       <div
+        :key="fillAnimationKey"
         class="guess-bar__fill"
         :class="{ 'guess-bar__fill--revealed': animateFillOnMount }"
         :style="fillStyle"
@@ -135,15 +162,6 @@ const fillStyle = computed(() => ({
 
 .guess-bar-shell--revealed {
   animation: hint-row-reveal 0.28s ease-out both;
-}
-
-.guess-bar-shell--inserted {
-  transform-origin: top center;
-  animation: guess-row-settle 0.28s cubic-bezier(0.22, 0.8, 0.3, 1) both;
-}
-
-.guess-bar-shell--repeated {
-  animation: guess-row-repeat 0.24s ease-out;
 }
 
 .guess-bar {
@@ -288,8 +306,6 @@ const fillStyle = computed(() => ({
     animation: none;
   }
 
-  .guess-bar-shell--inserted,
-  .guess-bar-shell--repeated,
   .guess-bar__fill--revealed {
     animation: none;
   }
@@ -316,31 +332,6 @@ const fillStyle = computed(() => ({
 
   to {
     transform: translateY(0);
-  }
-}
-
-@keyframes guess-row-settle {
-  from {
-    transform: translateY(-10px) scaleY(0.82);
-  }
-
-  to {
-    transform: translateY(0) scaleY(1);
-  }
-}
-
-@keyframes guess-row-repeat {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-
-  35% {
-    transform: translateX(-3px);
-  }
-
-  70% {
-    transform: translateX(2px);
   }
 }
 

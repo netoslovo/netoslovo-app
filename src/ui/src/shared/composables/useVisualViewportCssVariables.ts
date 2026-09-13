@@ -1,25 +1,25 @@
 import { onBeforeUnmount, onMounted } from "vue";
 
 const viewportTopProperty = "--app-visual-viewport-top";
-const viewportBottomProperty = "--app-visual-viewport-bottom";
+const viewportHeightProperty = "--app-visual-viewport-height";
+const viewportSafeBottomProperty = "--app-visual-viewport-safe-bottom";
 
 export function useVisualViewportCssVariables() {
   let animationFrame: number | null = null;
   let previousViewportTop: number | null = null;
-  let previousViewportBottom: number | null = null;
+  let previousViewportHeight: number | null = null;
+  let previousSafeBottomEnabled: boolean | null = null;
 
   function updateViewportVariables() {
     animationFrame = null;
 
     const viewport = window.visualViewport;
-    const viewportTop = Math.max(0, Math.round(viewport?.offsetTop ?? 0));
-    // Embedded browsers may shrink or pan only the visual viewport when their keyboard opens.
-    const viewportBottom = !viewport || Math.abs(viewport.scale - 1) > 0.01
-      ? 0
-      : Math.max(
-        0,
-        Math.round(window.innerHeight - viewportTop - viewport.height),
-      );
+    if (!viewport || Math.abs(viewport.scale - 1) > 0.01) return;
+
+    const viewportTop = Math.max(0, Math.round(viewport.offsetTop));
+    const viewportHeight = Math.max(0, Math.round(viewport.height));
+    const layoutViewportHeight = document.documentElement.clientHeight;
+    const safeBottomEnabled = viewport.offsetTop + viewport.height >= layoutViewportHeight - 1;
     const rootStyle = document.documentElement.style;
 
     if (viewportTop !== previousViewportTop) {
@@ -27,9 +27,17 @@ export function useVisualViewportCssVariables() {
       rootStyle.setProperty(viewportTopProperty, `${viewportTop}px`);
     }
 
-    if (viewportBottom !== previousViewportBottom) {
-      previousViewportBottom = viewportBottom;
-      rootStyle.setProperty(viewportBottomProperty, `${viewportBottom}px`);
+    if (viewportHeight !== previousViewportHeight) {
+      previousViewportHeight = viewportHeight;
+      rootStyle.setProperty(viewportHeightProperty, `${viewportHeight}px`);
+    }
+
+    if (safeBottomEnabled !== previousSafeBottomEnabled) {
+      previousSafeBottomEnabled = safeBottomEnabled;
+      rootStyle.setProperty(
+        viewportSafeBottomProperty,
+        safeBottomEnabled ? "env(safe-area-inset-bottom)" : "0px",
+      );
     }
   }
 
@@ -53,6 +61,7 @@ export function useVisualViewportCssVariables() {
 
     const rootStyle = document.documentElement.style;
     rootStyle.removeProperty(viewportTopProperty);
-    rootStyle.removeProperty(viewportBottomProperty);
+    rootStyle.removeProperty(viewportHeightProperty);
+    rootStyle.removeProperty(viewportSafeBottomProperty);
   });
 }

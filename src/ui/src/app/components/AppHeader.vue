@@ -150,7 +150,8 @@ function onLogoClick(event: MouseEvent) {
 
 <style scoped>
 .app-header {
-  min-height: var(--app-header-height);
+  min-height: calc(var(--app-header-height) + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -165,7 +166,8 @@ function onLogoClick(event: MouseEvent) {
   grid-template-columns: var(--app-header-side-size) minmax(0, 1fr) var(--app-header-side-size);
   align-items: center;
   gap: 10px;
-  padding: 0 12px;
+  padding-left: max(12px, env(safe-area-inset-left));
+  padding-right: max(12px, env(safe-area-inset-right));
 }
 
 .app-header__actions {

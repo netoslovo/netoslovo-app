@@ -74,6 +74,7 @@ withDefaults(
 .ui-button.p-button {
   min-width: 44px;
   position: relative;
+  touch-action: manipulation;
   font-weight: 500;
 }
 
@@ -183,7 +184,7 @@ a.ui-button.p-button {
   }
 }
 
-@media (hover: none) {
+@media (hover: none), (pointer: coarse) {
   .ui-button--primary.p-button:not(:disabled):hover {
     background: var(--p-primary-color);
     border-color: var(--p-primary-color);
