@@ -5,6 +5,7 @@ import { useInfoPopover } from "../../../shared/composables/useInfoPopover";
 
 const props = withDefaults(
   defineProps<{
+    active?: boolean;
     word: string;
     value: number;
     fillPercentage: number;
@@ -18,6 +19,7 @@ const props = withDefaults(
     feedback?: "insert" | "repeat" | null;
   }>(),
   {
+    active: true,
     current: false,
     highlighted: false,
     hint: false,
@@ -54,12 +56,23 @@ watch(
 const barShell = ref<HTMLElement | null>(null);
 let repeatAnimation: Animation | null = null;
 
+const fillAnimating = ref(false);
+const hintAnimating = ref(false);
+let consumedEvent: number | undefined;
+
 watch(
-  [() => props.feedback, () => props.fillAnimationKey],
+  [() => props.fillAnimationKey, () => props.active],
   () => {
     repeatAnimation?.cancel();
     repeatAnimation = null;
-    if (props.feedback !== "repeat" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    fillAnimating.value = false;
+    hintAnimating.value = false;
+    const fresh = consumedEvent !== props.fillAnimationKey;
+    consumedEvent = props.fillAnimationKey;
+    if (!props.active || !fresh || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    fillAnimating.value = props.animateFillOnMount;
+    hintAnimating.value = props.animateHintReveal && !props.feedback;
+    if (props.feedback !== "repeat") return;
 
     repeatAnimation = barShell.value?.animate(
       [
@@ -71,7 +84,7 @@ watch(
       { duration: 240, easing: "ease-out" },
     ) ?? null;
   },
-  { flush: "post" },
+  { immediate: true, flush: "post" },
 );
 
 onBeforeUnmount(() => repeatAnimation?.cancel());
@@ -99,8 +112,9 @@ const fillStyle = computed(() => ({
   <div
     ref="barShell"
     class="guess-bar-shell"
+    @animationend.self="hintAnimating = false" @animationcancel.self="hintAnimating = false"
     :class="{
-      'guess-bar-shell--revealed': animateHintReveal && !feedback,
+      'guess-bar-shell--revealed': hintAnimating,
     }"
   >
     <div
@@ -116,8 +130,9 @@ const fillStyle = computed(() => ({
       <div
         :key="fillAnimationKey"
         class="guess-bar__fill"
-        :class="{ 'guess-bar__fill--revealed': animateFillOnMount }"
+        :class="{ 'guess-bar__fill--revealed': fillAnimating }"
         :style="fillStyle"
+        @animationend="fillAnimating = false" @animationcancel="fillAnimating = false"
       ></div>
       <span class="guess-bar__word">{{ word }}</span>
       <span class="guess-bar__value">{{ value }}</span>
@@ -170,7 +185,7 @@ const fillStyle = computed(() => ({
   position: relative;
   display: flex;
   align-items: center;
-  overflow: hidden;
+  overflow: clip;
   border: 1px solid var(--color-gray-600);
   border-radius: 8px;
   background: white;
@@ -323,6 +338,15 @@ const fillStyle = computed(() => ({
   .guess-bar--highlighted {
     height: 45px;
   }
+}
+
+@media (width < 1024px) {
+  .guess-bar-shell--revealed { animation-name: hint-row-fade; }
+}
+
+@keyframes hint-row-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes hint-row-reveal {

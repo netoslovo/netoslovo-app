@@ -133,7 +133,7 @@ if (authBootstrapState.value !== "ready") {
   inset-inline: 0;
   height: var(--app-visual-viewport-height, 100dvh);
   min-height: 0;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .app-shell--game > .app-header {
@@ -142,8 +142,9 @@ if (authBootstrapState.value !== "ready") {
 
 .app-shell--game .app-container {
   min-height: 0;
-  padding: 0 max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left));
-  overflow: hidden;
+  max-width: none;
+  padding: 0;
+  overflow: clip;
 }
 
 .global-loading {

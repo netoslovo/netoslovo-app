@@ -149,8 +149,17 @@ import UiSkeleton from "../../../shared/ui/UiSkeleton.vue";
   .game-board-skeleton {
     min-height: 0;
     overflow-y: auto;
-    overscroll-behavior: none;
+    overflow-x: hidden;
+    overscroll-behavior: none auto;
     padding-block: 8px;
+  }
+
+  .game-board-skeleton > section {
+    flex-shrink: 0;
+    width: calc(100% - max(16px, env(safe-area-inset-left)) - max(16px, env(safe-area-inset-right)));
+    max-width: calc(var(--container-sm) - 32px);
+    min-width: 0;
+    margin-inline: auto;
   }
 }
 </style>

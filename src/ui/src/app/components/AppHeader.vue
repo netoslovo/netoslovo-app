@@ -150,6 +150,10 @@ function onLogoClick(event: MouseEvent) {
 
 <style scoped>
 .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-shrink: 0;
   min-height: calc(var(--app-header-height) + env(safe-area-inset-top));
   padding-top: env(safe-area-inset-top);
   display: flex;
