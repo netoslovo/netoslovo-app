@@ -223,25 +223,25 @@ watch(
       :hints-info="game.hintsInfo" :actions="actions"
       :show-statistics="dailyConfig ? showDailyStatsDialog : undefined">
       <template #word>
-        <div class="game-board__word" data-game-scroll-anchor="word-card">
+        <div class="game-board__word">
           <DisplayWordTiles :display-word="game.displayWord" :difficulty-name="game.difficulty.name"
             :mode-label="modeConfig.title" :mode-detail="modeConfig.detail" :mode-variant="modeConfig.mode"
             :game-state="game.gameState" />
         </div>
       </template>
-      <template #summary>
+      <template #summary="{ active }">
         <GameScoreCard class="guess-card__score" :score="game.score" :score-details="game.scoreDetails" embedded />
         <div v-if="currentGuess" class="guess-card__latest">
           <p class="guess-card__label">Последняя попытка</p>
-          <GuessBar :fill-animation-key="guessPresentationEvent?.id ?? 0" :word="currentGuess.word" :value="currentGuess.distance"
+          <GuessBar :active="active" :fill-animation-key="guessPresentationEvent?.id ?? 0" :word="currentGuess.word" :value="currentGuess.distance"
             :fill-percentage="currentGuess.fillPercentage" :hint="currentGuess.source === 'hint'"
             :animate-fill-on-mount="guessPresentationEvent?.word === currentGuess.word"
             :fill-animation-start="guessPresentationEvent?.previousFillPercentage ?? 0" />
         </div>
       </template>
-      <template #guesses>
+      <template #guesses="{ active, registerGuess }">
         <div class="game-board__guesses">
-          <GuessesList :key="game.id" :game-id="game.id" :current-guess="currentGuess"
+          <GuessesList :key="game.id" :active="active" :register-guess="registerGuess" :game-id="game.id" :current-guess="currentGuess"
             :guesses="game.allGuesses" :animated-hint-word="displayedAnimatedHintWord"
             :presentation-event="displayedPresentationEvent" />
         </div>
@@ -308,6 +308,8 @@ watch(
 }
 
 .guess-card__latest {
+  min-width: 0;
+  padding-block: 4px;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -322,7 +324,7 @@ watch(
 
 .game-result-summary-card {
   min-width: 0;
-  overflow: hidden;
+  overflow: clip;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -506,16 +508,32 @@ watch(
 }
 
 @media (width < 1024px) {
+  .guess-card__latest :deep(.guess-bar__fill--revealed) {
+    animation: none;
+  }
+
   .game-board {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    overscroll-behavior: none;
+    overflow-x: hidden;
+    min-width: 0;
+    overscroll-behavior: none auto;
     padding: 8px 0 max(12px, var(--app-visual-viewport-safe-bottom));
   }
 
+  .game-board:not(.game-board--active) > .game-board__win,
+  .game-board:not(.game-board--active) > .guesses-list {
+    flex-shrink: 0;
+    width: 100%;
+    max-width: var(--container-sm);
+    min-width: 0;
+    margin-inline: auto;
+    padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+  }
+
   .game-board--active {
-    overflow: hidden;
+    overflow: clip;
     padding: 0;
     gap: 0;
   }

@@ -9,6 +9,7 @@
 
 html {
   min-height: 100%;
+  scroll-padding-top: calc(var(--app-header-height) + env(safe-area-inset-top) + 8px);
   -webkit-text-size-adjust: 100%;
   font-synthesis: none;
 }
@@ -122,6 +123,48 @@ html.mobile-game-layout body,
 html.mobile-game-layout #app {
   height: 100%;
   min-height: 0;
-  overflow: hidden;
-  overscroll-behavior: none;
+  overflow: clip;
+  overscroll-behavior: none auto;
+}
+
+html.mobile-game-layout {
+  /* Allow native pull-to-refresh outside the isolated game scrollport. */
+  overflow-y: auto;
+}
+
+@media (width < 1024px) {
+  .gameplay-scrollport,
+  .game-board:not(.game-board--active),
+  .game-board-skeleton {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-gray-500) var(--color-gray-100);
+  }
+
+  @supports selector(::-webkit-scrollbar) {
+    :is(.gameplay-scrollport, .game-board:not(.game-board--active), .game-board-skeleton) {
+      /* Let the pseudo-elements control Chromium/WebKit scrollbars. */
+      scrollbar-width: auto;
+      scrollbar-color: auto;
+    }
+
+    :is(.gameplay-scrollport, .game-board:not(.game-board--active), .game-board-skeleton)::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    :is(.gameplay-scrollport, .game-board:not(.game-board--active), .game-board-skeleton)::-webkit-scrollbar-track {
+      background: var(--color-gray-100);
+    }
+
+    :is(.gameplay-scrollport, .game-board:not(.game-board--active), .game-board-skeleton)::-webkit-scrollbar-thumb {
+      min-height: 24px;
+      border-radius: 3px;
+      background: var(--color-gray-500);
+    }
+
+    :is(.gameplay-scrollport, .game-board:not(.game-board--active), .game-board-skeleton)::-webkit-scrollbar-button {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+  }
 }

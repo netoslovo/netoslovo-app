@@ -1,66 +1,90 @@
-import { onBeforeUnmount, onMounted, ref, watch, type Ref } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance, type Ref } from "vue";
+
+type ScrollCommand = { kind: "center"; key: string } | { kind: "position"; top: number; behavior: ScrollBehavior };
 
 export function useGameplayScroll(
   scrollport: Ref<HTMLElement | null>,
   content: Ref<HTMLElement | null>,
   enabled: Readonly<Ref<boolean>>,
+  dialogOpen: Readonly<Ref<boolean>>,
 ) {
   const showScrollTop = ref(false);
-  let targetKey: string | null = null;
+  const scrollbarWidth = ref(0);
+  const rows = new Map<string, HTMLElement>();
+  let command: ScrollCommand | null = null;
+  let frame = 0;
+  let disposed = false;
   let resizeObserver: ResizeObserver | null = null;
+
+  function registerGuess(key: string, element: Element | ComponentPublicInstance | null) {
+    if (element instanceof HTMLElement) rows.set(key, element);
+    else rows.delete(key);
+  }
 
   function updateScrollPosition() {
     showScrollTop.value = (scrollport.value?.scrollTop ?? 0) > 1;
   }
 
-  function centerTarget() {
-    const container = scrollport.value;
-    if (!enabled.value || !container || !targetKey) return;
-    const target = Array.from(content.value?.querySelectorAll<HTMLElement>("[data-game-scroll-anchor]") ?? [])
-      .find((element) => element.dataset.gameScrollAnchor === targetKey);
-    if (!target) return;
-
-    const row = target.getBoundingClientRect();
-    const bounds = container.getBoundingClientRect();
-    const top = container.scrollTop + row.top + row.height / 2
-      - (bounds.top + container.clientTop + container.clientHeight / 2);
-    const maximumTop = Math.max(0, container.scrollHeight - container.clientHeight);
-    container.scrollTo({ top: Math.max(0, Math.min(maximumTop, top)), behavior: "instant" });
+  function applyCommand() {
+    frame = 0;
+    if (!enabled.value || !scrollport.value || !command) return;
+    // Returning from a menu must restore the background even under a dialog.
+    if (dialogOpen.value && command.kind === "center") return;
+    const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ? "instant" : command.kind === "center" ? "smooth" : command.behavior;
+    if (command.kind === "center") {
+      rows.get(command.key)?.scrollIntoView({ block: "center", inline: "nearest", behavior });
+    } else {
+      scrollport.value.scrollTo({ top: command.top, behavior });
+    }
     updateScrollPosition();
   }
 
+  function scheduleCommand() {
+    if (!disposed && !frame) frame = requestAnimationFrame(applyCommand);
+  }
+
+  function onResize() {
+    const container = scrollport.value;
+    scrollbarWidth.value = container ? container.offsetWidth - container.clientWidth : 0;
+    scheduleCommand();
+  }
+
   function centerGuess(key: string) {
-    if (!enabled.value) return;
-    targetKey = key;
-    centerTarget();
+    command = { kind: "center", key };
+    void nextTick(scheduleCommand);
   }
 
   function cancelCentering() {
-    targetKey = null;
+    if (command && enabled.value && scrollport.value) {
+      scrollport.value.scrollTo({ top: scrollport.value.scrollTop, behavior: "instant" });
+    }
+    command = null;
+  }
+
+  function restorePosition(top: number, behavior: ScrollBehavior = "instant") {
+    command = { kind: "position", top, behavior };
+    cancelAnimationFrame(frame);
+    applyCommand();
   }
 
   function scrollToTop() {
-    cancelCentering();
-    scrollport.value?.scrollTo({
-      top: 0,
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
-    });
+    restorePosition(0, "smooth");
   }
 
-  watch(enabled, (active) => {
-    if (!active) cancelCentering();
-  }, { flush: "sync" });
-
+  watch([enabled, dialogOpen], scheduleCommand, { flush: "post" });
   onMounted(() => {
-    // Layout owns visibility. Resizing the list or its content only re-centers
-    // the current request; ordinary scroll events never re-enable following.
-    resizeObserver = new ResizeObserver(centerTarget);
+    resizeObserver = new ResizeObserver(onResize);
     if (scrollport.value) resizeObserver.observe(scrollport.value);
     if (content.value) resizeObserver.observe(content.value);
     updateScrollPosition();
   });
+  onBeforeUnmount(() => {
+    disposed = true;
+    cancelAnimationFrame(frame);
+    resizeObserver?.disconnect();
+    rows.clear();
+  });
 
-  onBeforeUnmount(() => resizeObserver?.disconnect());
-
-  return { showScrollTop, updateScrollPosition, centerGuess, cancelCentering, scrollToTop };
+  return { showScrollTop, scrollbarWidth, registerGuess, updateScrollPosition, centerGuess, cancelCentering, restorePosition, scrollToTop };
 }

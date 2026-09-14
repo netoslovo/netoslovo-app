@@ -1,25 +1,28 @@
 <script setup lang="ts">
+import { ref, watch, type ComponentPublicInstance } from "vue";
 import type { Guess } from "../model/game";
 import type { GuessPresentationEvent } from "./useGameSession";
 import GuessBar from "./GuessBar.vue";
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
+  active?: boolean;
+  registerGuess?: (key: string, element: Element | ComponentPublicInstance | null) => void;
   gameId: string;
   currentGuess: Guess | null;
   guesses: Guess[];
   animatedHintWord: string | null;
   presentationEvent: GuessPresentationEvent | null;
-}>();
+}>(), { active: true });
 
 function getGuessKey(guess: Guess) {
   return `${props.gameId}:${guess.word}`;
 }
 
-function getScrollAnchorKey(guess: Guess) {
-  return `${props.gameId}:${guess.word}`;
-}
-
-const revealRestoredGuesses = props.guesses.length > 0;
+const revealRestoredGuesses = ref(props.guesses.length > 0 && props.active !== false
+  && !window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+watch(() => props.active, (active) => {
+  if (active === false) revealRestoredGuesses.value = false;
+}, { flush: "sync" });
 
 function getFeedback(guess: Guess) {
   if (props.presentationEvent) {
@@ -35,13 +38,14 @@ function getFeedback(guess: Guess) {
 <template>
   <div class="guesses-list">
     <div v-if="guesses.length > 0" class="guesses-list__section"
-      :class="{ 'guesses-list__section--restored': revealRestoredGuesses }">
+      :class="{ 'guesses-list__section--restored': revealRestoredGuesses }"
+      @animationend.self="revealRestoredGuesses = false" @animationcancel.self="revealRestoredGuesses = false">
       <p class="guesses-list__label">
         Попыток: {{ guesses.length }}
       </p>
       <div class="guesses-list__items">
-        <div v-for="guess in guesses" :key="getGuessKey(guess)" :data-game-scroll-anchor="getScrollAnchorKey(guess)">
-          <GuessBar :word="guess.word" :value="guess.distance"
+        <div v-for="guess in guesses" :key="getGuessKey(guess)" :ref="(element) => registerGuess?.(getGuessKey(guess), element)">
+          <GuessBar :active="active" :word="guess.word" :value="guess.distance"
             :fill-percentage="guess.fillPercentage" :hint="guess.source === 'hint'"
             :animate-fill-on-mount="presentationEvent?.word === guess.word && presentationEvent.kind === 'insert'"
             :fill-animation-key="presentationEvent?.word === guess.word ? presentationEvent.id : 0"
@@ -79,6 +83,8 @@ function getFeedback(guess: Guess) {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+  padding-block: 4px;
 }
 
 .guesses-list__label {
@@ -101,6 +107,17 @@ function getFeedback(guess: Guess) {
   .guesses-list__items {
     gap: 3px;
   }
+}
+
+@media (width < 1024px) {
+  .guesses-list__section--restored {
+    animation-name: guesses-list-fade;
+  }
+}
+
+@keyframes guesses-list-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
