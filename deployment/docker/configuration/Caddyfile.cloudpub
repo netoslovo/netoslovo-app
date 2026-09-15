@@ -1,0 +1,10 @@
+:80 {
+    @backend path /api* /openapi* /scalar*
+    handle @backend {
+        reverse_proxy wordoguessr.webapi:8080
+    }
+
+    handle {
+        reverse_proxy wordoguessr.ui:8080
+    }
+}

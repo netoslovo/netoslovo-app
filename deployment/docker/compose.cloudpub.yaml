@@ -1,0 +1,24 @@
+services:
+
+  caddy-cloudpub:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    depends_on:
+      - wordoguessr.webapi
+      - wordoguessr.ui
+    volumes:
+      - ./configuration/Caddyfile.cloudpub:/etc/caddy/Caddyfile:ro
+
+  cloudpub:
+    image: cloudpub/cloudpub:latest
+    restart: unless-stopped
+    depends_on:
+      - caddy-cloudpub
+    environment:
+      TOKEN: ${CLOUDPUB_TOKEN:?Set CLOUDPUB_TOKEN in .env}
+    command: ["publish", "--auth", "basic", "http", "caddy-cloudpub:80"]
+    volumes:
+      - cloudpub_config:/home/cloudpub
+
+volumes:
+  cloudpub_config:
