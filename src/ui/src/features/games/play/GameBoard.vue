@@ -239,9 +239,9 @@ watch(
             :fill-animation-start="guessPresentationEvent?.previousFillPercentage ?? 0" />
         </div>
       </template>
-      <template #guesses="{ active, registerGuess }">
+      <template #guesses="{ active, registerGuess, registerListHeading }">
         <div class="game-board__guesses">
-          <GuessesList :key="game.id" :active="active" :register-guess="registerGuess" :game-id="game.id" :current-guess="currentGuess"
+          <GuessesList :key="game.id" :active="active" :register-guess="registerGuess" :register-list-heading="registerListHeading" :game-id="game.id" :current-guess="currentGuess"
             :guesses="game.allGuesses" :animated-hint-word="displayedAnimatedHintWord"
             :presentation-event="displayedPresentationEvent" />
         </div>

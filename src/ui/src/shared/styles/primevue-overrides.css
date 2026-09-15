@@ -11,6 +11,16 @@
   outline: none;
 }
 
+/* Do not keep text in a transformed layer after an overlay finishes opening. */
+.p-dialog.p-component,
+.p-popover.p-component {
+  will-change: auto;
+}
+
+.p-dialog.p-component:not(.p-dialog-enter-active):not(.p-dialog-leave-active) {
+  transform: none;
+}
+
 .info-popover.p-popover {
   box-shadow: var(--shadow-menu);
 }
