@@ -128,7 +128,8 @@ if (authBootstrapState.value !== "ready") {
 }
 
 .app-shell--game {
-  position: fixed;
+  /* Move with the document's native overscroll and pull-to-refresh. */
+  position: absolute;
   top: var(--app-visual-viewport-top);
   inset-inline: 0;
   height: var(--app-visual-viewport-height, 100dvh);
