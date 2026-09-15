@@ -29,11 +29,10 @@ internal sealed class GetByIdArcadeHandler : IQueryHandler<GetByIdArcadeQuery, G
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var singleGame = await _dbContext.SingleGamesForDetails()
+        var singleGame = await _dbContext.ArcadeSingleGamesForDetails()
             .FirstOrDefaultAsync(sg =>
                 sg.PlayerId == query.PlayerId &&
-                sg.Id == query.GameId &&
-                sg.Mode == SingleGameMode.Arcade,
+                sg.Id == query.GameId,
                 ct);
 
         if (singleGame is null)

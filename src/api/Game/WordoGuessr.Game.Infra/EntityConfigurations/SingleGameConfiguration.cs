@@ -15,12 +15,17 @@ public sealed class SingleGameConfiguration : IEntityTypeConfiguration<SingleGam
         builder.Property(g => g.Id)
             .HasColumnName("id");
 
+        builder.HasDiscriminator<SingleGameMode>("_mode")
+            .HasValue<DailySingleGame>(SingleGameMode.Daily)
+            .HasValue<ArcadeSingleGame>(SingleGameMode.Arcade);
+
+        builder.Property<SingleGameMode>("_mode")
+            .HasColumnName("mode")
+            .UsePropertyAccessMode(PropertyAccessMode.Field);
+
         builder.HasOne(g => g.VersionedGameSource)
             .WithMany()
             .HasForeignKey("game_source_id", "words_version");
-
-        builder.Property(g => g.Mode)
-            .HasColumnName("mode");
 
         builder.Property(g => g.PlayerId)
             .HasColumnName("player_id");
@@ -51,9 +56,6 @@ public sealed class SingleGameConfiguration : IEntityTypeConfiguration<SingleGam
         builder.Navigation(g => g.Guesses)
             .HasField("_guesses")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-        builder.Property(g => g.DayOfDailyGame)
-            .HasColumnName("day_of_daily_game");
 
         builder.Property<int>("_revealLetterHintsTotal")
             .HasColumnName("reveal_letter_hints_total")

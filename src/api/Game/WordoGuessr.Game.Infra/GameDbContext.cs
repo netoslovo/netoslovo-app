@@ -30,6 +30,8 @@ public sealed class GameDbContext : DbContext, IGameStore
     }
 
     public DbSet<SingleGame> SingleGames { get; private set; }
+    public DbSet<DailySingleGame> DailySingleGames { get; set; }
+    public DbSet<ArcadeSingleGame> ArcadeSingleGames { get; set; }
     public DbSet<SingleGameDailySchedule> SingleGamesDailySchedules { get; private set; }
     public DbSet<DailyGameSourceReview> DailyGameSourceReviews { get; private set; }
     public DbSet<ApprovedDailyGameSource> ApprovedDailyGameSources { get; private set; }
@@ -60,8 +62,34 @@ public sealed class GameDbContext : DbContext, IGameStore
                 .ThenInclude(vgs => vgs.GameSource)
             .Include(sg => sg.Guesses.OrderByDescending(g => g.Id));
 
+    public IQueryable<ArcadeSingleGame> ArcadeSingleGamesForDetails() =>
+        ArcadeSingleGames
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(sg => sg.VersionedGameSource)
+                .ThenInclude(vgs => vgs.GameSource)
+            .Include(sg => sg.Guesses.OrderByDescending(g => g.Id));
+
+    public IQueryable<DailySingleGame> DailySingleGamesForDetails() =>
+        DailySingleGames
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(sg => sg.VersionedGameSource)
+                .ThenInclude(vgs => vgs.GameSource)
+            .Include(sg => sg.Guesses.OrderByDescending(g => g.Id));
+
     public IQueryable<SingleGame> SingleGamesForSummary() =>
         SingleGames
+            .AsNoTracking()
+            .Include(sg => sg.VersionedGameSource);
+
+    public IQueryable<ArcadeSingleGame> ArcadeSingleGamesForSummary() =>
+        ArcadeSingleGames
+            .AsNoTracking()
+            .Include(sg => sg.VersionedGameSource);
+
+    public IQueryable<DailySingleGame> DailySingleGamesForSummary() =>
+        DailySingleGames
             .AsNoTracking()
             .Include(sg => sg.VersionedGameSource);
 
@@ -87,6 +115,8 @@ public sealed class GameDbContext : DbContext, IGameStore
         modelBuilder.ApplyConfiguration(new GameSourceConfiguration());
         modelBuilder.ApplyConfiguration(new VersionedGameSourceConfiguration());
         modelBuilder.ApplyConfiguration(new SingleGameConfiguration());
+        modelBuilder.ApplyConfiguration(new ArcadeSingleGameConfiguration());
+        modelBuilder.ApplyConfiguration(new DailySingleGameConfiguration());
         modelBuilder.ApplyConfiguration(new GuessConfiguration());
         modelBuilder.ApplyConfiguration(new SingleGameDailyScheduleConfiguration());
         modelBuilder.ApplyConfiguration(new DailyGameSourceReviewConfiguration());

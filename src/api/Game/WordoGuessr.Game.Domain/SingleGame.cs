@@ -8,7 +8,7 @@ using WordoGuessr.Game.Domain.SingleGameEvents;
 
 namespace WordoGuessr.Game.Domain;
 
-public sealed class SingleGame : DomainEntity<Guid>
+public abstract class SingleGame : DomainEntity<Guid>
 {
     public const int HalfwayWordHintsTotal = 3;
     public const int RevealLengthHintPenalty = 20;
@@ -16,7 +16,6 @@ public sealed class SingleGame : DomainEntity<Guid>
     private const int MinDistanceForNeighbourHint = 1;
 
     public VersionedGameSource VersionedGameSource { get; private set; } = null!;
-    public SingleGameMode Mode { get; }
     public Guid PlayerId { get; private set; }
     public DateTimeOffset CreatedAt { get; init; }
     public DateTimeOffset? StartedAt { get; private set; }
@@ -24,8 +23,6 @@ public sealed class SingleGame : DomainEntity<Guid>
     public DateTimeOffset? FinishedAt { get; private set; }
     public int? ClosestGuessDistance { get; private set; }
     public SingleGameStateCode StateCode { get; private set; }
-
-    public DateOnly? DayOfDailyGame { get; }
 
     private readonly List<Guess> _guesses = [];
     public IReadOnlyList<Guess> Guesses => _guesses.AsReadOnly();
@@ -65,47 +62,30 @@ public sealed class SingleGame : DomainEntity<Guid>
         ? _revealLetterHintsTotal
         : null;
 
-    private SingleGame(
+    protected readonly SingleGameMode _mode;
+
+    protected SingleGame(
         VersionedGameSource versionedGameSource,
         SingleGameMode mode,
         Guid playerId,
-        DateTimeOffset createdAt,
-        DateOnly? dayOfDailyGame = null
+        DateTimeOffset createdAt
         ) : base(Guid.CreateVersion7(createdAt))
     {
         VersionedGameSource = versionedGameSource;
-        Mode = mode;
+        _mode = mode;
         PlayerId = playerId;
         StateCode = SingleGameStateCode.Active;
         _displayWord = new DisplayWord(versionedGameSource.GameSource.Word);
         CreatedAt = createdAt;
         UpdatedAt = createdAt;
-        DayOfDailyGame = dayOfDailyGame;
         _revealLetterHintsTotal = CalculateRevealLetterHintsTotal();
         _calculatedRevealLetterHintPenalties = CalculateRevealLetterHintPenalties();
         _orderedLettersIndexesForReveal = GetOrderedLettersIndexesForReveal();
 
-        AddDomainEvent(new GameCreatedEvent(Id, PlayerId, Mode, VersionedGameSource.Difficulty.Code, CreatedAt));
+        AddDomainEvent(new GameCreatedEvent(Id, PlayerId, _mode, VersionedGameSource.Difficulty.Code, CreatedAt));
     }
 
-    public static SingleGame CreateDaily(
-        VersionedGameSource versionedGameSource,
-        Guid playerId,
-        DateOnly dayOfDailyGame,
-        DateTimeOffset createdAt)
-    {
-        return new SingleGame(versionedGameSource, SingleGameMode.Daily, playerId, createdAt, dayOfDailyGame);
-    }
-
-    public static SingleGame CreateArcade(
-        VersionedGameSource versionedGameSource,
-        Guid playerId,
-        DateTimeOffset createdAt)
-    {
-        return new SingleGame(versionedGameSource, SingleGameMode.Arcade, playerId, createdAt);
-    }
-
-    private SingleGame() { }
+    protected SingleGame() { }
 
     public Result<GuessStatus, SingleGameErrorCode> MakeGuess(GuessAttempt attempt)
     {
@@ -306,39 +286,9 @@ public sealed class SingleGame : DomainEntity<Guid>
         UpdatedAt = at;
     }
 
-    private void AddGameFinishedEvent()
-    {
-        if (StartedAt is null)
-        {
-            throw new InvalidOperationException("Couldn't add finished event for game without start date");
-        }
+    public abstract bool ShouldShowRevealedWord(DateOnly today, out DisplayWordHideReason? hideReason);
 
-        var score = GetScore();
-
-        AddDomainEvent(new GameFinishedEvent(
-            GameId: Id,
-            PlayerId: PlayerId,
-            GameSourceId: VersionedGameSource.GameSource.Id,
-            DifficultyCode: VersionedGameSource.Difficulty.Code,
-            Mode: Mode,
-            CreatedAt: CreatedAt,
-            StartedAt: StartedAt.Value,
-            FinishedAt: FinishedAt!.Value,
-            State: StateCode,
-            Score: score.Value,
-            Attempts: score.GuessesCount,
-            RevealHalfwayWordHintsUsed: score.HintPenalties
-                .Count(hp => hp.Hint.Type == HintType.RevealHalfwayWord),
-
-            RevealLengthHintUsed: score.HintPenalties
-                .Any(hp => hp.Hint.Type == HintType.RevealLength),
-
-            RevealLetterHintsUsed: score.HintPenalties
-                .Count(hp => hp.Hint.Type == HintType.RevealLetter),
-
-            DayOfDailyGame: DayOfDailyGame
-        ));
-    }
+    protected abstract void AddGameFinishedEvent();
 
     private HintPenalty[] BuildPenalties()
     {

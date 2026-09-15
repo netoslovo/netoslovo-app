@@ -5,6 +5,7 @@ using WordoGuessr.Common.App.Exceptions.Persistence;
 using WordoGuessr.Common.Domain;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
+using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.Domain;
 using WordoGuessr.Game.Dto;
 using WordoGuessr.Words.Contract;
@@ -45,8 +46,8 @@ internal sealed class CreateArcadeHandler : ICommandHandler<CreateArcadeCommand,
         var wordsVersionResult = await _wordsModule.LoadData(new WordsDataRequest(), ct);
         var wordsVersion = wordsVersionResult.Version;
 
-        var playedSourceIds = _dbContext.SingleGames
-            .Where(sg => sg.PlayerId == command.PlayerId && sg.Mode == SingleGameMode.Arcade)
+        var playedSourceIds = _dbContext.ArcadeSingleGames
+            .Where(sg => sg.PlayerId == command.PlayerId)
             .Select(sg => sg.VersionedGameSource.GameSourceId);
 
         var notPlayedSources = _dbContext.VersionedGameSourcesForGameCreation()
@@ -74,7 +75,7 @@ internal sealed class CreateArcadeHandler : ICommandHandler<CreateArcadeCommand,
             return Result<GameDto, CreateArcadeError>.Failure(CreateArcadeError.NoMorePossibleGames);
         }
 
-        var arcadeGame = SingleGame.CreateArcade(
+        var arcadeGame = new ArcadeSingleGame(
             notPlayedSource,
             command.PlayerId,
             _timeProvider.GetUtcNow());

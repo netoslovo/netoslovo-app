@@ -3,7 +3,6 @@ using WordoGuessr.API.BuildingBlocks.CQRS;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
 using WordoGuessr.Game.App.Services;
-using WordoGuessr.Game.Domain;
 using WordoGuessr.Game.Dto;
 
 namespace WordoGuessr.Game.App.UseCases.SingleGames.Daily.GetHistory;
@@ -39,10 +38,9 @@ internal sealed class GetDailyGamesHistoryHandler
             .Select(dc => new
             {
                 dc.Day,
-                Game = _dbContext.SingleGamesForSummary()
+                Game = _dbContext.DailySingleGamesForSummary()
                     .Where(sg =>
                         sg.PlayerId == query.PlayerId &&
-                        sg.Mode == SingleGameMode.Daily &&
                         sg.VersionedGameSource.GameSourceId == dc.ApprovedGameSourceId
                     )
                     .FirstOrDefault()

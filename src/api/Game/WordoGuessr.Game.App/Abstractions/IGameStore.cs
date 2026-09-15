@@ -8,6 +8,9 @@ namespace WordoGuessr.Game.App.Abstractions;
 public interface IGameStore
 {
     DbSet<SingleGame> SingleGames { get; }
+    DbSet<DailySingleGame> DailySingleGames { get; }
+    DbSet<ArcadeSingleGame> ArcadeSingleGames { get; }
+
     DbSet<SingleGameDailySchedule> SingleGamesDailySchedules { get; }
     DbSet<DailyGameSourceReview> DailyGameSourceReviews { get; }
     DbSet<ApprovedDailyGameSource> ApprovedDailyGameSources { get; }
@@ -16,8 +19,10 @@ public interface IGameStore
 
     IQueryable<SingleGame> SingleGamesForGuessAction();
     IQueryable<SingleGame> SingleGamesForTextHintAction();
-    IQueryable<SingleGame> SingleGamesForDetails();
-    IQueryable<SingleGame> SingleGamesForSummary();
+    IQueryable<ArcadeSingleGame> ArcadeSingleGamesForDetails();
+    IQueryable<DailySingleGame> DailySingleGamesForDetails();
+    IQueryable<ArcadeSingleGame> ArcadeSingleGamesForSummary();
+    IQueryable<DailySingleGame> DailySingleGamesForSummary();
     IQueryable<VersionedGameSource> VersionedGameSourcesForGameCreation();
 
 

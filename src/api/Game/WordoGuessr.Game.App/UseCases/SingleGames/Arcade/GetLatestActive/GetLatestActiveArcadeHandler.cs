@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WordoGuessr.API.BuildingBlocks.CQRS;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
+using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.Domain;
 using WordoGuessr.Game.Dto;
 
@@ -24,10 +25,9 @@ internal sealed class GetLatestActiveArcadeHandler : IQueryHandler<GetLatestActi
     {
         ArgumentNullException.ThrowIfNull(query);
 
-        var game = await _dbContext.SingleGamesForSummary()
+        var game = await _dbContext.ArcadeSingleGamesForSummary()
             .Where(sg => sg.PlayerId == query.PlayerId &&
-                sg.StateCode == SingleGameStateCode.Active &&
-                sg.Mode == SingleGameMode.Arcade)
+                sg.StateCode == SingleGameStateCode.Active)
             .OrderByDescending(sg => sg.UpdatedAt)
             .FirstOrDefaultAsync(ct);
 

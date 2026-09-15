@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WordoGuessr.API.BuildingBlocks.CQRS;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
+using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.Dto;
 
 namespace WordoGuessr.Game.App.UseCases.SingleGames.Arcade.GetHistory;
@@ -22,10 +23,8 @@ internal sealed class GetArcadeGamesHistoryHandler
 
     public async Task<ArcadeGamesHistoryDto> Handle(GetArcadeGamesHistoryQuery query, CancellationToken ct)
     {
-        var gamesFromDb = await _dbContext.SingleGamesForSummary()
-            .Where(sg =>
-                sg.PlayerId == query.PlayerId &&
-                sg.Mode == Domain.SingleGameMode.Arcade)
+        var gamesFromDb = await _dbContext.ArcadeSingleGamesForSummary()
+            .Where(sg => sg.PlayerId == query.PlayerId)
             .OrderByDescending(s => s.CreatedAt)
             .Skip(query.Skip)
             .Take(query.Take + 1)

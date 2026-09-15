@@ -4,7 +4,6 @@ using WordoGuessr.Common.Domain;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
 using WordoGuessr.Game.App.Services;
-using WordoGuessr.Game.Domain;
 using WordoGuessr.Game.Dto;
 
 namespace WordoGuessr.Game.App.UseCases.SingleGames.Daily.GetToday;
@@ -43,9 +42,8 @@ internal sealed class GetTodayDailyGameHandler
             return Result<DailyGameInfoDto?, GetDailyError>.Failure(GetDailyError.ScheduleNotFound);
         }
 
-        var game = await _dbContext.SingleGamesForSummary()
+        var game = await _dbContext.DailySingleGamesForSummary()
             .Where(sg => sg.PlayerId == query.PlayerId &&
-                sg.Mode == SingleGameMode.Daily &&
                 sg.VersionedGameSource.GameSourceId == todayGameSource.Id)
             .FirstOrDefaultAsync(ct);
 

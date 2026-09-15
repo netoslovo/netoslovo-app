@@ -7,7 +7,7 @@ namespace WordoGuessr.Game.App.Mapping;
 internal static class SingleGameInfoMapping
 {
     public static ArcadeGameInfoDto MapToArcadeGameInfoDto(
-        this SingleGame game,
+        this ArcadeSingleGame game,
         DisplayWordDto word) =>
         new(
             Id: game.Id,
@@ -17,7 +17,7 @@ internal static class SingleGameInfoMapping
             Word: word);
 
     public static DailyGameInfoDto MapToDailyGameInfoDto(
-        this SingleGame game,
+        this DailySingleGame game,
         DateOnly day,
         DateOnly today,
         DisplayWordDto word) =>
@@ -36,9 +36,8 @@ internal static class SingleGameInfoMapping
             IsToday: day == today,
             Word: null);
 
-    private static bool GuessedAtGameDay(SingleGame singleGame) =>
+    private static bool GuessedAtGameDay(DailySingleGame singleGame) =>
         singleGame.StateCode == SingleGameStateCode.Guessed &&
         singleGame.FinishedAt.HasValue &&
-        singleGame.DayOfDailyGame is not null &&
-        DailyGameClock.GetDateOnly(singleGame.FinishedAt.Value) == singleGame.DayOfDailyGame.Value;
+        DailyGameClock.GetDateOnly(singleGame.FinishedAt.Value) == singleGame.Day;
 }

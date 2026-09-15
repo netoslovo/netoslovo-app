@@ -67,10 +67,9 @@ internal sealed class StartForDayDailyHandler
             return Result<GameDto, StartDailyError>.Failure(StartDailyError.ScheduleNotFound);
         }
 
-        var hasActiveDailySingleGame = await _dbContext.SingleGames
+        var hasActiveDailySingleGame = await _dbContext.DailySingleGames
             .AsNoTracking()
             .AnyAsync(sg => sg.PlayerId == command.PlayerId &&
-                sg.Mode == SingleGameMode.Daily &&
                 sg.VersionedGameSource.GameSourceId == dailyGameSourceVersion.GameSourceId &&
                 sg.StateCode == SingleGameStateCode.Active,
                 ct);
@@ -80,7 +79,7 @@ internal sealed class StartForDayDailyHandler
             return Result<GameDto, StartDailyError>.Failure(StartDailyError.AlreadyHasActiveGame);
         }
 
-        var dailyGame = SingleGame.CreateDaily(
+        var dailyGame = new DailySingleGame(
             dailyGameSourceVersion,
             command.PlayerId,
             command.Day,
