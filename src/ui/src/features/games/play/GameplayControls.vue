@@ -386,8 +386,16 @@ function requestRandomLetterHint(closeMenu?: () => void) {
         <Transition name="scroll-top">
           <div v-if="mobile && showScrollTop" class="gameplay-controls__scroll-top-slot">
             <Button class="gameplay-controls__scroll-top" type="button"
-              :aria-label="scrollUpLabel" :icon="scrollUpIcon" severity="secondary" outlined
-              @pointerdown.prevent @click="scrollToTop" />
+              :aria-label="scrollUpLabel" severity="secondary" outlined
+              @pointerdown.prevent @click="scrollToTop">
+              <template #icon>
+                <span class="gameplay-controls__scroll-top-icon" aria-hidden="true">
+                  <Transition name="scroll-chevron">
+                    <span :key="scrollUpIcon" class="p-button-icon" :class="scrollUpIcon" />
+                  </Transition>
+                </span>
+              </template>
+            </Button>
           </div>
         </Transition>
         <div class="gameplay-controls__input-row">
@@ -662,15 +670,15 @@ function requestRandomLetterHint(closeMenu?: () => void) {
 }
 
 .gameplay-controls__scroll-top.p-button {
-  --scroll-top-background: var(--gameplay-glass-background);
-  --scroll-top-shadow: inset 0 1px 0 rgb(255 255 255 / 60%), inset 0 -1px 0 rgb(25 32 43 / 3%), 0 2px 8px rgb(25 32 43 / 5%);
+  --scroll-top-background: linear-gradient(120deg, rgb(255 255 255 / 80%), rgb(255 255 255 / 50%) 45%, rgb(255 255 255 / 70%));
+  --scroll-top-shadow: inset 0 1px 0 rgb(255 255 255 / 90%), inset 0 -1px 0 rgb(25 32 43 / 4%), 0 4px 16px rgb(25 32 43 / 12%);
   position: static;
   transform: none;
   width: 50px;
   min-width: 0;
   height: 50px;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--color-gray-200) 65%, transparent);
+  border: 1px solid rgb(255 255 255 / 75%);
   border-radius: 12px;
   background: var(--scroll-top-background);
   -webkit-backdrop-filter: var(--gameplay-glass-filter);
@@ -684,7 +692,7 @@ function requestRandomLetterHint(closeMenu?: () => void) {
 }
 
 .gameplay-controls__scroll-top.p-button:not(:disabled):is(:hover, :active, :focus) {
-  border-color: color-mix(in srgb, var(--color-gray-200) 65%, transparent);
+  border-color: rgb(255 255 255 / 75%);
   background: var(--scroll-top-background);
   box-shadow: var(--scroll-top-shadow);
   transform: none;
@@ -715,6 +723,29 @@ function requestRandomLetterHint(closeMenu?: () => void) {
   height: 18px;
   font-size: 18px;
   line-height: 1;
+}
+
+.gameplay-controls__scroll-top-icon {
+  display: grid;
+}
+
+.gameplay-controls__scroll-top-icon > .p-button-icon {
+  grid-area: 1 / 1;
+}
+
+.gameplay-controls__scroll-top :deep(.scroll-chevron-enter-active),
+.gameplay-controls__scroll-top :deep(.scroll-chevron-leave-active) {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.gameplay-controls__scroll-top :deep(.scroll-chevron-enter-from) {
+  opacity: 0;
+  transform: translateY(5px);
+}
+
+.gameplay-controls__scroll-top :deep(.scroll-chevron-leave-to) {
+  opacity: 0;
+  transform: translateY(-5px);
 }
 
 
@@ -986,6 +1017,7 @@ function requestRandomLetterHint(closeMenu?: () => void) {
 
 @media (width < 1024px) {
   .gameplay-controls {
+    position: relative;
     display: flex;
     gap: 0;
     align-items: center;
@@ -996,23 +1028,42 @@ function requestRandomLetterHint(closeMenu?: () => void) {
   }
 
   .gameplay-controls__scroll-top-slot {
-    flex: 0 0 auto;
-    width: calc(var(--guess-control-height) + 2px + 6px);
+    position: absolute;
+    inset-inline: 0;
+    bottom: calc(100% + 16px);
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
   }
 
   .gameplay-controls__scroll-top.p-button {
-    width: calc(var(--guess-control-height) + 2px);
-    height: calc(var(--guess-control-height) + 2px);
+    width: 44px;
+    height: 44px;
+    pointer-events: auto;
   }
 
-  .scroll-top-enter-active,
+  .gameplay-controls__scroll-top :deep(.p-button-icon) {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+
+  .scroll-top-enter-active {
+    transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+  }
+
   .scroll-top-leave-active {
-    transition: width 0.18s ease, opacity 0.18s ease;
+    transition: transform 0.18s ease-in, opacity 0.18s ease;
+  }
+
+  .scroll-top-leave-active .gameplay-controls__scroll-top.p-button {
+    pointer-events: none;
   }
 
   .scroll-top-enter-from,
   .scroll-top-leave-to {
-    width: 0;
+    transform: translateY(8px) scale(0.9);
     opacity: 0;
     pointer-events: none;
   }
@@ -1041,7 +1092,9 @@ function requestRandomLetterHint(closeMenu?: () => void) {
   }
 
   .scroll-top-enter-active,
-  .scroll-top-leave-active {
+  .scroll-top-leave-active,
+  .gameplay-controls__scroll-top :deep(.scroll-chevron-enter-active),
+  .gameplay-controls__scroll-top :deep(.scroll-chevron-leave-active) {
     transition: none;
   }
 }

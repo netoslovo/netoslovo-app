@@ -17,7 +17,7 @@ export function useGameplayScroll(
   const scrollUpLabel = computed(() => listHeadingAbove.value
     ? "К началу списка попыток" : "Наверх");
   const scrollUpIcon = computed(() => listHeadingAbove.value
-    ? "pi pi-chevron-up" : "pi pi-angle-double-up");
+    ? "pi pi-angle-double-up" : "pi pi-chevron-up");
   let frame = 0;
   let disposed = false;
   let resizeObserver: ResizeObserver | null = null;

@@ -17,9 +17,11 @@ export function useVisualViewportCssVariables() {
     // Pinch zoom should magnify the layout, not make it reflow like a keyboard resize.
     if (!viewport || Math.abs(viewport.scale - 1) > 0.01) return;
 
-    const viewportTop = Math.max(0, Math.round(viewport.offsetTop));
     const viewportHeight = Math.max(0, Math.round(viewport.height));
     const layoutViewportHeight = document.documentElement.clientHeight;
+    const maxViewportTop = Math.max(0, layoutViewportHeight - viewportHeight);
+    // Track keyboard panning without applying native overscroll a second time.
+    const viewportTop = Math.min(maxViewportTop, Math.max(0, Math.round(viewport.offsetTop)));
     const safeBottomEnabled = viewport.offsetTop + viewport.height >= layoutViewportHeight - 1;
     const rootStyle = document.documentElement.style;
 
