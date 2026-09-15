@@ -1,0 +1,14 @@
+:8089 {
+    bind 127.0.0.1
+
+    @backend path /api* /openapi* /scalar*
+    handle @backend {
+        reverse_proxy localhost:5292
+    }
+
+    handle {
+        reverse_proxy localhost:5173 {
+            header_up Host localhost:5173
+        }
+    }
+}

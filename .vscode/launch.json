@@ -114,6 +114,53 @@
 
       "url": "https://wordoguessr.localhost",
       "webRoot": "${workspaceFolder}/src/ui"
+    },
+    {
+      "name": "Debug API + UI + proxy (cloudpub)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "api:prepare-debug-cloudpub",
+      "postDebugTask": "docker:debug-cloudpub-stack-down",
+      "program": "${workspaceFolder}/src/api/WordoGuessr.WebAPI/bin/Debug/net10.0/WordoGuessr.WebAPI.dll",
+      "cwd": "${workspaceFolder}/src/api/WordoGuessr.WebAPI",
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "serverReadyAction": {
+        "pattern": "Now listening on:\\s+(https?://\\S+)",
+        "action": "startDebugging",
+        "name": "Debug UI (cloudpub)",
+        "killOnServerStop": true
+      }
+    },
+    {
+      "name": "Debug UI (cloudpub)",
+      "type": "node-terminal",
+      "request": "launch",
+      "presentation": {
+        "hidden": true
+      },
+      "command": "pnpm dev --host localhost --port 5173 --strictPort",
+      "cwd": "${workspaceFolder}/src/ui",
+      "serverReadyAction": {
+        "pattern": "Local:\\s+(https?://\\S+)",
+        "action": "startDebugging",
+        "name": "Open UI (cloudpub local)",
+        "killOnServerStop": true
+      }
+    },
+    {
+      "name": "Open UI (cloudpub local)",
+      "type": "editor-browser",
+      "request": "launch",
+      "presentation": {
+        "hidden": true
+      },
+      "url": "http://localhost:8089",
+      "webRoot": "${workspaceFolder}/src/ui"
     }
   ]
 }

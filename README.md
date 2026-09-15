@@ -36,6 +36,9 @@ Docker-прокси публикует приложение по адресу `h
 - `Debug API` — собирает и запускает API вместе с необходимыми Docker-сервисами, затем открывает Scalar по адресу `http://localhost:5292/scalar`;
 - `Debug API (migration mode)` — запускает API в режиме применения миграций;
 - `Debug API + UI + proxy (host_mode)` — запускает API, dev-сервер UI и локальный proxy, затем открывает `https://wordoguessr.localhost`.
+- `Debug API + UI + proxy (cloudpub)` — запускает API и dev-сервер UI локально, а Caddy и CloudPub — через `compose.proxy.cloudpub.yaml`; открывает локальный адрес `http://localhost:8089`.
+
+Для профиля CloudPub задайте `CLOUDPUB_TOKEN` в `deployment/docker/.env`. UI и API публикуются с Basic Auth. Этот профиль использует Docker host networking, как и `host_mode`, и требует свободных портов `5292`, `5173` и `8089`.
 
 Связанные задачи автоматически собирают API и поднимают нужные зависимости через Docker Compose. После остановки отладки созданный для неё Compose-стек удаляется автоматически.
 
@@ -64,4 +67,3 @@ Affero General Public License версии 3 (`AGPL-3.0-only`). Полный т�
 
 Сторонние зависимости и другие сторонние материалы сохраняют собственные
 лицензии.
-

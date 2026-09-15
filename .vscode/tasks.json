@@ -141,6 +141,58 @@
       "dependsOrder": "sequence",
       "dependsOn": ["build:webapi", "docker:migration-services-up"],
       "problemMatcher": []
+    },
+    {
+      "label": "docker:proxy-cloudpub-up",
+      "type": "process",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-p",
+        "wordoguessr-debug",
+        "-f",
+        "compose.infra.yaml",
+        "-f",
+        "compose.proxy.cloudpub.yaml",
+        "up",
+        "-d",
+        "--force-recreate",
+        "--wait",
+        "--wait-timeout",
+        "120"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/deployment/docker"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker:debug-cloudpub-stack-down",
+      "type": "process",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-p",
+        "wordoguessr-debug",
+        "-f",
+        "compose.infra.yaml",
+        "-f",
+        "compose.proxy.cloudpub.yaml",
+        "down"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/deployment/docker"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "api:prepare-debug-cloudpub",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "build:webapi",
+        "docker:proxy-cloudpub-up"
+      ],
+      "problemMatcher": []
     }
   ]
 }

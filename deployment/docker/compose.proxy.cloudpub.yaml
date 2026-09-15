@@ -1,0 +1,26 @@
+services:
+
+  caddy-cloudpub-host:
+    image: caddy:2.11-alpine
+    restart: unless-stopped
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+    network_mode: host
+    volumes:
+      - ./configuration/Caddyfile.cloudpub.host:/etc/caddy/Caddyfile:ro
+
+  cloudpub-host:
+    image: cloudpub/cloudpub:latest
+    restart: unless-stopped
+    depends_on:
+      - caddy-cloudpub-host
+    network_mode: host
+    environment:
+      TOKEN: ${CLOUDPUB_TOKEN:?Set CLOUDPUB_TOKEN in .env}
+    command: ["publish", "--auth", "basic", "http", "localhost:8089"]
+    volumes:
+      - cloudpub_host_config:/home/cloudpub
+
+volumes:
+  cloudpub_host_config:
