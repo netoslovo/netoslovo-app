@@ -6,6 +6,7 @@ import GuessBar from "./GuessBar.vue";
 
 const props = withDefaults(defineProps<{
   active?: boolean;
+  registerListHeading?: (element: Element | ComponentPublicInstance | null) => void;
   registerGuess?: (key: string, element: Element | ComponentPublicInstance | null) => void;
   gameId: string;
   currentGuess: Guess | null;
@@ -40,7 +41,7 @@ function getFeedback(guess: Guess) {
     <div v-if="guesses.length > 0" class="guesses-list__section"
       :class="{ 'guesses-list__section--restored': revealRestoredGuesses }"
       @animationend.self="revealRestoredGuesses = false" @animationcancel.self="revealRestoredGuesses = false">
-      <p class="guesses-list__label">
+      <p :ref="(element) => registerListHeading?.(element)" class="guesses-list__label">
         Попыток: {{ guesses.length }}
       </p>
       <div class="guesses-list__items">
@@ -110,6 +111,10 @@ function getFeedback(guess: Guess) {
 }
 
 @media (width < 1024px) {
+  .guesses-list__label {
+    scroll-margin-top: 8px;
+  }
+
   .guesses-list__section--restored {
     animation-name: guesses-list-fade;
   }

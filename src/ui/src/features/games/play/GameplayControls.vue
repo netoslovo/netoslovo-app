@@ -81,7 +81,7 @@ const dictionaryChangedDialogOpen = ref(false);
 const dictionaryChangedAction = ref<"guess" | "hint">("guess");
 const dialogOpen = computed(() => props.dialogOpen || howToPlayOpen.value || surrenderDialogOpen.value
   || wordNotFoundInfoOpen.value || dictionaryChangedDialogOpen.value);
-const { showScrollTop, scrollbarWidth, registerGuess, updateScrollPosition, centerGuess, cancelCentering, restorePosition, scrollToTop: scrollGameToTop } = useGameplayScroll(
+const { showScrollTop, scrollbarWidth, registerListHeading, scrollUp, scrollUpLabel, scrollUpIcon, registerGuess, updateScrollPosition, centerGuess, cancelCentering, restorePosition, scrollToTop: scrollGameToTop } = useGameplayScroll(
   scrollport, gameContent, computed(() => mobile.value && view.value === "game"), dialogOpen,
 );
 
@@ -143,11 +143,10 @@ function onInputFocus(event: FocusEvent) {
 }
 
 async function scrollToTop() {
-  cancelCentering();
   actionsMenu.value?.close();
   closeHintsPopover();
   await closePanel(false);
-  if (mobile.value) scrollGameToTop();
+  if (mobile.value) scrollUp();
 }
 
 function onPointerMove(event: PointerEvent) {
@@ -378,7 +377,7 @@ function requestRandomLetterHint(closeMenu?: () => void) {
         <div v-if="mobile" class="gameplay-summary">
           <slot name="summary" :active="view === 'game'" />
         </div>
-        <slot name="guesses" :active="view === 'game'" :register-guess="registerGuess" />
+        <slot name="guesses" :active="view === 'game'" :register-guess="registerGuess" :register-list-heading="registerListHeading" />
       </div>
     </div>
     <div class="gameplay-composer" :inert="mobile && view !== 'game'">
@@ -387,7 +386,7 @@ function requestRandomLetterHint(closeMenu?: () => void) {
         <Transition name="scroll-top">
           <div v-if="mobile && showScrollTop" class="gameplay-controls__scroll-top-slot">
             <Button class="gameplay-controls__scroll-top" type="button"
-              aria-label="Наверх" icon="pi pi-arrow-up" severity="secondary" outlined
+              :aria-label="scrollUpLabel" :icon="scrollUpIcon" severity="secondary" outlined
               @pointerdown.prevent @click="scrollToTop" />
           </div>
         </Transition>
@@ -957,8 +956,8 @@ function requestRandomLetterHint(closeMenu?: () => void) {
   display: none;
 }
 
-.gameplay-controls .gameplay-controls__actions-button.p-button,
-.gameplay-controls .gameplay-controls__actions-button.p-button:is(:hover, :active) {
+.gameplay-controls .gameplay-controls__hints-button.p-button,
+.gameplay-controls .gameplay-controls__hints-button.p-button:is(:hover, :active) {
   color: var(--color-gray-600);
 }
 

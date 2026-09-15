@@ -466,7 +466,7 @@ const modeIcon = computed(() =>
 .word-tiles__helper-icon {
   position: relative;
   top: -1px;
-  color: var(--color-primary-600);
+  color: var(--color-gray-600);
   font-size: var(--word-tiles-helper-icon-size);
   line-height: 1;
 }
