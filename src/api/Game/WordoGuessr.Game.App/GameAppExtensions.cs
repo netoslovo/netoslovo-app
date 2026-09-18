@@ -24,7 +24,9 @@ using WordoGuessr.Game.App.UseCases.SingleGames.Common.MakeGuess;
 using WordoGuessr.Game.App.UseCases.SingleGames.Common.RevealHalfwayWord;
 using WordoGuessr.Game.App.UseCases.SingleGames.Common.RevealRandomLetter;
 using WordoGuessr.Game.App.UseCases.SingleGames.Common.RevealWordLength;
+using WordoGuessr.Game.App.UseCases.SingleGames.Common.Share;
 using WordoGuessr.Game.App.UseCases.SingleGames.Common.Surrender;
+using WordoGuessr.Game.App.UseCases.SingleGames.Common.Unshare;
 using WordoGuessr.Game.App.UseCases.SingleGames.Daily;
 using WordoGuessr.Game.App.UseCases.SingleGames.Daily.GetForDay;
 using WordoGuessr.Game.App.UseCases.SingleGames.Daily.GetHistory;
@@ -60,6 +62,8 @@ public static class GameAppExtensions
             .AddCommandHandler<RevealWordLengthHandler, RevealWordLengthCommand, Result<TextHintDto, RevealWordLengthError>>()
             .AddCommandHandler<RevealRandomLetterHandler, RevealRandomLetterCommand, Result<TextHintDto, RevealRandomLetterError>>()
             .AddCommandHandler<ReviewDailyGameSourceHandler, ReviewDailyGameSourceCommand, Result<ReviewDailyGameSourceError>>()
+            .AddCommandHandler<ShareHandler, ShareCommand, Result<Guid, ShareError>>()
+            .AddCommandHandler<UnshareHandler, UnshareCommand>()
 
             .AddCommandHandler<AutoAssignSourcesToEmptyDaysHandler, AutoAssignSourcesToEmptyDaysCommand, Result<AutoAssignSourcesToEmptyDaysError>>()
             .AddCommandHandler<UnassignSourceFromDayHandler, UnassignSourceFromDayCommand, Result<UnassignSourceFromDayError>>()
