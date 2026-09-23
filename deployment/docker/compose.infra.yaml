@@ -31,7 +31,7 @@ services:
       - "127.0.0.1:${MAILPIT_WEB_PORT:-18025}:8025"
 
   minio:
-    image: minio/minio:latest
+    image: quay.io/minio/minio:latest
     restart: always
     command: server /data
     environment:
@@ -50,7 +50,7 @@ services:
       - "127.0.0.1:${MINIO_API_PUBLIC_PORT:-19000}:9000"
 
   minio-init:
-    image: minio/mc
+    image: quay.io/minio/mc
     depends_on:
       - minio
     volumes:
