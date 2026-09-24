@@ -1,7 +1,7 @@
 create table game.single_game_shares
 (
-    public_id uuid not null,
     game_id uuid primary key,
+    public_id uuid not null,
     show_guess_words boolean not null,
     created_at timestamptz not null,
     updated_at timestamptz not null,
