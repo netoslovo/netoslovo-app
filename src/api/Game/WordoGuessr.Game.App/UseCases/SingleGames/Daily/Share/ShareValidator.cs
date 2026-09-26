@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace WordoGuessr.Game.App.UseCases.SingleGames.Common.Share;
+namespace WordoGuessr.Game.App.UseCases.SingleGames.Daily.Share;
 
 internal sealed class ShareValidator : AbstractValidator<ShareCommand>
 {

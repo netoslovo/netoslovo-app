@@ -24,15 +24,17 @@ using WordoGuessr.Game.App.UseCases.SingleGames.Common.MakeGuess;
 using WordoGuessr.Game.App.UseCases.SingleGames.Common.RevealHalfwayWord;
 using WordoGuessr.Game.App.UseCases.SingleGames.Common.RevealRandomLetter;
 using WordoGuessr.Game.App.UseCases.SingleGames.Common.RevealWordLength;
-using WordoGuessr.Game.App.UseCases.SingleGames.Common.Share;
 using WordoGuessr.Game.App.UseCases.SingleGames.Common.Surrender;
-using WordoGuessr.Game.App.UseCases.SingleGames.Common.Unshare;
 using WordoGuessr.Game.App.UseCases.SingleGames.Daily;
 using WordoGuessr.Game.App.UseCases.SingleGames.Daily.GetForDay;
 using WordoGuessr.Game.App.UseCases.SingleGames.Daily.GetHistory;
+using WordoGuessr.Game.App.UseCases.SingleGames.Daily.GetShare;
+using WordoGuessr.Game.App.UseCases.SingleGames.Daily.GetSharedGame;
 using WordoGuessr.Game.App.UseCases.SingleGames.Daily.GetToday;
+using WordoGuessr.Game.App.UseCases.SingleGames.Daily.Share;
 using WordoGuessr.Game.App.UseCases.SingleGames.Daily.StartForDay;
 using WordoGuessr.Game.App.UseCases.SingleGames.Daily.StartToday;
+using WordoGuessr.Game.App.UseCases.SingleGames.Daily.Unshare;
 using WordoGuessr.Game.App.UseCases.Statistics.GetArcadeGameTopPlayers;
 using WordoGuessr.Game.App.UseCases.Statistics.GetDailyGameCurrentPlayerStreak;
 using WordoGuessr.Game.App.UseCases.Statistics.GetDailyGameCurrentStreakTop;
@@ -72,6 +74,8 @@ public static class GameAppExtensions
         services
             .AddQueryHandler<GetLatestActiveArcadeHandler, GetLatestActiveArcadeQuery, ArcadeGameInfoDto?>()
             .AddQueryHandler<GetByIdArcadeHandler, GetByIdArcadeQuery, GameDto?>()
+            .AddQueryHandler<GetShareHandler, GetShareQuery, DailyGameShareDto?>()
+            .AddQueryHandler<GetSharedGameHandler, GetSharedGameQuery, Result<SharedDailyGameDto, GetSharedGameError>>()
             .AddQueryHandler<GetDailyGameForDayHandler, GetDailyGameForDayQuery, Result<GameDto?, GetDailyError>>()
             .AddQueryHandler<GetTodayDailyGameHandler, GetTodayDailyGameQuery, Result<DailyGameInfoDto?, GetDailyError>>()
             .AddQueryHandler<GetDifficultiesHandler, GetDifficultiesQuery, IReadOnlyCollection<DifficultyDto>>()

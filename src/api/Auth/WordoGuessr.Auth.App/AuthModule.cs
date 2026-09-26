@@ -18,4 +18,7 @@ public sealed class AuthModule : IAuthModule
     {
         return _userService.GetUserNames(userIds);
     }
+
+    public Task<string?> GetUserName(Guid userId, CancellationToken ct = default) =>
+        _userService.GetUserName(userId, ct);
 }

@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace WordoGuessr.Game.App.UseCases.SingleGames.Common.Unshare;
+namespace WordoGuessr.Game.App.UseCases.SingleGames.Daily.Unshare;
 
 internal sealed class UnshareValidator : AbstractValidator<UnshareCommand>
 {

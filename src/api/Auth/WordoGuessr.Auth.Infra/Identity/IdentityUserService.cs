@@ -297,6 +297,21 @@ internal sealed class IdentityUserService : IUserService
         }
     }
 
+    public async Task<string?> GetUserName(Guid userId, CancellationToken ct = default)
+    {
+        try
+        {
+            return await _userManager.Users
+                .Where(user => user.Id == userId)
+                .Select(user => user.UserName)
+                .SingleOrDefaultAsync(ct);
+        }
+        catch (Exception ex)
+        {
+            throw PersistenceExceptionsMapper.MapToPersistenceException(ex);
+        }
+    }
+
     private static UserErrorCode MapIdentityErrors(IdentityResult result)
     {
         if (result.Succeeded)

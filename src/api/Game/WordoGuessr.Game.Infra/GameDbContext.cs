@@ -35,7 +35,7 @@ public sealed class GameDbContext : DbContext, IGameStore
     public DbSet<ApprovedDailyGameSource> ApprovedDailyGameSources { get; private set; }
     public DbSet<GameSource> GameSources { get; private set; }
     public DbSet<VersionedGameSource> VersionedGameSources { get; private set; }
-    public DbSet<SingleGameShare> SingleGameShares { get; private set; }
+    public DbSet<DailyGameShare> DailyGameShares { get; private set; }
     internal DbSet<SingleGameResult> SingleGameResults { get; set; }
     internal DbSet<DailyGameStreakInfo> DailyGameStreaksInfo { get; set; }
     internal DbSet<ArcadeGameStats> ArcadeGameStats { get; set; }
@@ -95,6 +95,6 @@ public sealed class GameDbContext : DbContext, IGameStore
         modelBuilder.ApplyConfiguration(new SingleGameResultConfiguration());
         modelBuilder.ApplyConfiguration(new DailyGameStreakInfoConfiguration());
         modelBuilder.ApplyConfiguration(new ArcadeGameStatsConfiguration());
-        modelBuilder.ApplyConfiguration(new SingleGameShareConfiguration());
+        modelBuilder.ApplyConfiguration(new DailyGameShareConfiguration());
     }
 }

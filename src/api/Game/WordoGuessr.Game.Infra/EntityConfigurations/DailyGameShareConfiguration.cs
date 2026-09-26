@@ -4,11 +4,11 @@ using WordoGuessr.Game.Domain;
 
 namespace WordoGuessr.Game.Infra.EntityConfigurations;
 
-public sealed class SingleGameShareConfiguration : IEntityTypeConfiguration<SingleGameShare>
+public sealed class DailyGameShareConfiguration : IEntityTypeConfiguration<DailyGameShare>
 {
-    public void Configure(EntityTypeBuilder<SingleGameShare> builder)
+    public void Configure(EntityTypeBuilder<DailyGameShare> builder)
     {
-        builder.ToTable("single_game_shares");
+        builder.ToTable("daily_game_shares");
 
         builder.HasKey(ssg => ssg.Id);
 
@@ -19,8 +19,8 @@ public sealed class SingleGameShareConfiguration : IEntityTypeConfiguration<Sing
         builder.Property(ssg => ssg.PublicId)
             .HasColumnName("public_id");
 
-        builder.Property(ssg => ssg.ShowGuessWords)
-            .HasColumnName("show_guess_words");
+        builder.HasIndex(ssg => ssg.PublicId)
+            .IsUnique();
 
         builder.Property(ssg => ssg.CreatedAt)
             .HasColumnName("created_at");
@@ -30,7 +30,7 @@ public sealed class SingleGameShareConfiguration : IEntityTypeConfiguration<Sing
 
         builder.HasOne(ssg => ssg.SingleGame)
             .WithOne()
-            .HasForeignKey<SingleGameShare>(s => s.Id)
+            .HasForeignKey<DailyGameShare>(s => s.Id)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.Property<uint>("version")

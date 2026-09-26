@@ -5,7 +5,7 @@ using WordoGuessr.Common.Domain;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.Domain;
 
-namespace WordoGuessr.Game.App.UseCases.SingleGames.Common.Share;
+namespace WordoGuessr.Game.App.UseCases.SingleGames.Daily.Share;
 
 internal sealed class ShareHandler : ICommandHandler<ShareCommand, Result<Guid, ShareError>>
 {
@@ -20,30 +20,42 @@ internal sealed class ShareHandler : ICommandHandler<ShareCommand, Result<Guid, 
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
-
     public async Task<Result<Guid, ShareError>> Handle(
         ShareCommand command,
         CancellationToken ct)
     {
         var now = _timeProvider.GetUtcNow();
 
-        var gameExists = await _dbContext.SingleGames.AnyAsync(sg => sg.Id == command.GameId, ct);
-        if (!gameExists)
+        var game = await _dbContext.SingleGames
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                sg =>
+                    sg.Id == command.GameId &&
+                    sg.PlayerId == command.PlayerId &&
+                    sg.Mode == SingleGameMode.Daily,
+                ct);
+
+        if (game is null)
         {
             return Result<Guid, ShareError>.Failure(ShareError.GameNotFound);
         }
 
-        var exisitngShare = await _dbContext.SingleGameShares
+        if (game.StateCode == SingleGameStateCode.Active)
+        {
+            return Result<Guid, ShareError>.Failure(ShareError.GameIsActive);
+        }
+
+        var existingShare = await _dbContext.DailyGameShares
             .AsNoTracking()
             .FirstOrDefaultAsync(sgs => sgs.Id == command.GameId, ct);
 
-        if (exisitngShare is not null)
+        if (existingShare is not null)
         {
-            return Result<Guid, ShareError>.Success(exisitngShare.PublicId);
+            return Result<Guid, ShareError>.Success(existingShare.PublicId);
         }
 
-        var newShare = new SingleGameShare(command.GameId, now, command.ShowGuessWords);
-        _dbContext.SingleGameShares.Add(newShare);
+        var newShare = new DailyGameShare(command.GameId, now);
+        _dbContext.DailyGameShares.Add(newShare);
 
         try
         {
@@ -51,7 +63,7 @@ internal sealed class ShareHandler : ICommandHandler<ShareCommand, Result<Guid, 
         }
         catch (UniqueConstraintViolationException)
         {
-            var existingConcurrentShare = await _dbContext.SingleGameShares
+            var existingConcurrentShare = await _dbContext.DailyGameShares
                 .AsNoTracking()
                 .FirstOrDefaultAsync(sgs => sgs.Id == command.GameId, ct);
 

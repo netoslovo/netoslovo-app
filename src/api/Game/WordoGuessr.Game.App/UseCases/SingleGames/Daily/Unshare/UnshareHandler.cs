@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WordoGuessr.API.BuildingBlocks.CQRS;
 using WordoGuessr.Game.App.Abstractions;
 
-namespace WordoGuessr.Game.App.UseCases.SingleGames.Common.Unshare;
+namespace WordoGuessr.Game.App.UseCases.SingleGames.Daily.Unshare;
 
 internal sealed class UnshareHandler : ICommandHandler<UnshareCommand>
 {
@@ -17,8 +17,10 @@ internal sealed class UnshareHandler : ICommandHandler<UnshareCommand>
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        await _dbContext.SingleGameShares
-            .Where(sgs => sgs.Id == command.GameId && sgs.SingleGame.PlayerId == command.PlayerId)
+        await _dbContext.DailyGameShares
+            .Where(sgs =>
+                sgs.Id == command.GameId &&
+                sgs.SingleGame.PlayerId == command.PlayerId)
             .ExecuteDeleteAsync(ct);
     }
 }

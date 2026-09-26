@@ -5,15 +5,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using WordoGuessr.API.BuildingBlocks.CQRS;
 using WordoGuessr.API.BuildingBlocks.Security.CurrentPlayerAccessor;
-using WordoGuessr.Game.App.UseCases.SingleGames.Common.Unshare;
+using WordoGuessr.Game.App.UseCases.SingleGames.Daily.Unshare;
 
-namespace WordoGuessr.Game.API.UseCases.SingleGames.Common.Unshare;
+namespace WordoGuessr.Game.API.UseCases.SingleGames.Daily.Unshare;
 
 public static class UnshareEndpoint
 {
     public static IEndpointRouteBuilder MapUnshareSingleGame(this IEndpointRouteBuilder group)
     {
-        group.MapDelete("/{gameId:guid}/share", Handle)
+        group.MapDelete("/daily/{gameId:guid}/share", Handle)
             .ProducesValidationProblem()
             .WithName("Unshare");
 

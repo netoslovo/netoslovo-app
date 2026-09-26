@@ -7,15 +7,15 @@ using WordoGuessr.API.BuildingBlocks.CQRS;
 using WordoGuessr.API.BuildingBlocks.ProblemDetails;
 using WordoGuessr.API.BuildingBlocks.Security.CurrentPlayerAccessor;
 using WordoGuessr.Common.Domain;
-using WordoGuessr.Game.App.UseCases.SingleGames.Common.Share;
+using WordoGuessr.Game.App.UseCases.SingleGames.Daily.Share;
 
-namespace WordoGuessr.Game.API.UseCases.SingleGames.Common.Share;
+namespace WordoGuessr.Game.API.UseCases.SingleGames.Daily.Share;
 
 public static class ShareEndpoint
 {
     public static IEndpointRouteBuilder MapShareSingleGame(this IEndpointRouteBuilder group)
     {
-        group.MapPost("/{gameId:guid}/share", Handle)
+        group.MapPost("/daily/{gameId:guid}/share", Handle)
             .ProducesValidationProblem()
             .WithName("Share");
 
@@ -28,7 +28,6 @@ public static class ShareEndpoint
         Conflict<ProblemDetails>,
         BadRequest<ProblemDetails>>> Handle(
             [FromRoute] Guid gameId,
-            [FromBody] ShareRequest request,
             [FromServices] ICurrentPlayerAccessor currentPlayerAccessor,
             [FromServices] ICommandHandler<ShareCommand, Result<Guid, ShareError>> handler,
             CancellationToken ct)
@@ -37,7 +36,7 @@ public static class ShareEndpoint
         ArgumentNullException.ThrowIfNull(handler);
 
         var currentPlayer = currentPlayerAccessor.GetCurrentPlayer();
-        var command = new ShareCommand(currentPlayer.PlayerId, gameId, request.ShowGuessWords);
+        var command = new ShareCommand(currentPlayer.PlayerId, gameId);
 
         var result = await handler.Handle(command, ct);
         if (!result.IsSuccess)
