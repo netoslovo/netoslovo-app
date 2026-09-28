@@ -122,7 +122,6 @@ internal sealed class GetSharedGameHandler
             currentGuess,
             allGuesses,
             canViewSpoilers ? _displayWordDtoBuilder.Build(game) : null,
-            Helpers.BuildHintsInfo(game),
             score.Value,
             score.MapToDto(),
             playerName,

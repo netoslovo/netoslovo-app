@@ -5,7 +5,6 @@ public sealed record SharedDailyGameDto(
     SharedGuessDto? CurrentGuess,
     IReadOnlyCollection<SharedGuessDto> AllGuesses,
     DisplayWordDto? DisplayWord,
-    HintsInfoDto HintInfo,
     int Score,
     ScoreDetailsDto ScoreDetails,
     string PlayerName,

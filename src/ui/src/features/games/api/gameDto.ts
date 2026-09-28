@@ -91,7 +91,6 @@ export type SharedDailyGameDto = {
   currentGuess: SharedGuessDto | null;
   allGuesses: SharedGuessDto[];
   displayWord: DisplayWordDto | null;
-  hintInfo: HintsInfo;
   score: number;
   scoreDetails: ScoreDetailsDto;
   playerName: string;
