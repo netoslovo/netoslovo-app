@@ -118,6 +118,22 @@ b {
   }
 }
 
+.game-card--clickable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 0.16s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .game-card--clickable.game-card--clickable:hover {
+    background: var(--color-gray-50);
+  }
+}
+
+.game-card--clickable.game-card--clickable:active {
+  background: var(--color-gray-100);
+}
+
 html.mobile-game-layout,
 html.mobile-game-layout body,
 html.mobile-game-layout #app {

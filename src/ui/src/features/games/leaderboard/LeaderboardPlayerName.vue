@@ -113,8 +113,8 @@ onBeforeUnmount(() => {
 
 .leaderboard-player-name__content--interactive:focus-visible {
   border-radius: 2px;
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .leaderboard-player-name__full-name {

@@ -100,8 +100,8 @@ const {
 }
 
 .daily-on-time-badge:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
   background: var(--color-streak-50);
   color: var(--color-streak-600);
 }

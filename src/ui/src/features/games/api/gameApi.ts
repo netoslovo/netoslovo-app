@@ -12,6 +12,9 @@ import {
   type GuessOutcomeDto,
   type MakeGuessRequest,
   type TextHintDto,
+  type GetDailyGameShareResponse,
+  type GetSharedDailyGameResponse,
+  type ShareDailyGameResponse,
 } from "./gameDto";
 import type {
   ArcadeGame,
@@ -28,6 +31,7 @@ import type {
   GuessHint,
   GuessOutcome,
   TextHint,
+  SharedDailyGame,
 } from "../model/game";
 import {
   mapArcadeGame,
@@ -39,6 +43,7 @@ import {
   mapGuessHint,
   mapGuessOutcome,
   mapTextHint,
+  mapSharedDailyGame,
 } from "../model/gameMappers";
 import {
   apiClient,
@@ -70,6 +75,10 @@ const requestPolicies = {
   revealHalfwayWord: { timeoutMs: 10_000, retries: 0 },
   revealWordLength: { timeoutMs: 10_000, retries: 0 },
   revealRandomLetter: { timeoutMs: 10_000, retries: 0 },
+  getDailyGameShare: { timeoutMs: 8_000, retries: 1 },
+  shareDailyGame: { timeoutMs: 10_000, retries: 0 },
+  unshareDailyGame: { timeoutMs: 10_000, retries: 0 },
+  getSharedDailyGame: { timeoutMs: 10_000, retries: 1 },
 } satisfies Record<string, ApiRequestPolicy>;
 
 export async function getDifficulties(
@@ -330,4 +339,45 @@ export async function revealRandomLetter(gameId: string): Promise<TextHint> {
   );
 
   return mapTextHint(response.data);
+}
+
+export async function getDailyGameShare(
+  gameId: string,
+  options?: ApiRequestOptions,
+): Promise<string | null> {
+  const response = await apiClient.get<GetDailyGameShareResponse>(
+    `/api/games/single/daily/${gameId}/share`,
+    withRequestPolicy(requestPolicies.getDailyGameShare, options),
+  );
+
+  return response.data.share?.publicId ?? null;
+}
+
+export async function shareDailyGame(gameId: string): Promise<string> {
+  const response = await apiClient.post<ShareDailyGameResponse>(
+    `/api/games/single/daily/${gameId}/share`,
+    undefined,
+    withRequestPolicy(requestPolicies.shareDailyGame),
+  );
+
+  return response.data.publicId;
+}
+
+export async function unshareDailyGame(gameId: string): Promise<void> {
+  await apiClient.delete(
+    `/api/games/single/daily/${gameId}/share`,
+    withRequestPolicy(requestPolicies.unshareDailyGame),
+  );
+}
+
+export async function getSharedDailyGame(
+  publicId: string,
+  options?: ApiRequestOptions,
+): Promise<SharedDailyGame> {
+  const response = await apiClient.get<GetSharedDailyGameResponse>(
+    `/api/games/single/daily/shared/${publicId}`,
+    withRequestPolicy(requestPolicies.getSharedDailyGame, options),
+  );
+
+  return mapSharedDailyGame(response.data.game);
 }

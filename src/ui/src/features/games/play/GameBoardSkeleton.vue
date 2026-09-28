@@ -4,6 +4,10 @@ import UiSkeleton from "../../../shared/ui/UiSkeleton.vue";
 
 <template>
   <div class="game-board-skeleton" aria-hidden="true">
+    <section v-if="$slots.context" class="game-board-skeleton__context">
+      <slot name="context" />
+    </section>
+
     <section class="game-board-skeleton__word-card">
       <UiSkeleton class="game-board-skeleton__mode" width="46%" height="20px" />
       <UiSkeleton class="game-board-skeleton__mode-detail" width="32%" height="15px" />
@@ -46,12 +50,21 @@ import UiSkeleton from "../../../shared/ui/UiSkeleton.vue";
 
 .game-board-skeleton__word-card,
 .game-board-skeleton__state-card,
-.game-board-skeleton__list {
+.game-board-skeleton__list,
+.game-board-skeleton__context {
   border: 1px solid var(--color-gray-200);
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   background: white;
+}
+
+.game-board-skeleton__context {
+  min-height: 48px;
+  gap: 8px;
+  padding: 8px 10px;
+  border-color: var(--color-primary-100);
+  background: var(--color-primary-50);
 }
 
 .game-board-skeleton__word-card {

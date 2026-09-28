@@ -214,8 +214,8 @@ function onLogoClick(event: MouseEvent) {
 }
 
 .app-header__back:focus-visible {
-  outline: 2px solid var(--p-primary-contrast-color);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-inverse);
 }
 
 .app-header__back .pi {
@@ -251,8 +251,8 @@ function onLogoClick(event: MouseEvent) {
 }
 
 .game-logo-button:focus-visible {
-  outline: 2px solid var(--p-primary-contrast-color);
-  outline-offset: 4px;
+  outline: none;
+  box-shadow: var(--focus-ring-inverse);
 }
 
 .game-logo {

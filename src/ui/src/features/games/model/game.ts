@@ -85,6 +85,32 @@ export type DailyGameStreak = {
   tier: DailyGameStreakTier;
 };
 
+export type SharedGameSpoilersHideReason =
+  | "viewerGameNotFinished"
+  | "hiddenForToday";
+
+export type SharedGuess = {
+  word: string | null;
+  distance: number;
+  order: number;
+  fillPercentage: number;
+  source: GuessSource;
+};
+
+export type SharedDailyGame = {
+  gameState: GameState;
+  currentGuess: SharedGuess | null;
+  allGuesses: SharedGuess[];
+  displayWord: DisplayWord | null;
+  score: number;
+  scoreDetails: ScoreDetails;
+  playerName: string;
+  spoilersHideReason: SharedGameSpoilersHideReason | null;
+  day: string;
+  playerStats: DailyGamePlayerStats | null;
+  gameStats: DailyGameStats | null;
+};
+
 export type DailyGameStats = {
   medianScore: number;
   medianAttempts: number;

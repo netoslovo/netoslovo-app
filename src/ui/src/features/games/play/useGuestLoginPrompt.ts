@@ -79,7 +79,7 @@ export function useGuestLoginPrompt(
   function showPrompt() {
     shownForCurrentPage = true;
     visible.value = true;
-    userNotices.saveOneTimeUserNoticeView(
+    void userNotices.saveOneTimeUserNoticeView(
       userNoticeCodes.guestLoginAfterFinishedGame,
     );
   }

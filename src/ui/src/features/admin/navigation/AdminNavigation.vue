@@ -82,7 +82,7 @@ defineProps<{
 }
 
 .admin-navigation__link:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 </style>

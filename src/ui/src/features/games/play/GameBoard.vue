@@ -11,6 +11,7 @@ import UiButton from "../../../shared/ui/UiButton.vue";
 import UiSkeleton from "../../../shared/ui/UiSkeleton.vue";
 import DailyGameStatsCard from "./DailyGameStatsCard.vue";
 import DisplayWordTiles from "./DisplayWordTiles.vue";
+import GameWordCard from "./GameWordCard.vue";
 import GameScoreCard from "./GameScoreCard.vue";
 import GameSourceRemovedDialog from "./GameSourceRemovedDialog.vue";
 import GuessBar from "./GuessBar.vue";
@@ -172,16 +173,24 @@ watch(
   <div ref="gameBoard" class="game-board" :class="{ 'game-board--active': game.gameState === 'active' }">
     <template v-if="game.gameState !== 'active'">
       <div class="game-board__win">
-        <DisplayWordTiles :display-word="game.displayWord" :difficulty-name="game.difficulty.name"
-          :mode-label="modeConfig.title" :mode-detail="modeConfig.detail" :mode-variant="modeConfig.mode"
+        <GameWordCard :difficulty-name="game.difficulty.name" :mode-label="modeConfig.title"
+          :mode-detail="modeConfig.detail" :mode-variant="modeConfig.mode"
           :result-label="resultConfig[game.gameState].label" :result-icon="resultConfig[game.gameState].icon"
-          :game-state="game.gameState" :word-loading="finishedGameRefreshing"
-          :celebrate-guessed="celebrateGuessed" :animations-enabled="resultAnimationsReady" />
-        <section v-if="dailyResultState" class="game-result-summary-card" aria-label="Итоги игры дня">
+          :game-state="game.gameState"
+          :celebrate-guessed="celebrateGuessed" :animations-enabled="resultAnimationsReady">
+          <template v-if="$slots['result-header-action']" #header-action>
+            <slot name="result-header-action" />
+          </template>
+          <DisplayWordTiles :display-word="game.displayWord" :game-state="game.gameState"
+            :word-loading="finishedGameRefreshing" :animations-enabled="resultAnimationsReady" />
+        </GameWordCard>
+        <section v-if="dailyConfig" class="game-result-summary-card" aria-label="Итоги игры дня">
           <GameScoreCard :score="game.score" :score-details="game.scoreDetails" embedded />
-          <div class="game-result-summary-card__divider" aria-hidden="true"></div>
-          <DailyGameStatsCard :result-state="dailyResultState" :stats="dailyResultStats"
-            :refresh="dailyConfig?.stats.refresh" embedded collapsible />
+          <template v-if="dailyResultState">
+            <div class="game-result-summary-card__divider" aria-hidden="true"></div>
+            <DailyGameStatsCard :result-state="dailyResultState" :stats="dailyResultStats"
+              :refresh="dailyConfig.stats.refresh" embedded collapsible />
+          </template>
         </section>
         <GameScoreCard v-else :score="game.score" :score-details="game.scoreDetails" />
 
@@ -224,9 +233,10 @@ watch(
       :show-statistics="dailyConfig ? showDailyStatsDialog : undefined">
       <template #word>
         <div class="game-board__word">
-          <DisplayWordTiles :display-word="game.displayWord" :difficulty-name="game.difficulty.name"
-            :mode-label="modeConfig.title" :mode-detail="modeConfig.detail" :mode-variant="modeConfig.mode"
-            :game-state="game.gameState" />
+          <GameWordCard :difficulty-name="game.difficulty.name" :mode-label="modeConfig.title"
+            :mode-detail="modeConfig.detail" :mode-variant="modeConfig.mode" :game-state="game.gameState">
+            <DisplayWordTiles :display-word="game.displayWord" :game-state="game.gameState" />
+          </GameWordCard>
         </div>
       </template>
       <template #summary="{ active }">
@@ -415,8 +425,8 @@ watch(
 }
 
 .daily-stats-dialog__info:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .game-result-actions {

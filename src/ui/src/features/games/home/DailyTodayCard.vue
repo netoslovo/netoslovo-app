@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Popover from "primevue/popover";
 import { computed } from "vue";
-import type { RouteLocationRaw } from "vue-router";
+import { type RouteLocationRaw, useRouter } from "vue-router";
 import { useInfoPopover } from "../../../shared/composables/useInfoPopover";
 import UiButton from "../../../shared/ui/UiButton.vue";
 import type { DailyGame } from "../model/game";
@@ -12,6 +12,9 @@ import {
   wasGuessedOnReleaseDay,
 } from "../lib/dailyGamePresentation";
 import DailyOnTimeBadge from "../components/DailyOnTimeBadge.vue";
+import { isCardNavigationClick } from "../lib/cardNavigation";
+
+const router = useRouter();
 
 const props = withDefaults(
   defineProps<{
@@ -81,6 +84,11 @@ function onDisabledCardKeyDown(event: KeyboardEvent) {
   if (props.disabled) toggleStatus(event);
 }
 
+function openCard(event: MouseEvent) {
+  if (props.disabled || !props.to || !isCardNavigationClick(event)) return;
+  void router.push(props.to);
+}
+
 </script>
 
 <template>
@@ -88,7 +96,10 @@ function onDisabledCardKeyDown(event: KeyboardEvent) {
     class="daily-today-card"
     :class="[
       `daily-today-card--status-${config.status}`,
-      { 'daily-today-card--disabled': disabled },
+      {
+        'daily-today-card--disabled': disabled,
+        'game-card--clickable': !disabled && to,
+      },
     ]"
     :role="disabled ? 'button' : undefined"
     :tabindex="disabled ? 0 : undefined"
@@ -98,6 +109,7 @@ function onDisabledCardKeyDown(event: KeyboardEvent) {
     @mouseenter="showDisabledStatus"
     @mouseleave="hideDisabledStatus"
     @pointerdown="onDisabledCardPointerDown"
+    @click="openCard"
     @focus="showDisabledStatus"
     @blur="hideDisabledStatus"
     @keydown.enter.prevent="onDisabledCardKeyDown"
@@ -219,13 +231,22 @@ function onDisabledCardKeyDown(event: KeyboardEvent) {
 }
 
 .daily-today-card--disabled:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .daily-today-card--disabled:hover {
     border-color: var(--color-gray-300);
+    background: var(--color-gray-100);
+  }
+
+  .daily-today-card.game-card--clickable:hover {
+    background: var(--color-gray-50);
+  }
+
+  .daily-today-card--status-notStarted.game-card--clickable:hover,
+  .daily-today-card--status-cancelled.game-card--clickable:hover {
     background: var(--color-gray-100);
   }
 }
@@ -290,8 +311,8 @@ function onDisabledCardKeyDown(event: KeyboardEvent) {
 }
 
 .daily-today-card__status:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .daily-today-card__status .pi {
@@ -335,6 +356,32 @@ function onDisabledCardKeyDown(event: KeyboardEvent) {
   padding-inline: 0;
 }
 
+.daily-today-card--status-surrendered .daily-today-card__action.ui-button.ui-button--soft.p-button,
+.daily-today-card--status-cancelled .daily-today-card__action.ui-button.ui-button--soft.p-button {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-gray-700);
+}
+
+.daily-today-card--status-surrendered .daily-today-card__action.ui-button.ui-button--soft.p-button:not(:disabled):is(:hover, :active),
+.daily-today-card--status-cancelled .daily-today-card__action.ui-button.ui-button--soft.p-button:not(:disabled):is(:hover, :active) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-gray-800);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .daily-today-card__action.ui-button.ui-button--soft:hover .pi {
+    transform: scale(1.08);
+  }
+}
+
+.daily-today-card--status-surrendered .daily-today-card__action.ui-button:focus-visible,
+.daily-today-card--status-cancelled .daily-today-card__action.ui-button:focus-visible {
+  border-color: transparent;
+  box-shadow: var(--focus-ring-neutral);
+}
+
 .daily-today-card__action--disabled {
   width: 40px;
   min-width: 40px;
@@ -350,6 +397,7 @@ function onDisabledCardKeyDown(event: KeyboardEvent) {
 
 .daily-today-card__action .pi {
   font-size: 20px;
+  transition: transform 0.16s ease;
 }
 
 .daily-today-card__popover-content {

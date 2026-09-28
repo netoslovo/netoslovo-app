@@ -699,8 +699,8 @@ function requestRandomLetterHint(closeMenu?: () => void) {
 }
 
 .gameplay-controls__scroll-top.p-button:focus-visible {
-  outline: 2px solid var(--color-gray-300);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-neutral);
 }
 
 .gameplay-controls__scroll-top.p-button:not(:disabled):active {

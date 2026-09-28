@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Popover from "primevue/popover";
 import { computed } from "vue";
-import type { RouteLocationRaw } from "vue-router";
+import { type RouteLocationRaw, useRouter } from "vue-router";
 import { useInfoPopover } from "../../../shared/composables/useInfoPopover";
 import UiButton from "../../../shared/ui/UiButton.vue";
 import type { DailyGame } from "../model/game";
@@ -12,6 +12,9 @@ import {
 } from "../lib/dailyGamePresentation";
 import DailyOnTimeBadge from "../components/DailyOnTimeBadge.vue";
 import HistoryDisplayWord from "./HistoryDisplayWord.vue";
+import { isCardNavigationClick } from "../lib/cardNavigation";
+
+const router = useRouter();
 
 const props = defineProps<{
   dailyGame: DailyGame;
@@ -34,10 +37,16 @@ const {
 const config = computed(() => getDailyGameStatus(props.dailyGame));
 const title = computed(() => formatDailyGameDate(props.dailyGame.day));
 const showOnTimeBadge = computed(() => wasGuessedOnReleaseDay(props.dailyGame));
+
+function openCard(event: MouseEvent) {
+  if (!isCardNavigationClick(event)) return;
+  void router.push(props.to);
+}
 </script>
 
 <template>
-  <article class="daily-history-card" :class="`daily-history-card--status-${config.status}`">
+  <article class="daily-history-card game-card--clickable" :class="`daily-history-card--status-${config.status}`"
+    @click="openCard">
     <DailyOnTimeBadge v-if="showOnTimeBadge" />
 
     <div class="daily-history-card__layout">
@@ -210,8 +219,8 @@ const showOnTimeBadge = computed(() => wasGuessedOnReleaseDay(props.dailyGame));
 }
 
 .daily-history-card__status:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .daily-history-card__status .pi {
@@ -289,8 +298,37 @@ const showOnTimeBadge = computed(() => wasGuessedOnReleaseDay(props.dailyGame));
   white-space: nowrap;
 }
 
+.daily-history-card__action.ui-button.ui-button--soft.p-button {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-gray-700);
+}
+
+.daily-history-card__action.ui-button.ui-button--soft.p-button:not(:disabled):is(:hover, :active) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-gray-800);
+}
+
+.daily-history-card__action.ui-button:focus-visible {
+  border-color: transparent;
+  box-shadow: var(--focus-ring-neutral);
+}
+
 .daily-history-card__action .pi {
   font-size: 14px;
+  transition: transform 0.16s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .daily-history-card--status-notStarted.game-card--clickable:hover,
+  .daily-history-card--status-cancelled.game-card--clickable:hover {
+    background: var(--color-gray-100);
+  }
+
+  .daily-history-card__action:hover .pi {
+    transform: translateX(2px);
+  }
 }
 
 .daily-history-card__popover-content {

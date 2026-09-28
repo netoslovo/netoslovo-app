@@ -100,8 +100,8 @@ const {
 }
 
 .leaderboard-place__info:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .leaderboard-place__popover-text {

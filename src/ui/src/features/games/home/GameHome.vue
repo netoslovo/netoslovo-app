@@ -97,7 +97,7 @@ onMounted(async () => {
 
   gameGuideShowWelcome.value = true;
   howToPlayOpen.value = true;
-  userNotices.saveOneTimeUserNoticeView(userNoticeCodes.gameGuide);
+  void userNotices.saveOneTimeUserNoticeView(userNoticeCodes.gameGuide);
 });
 
 onUnmounted(() => {
@@ -550,8 +550,8 @@ function formatLocalDay(date: Date) {
 }
 
 .home-screen__how-to-play:focus-visible {
-  outline: 2px solid var(--color-primary-500);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
   border-radius: 4px;
 }
 
@@ -730,8 +730,8 @@ function formatLocalDay(date: Date) {
 }
 
 .daily-streak__info:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .daily-streak__info .pi {

@@ -357,7 +357,7 @@ onBeforeUnmount(unbindViewportListeners);
 }
 
 .ui-menu__button--header.p-button:focus-visible {
-  outline-color: var(--p-primary-100);
+  box-shadow: var(--focus-ring-inverse);
   background: color-mix(in srgb, var(--p-primary-100) 18%, transparent);
   color: var(--p-primary-100);
 }

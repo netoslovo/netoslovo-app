@@ -74,6 +74,53 @@ export type DailyGameStreakDto = {
   tier: DailyGameStreakTierDto;
 };
 
+export type SharedGameSpoilersHideReasonDto =
+  | "ViewerGameNotFinished"
+  | "HiddenForToday";
+
+export type SharedGuessDto = {
+  word: string | null;
+  distance: number;
+  order: number;
+  fillPercentage: number;
+  source: GuessSourceDto;
+};
+
+export type SharedDailyGameDto = {
+  gameState: GameStateDto;
+  currentGuess: SharedGuessDto | null;
+  allGuesses: SharedGuessDto[];
+  displayWord: DisplayWordDto | null;
+  hintInfo: HintsInfo;
+  score: number;
+  scoreDetails: ScoreDetailsDto;
+  playerName: string;
+  spoilersHideReason: SharedGameSpoilersHideReasonDto | null;
+  day: string;
+  playerStats: DailyGamePlayerStatsDto | null;
+  gameStats: DailyGameStatsDto | null;
+};
+
+export type DailyGameShareDto = { publicId: string };
+export type GetDailyGameShareResponse = { share: DailyGameShareDto | null };
+export type ShareDailyGameResponse = { publicId: string };
+export type GetSharedDailyGameResponse = { game: SharedDailyGameDto };
+
+export type DailyGameStatsDto = {
+  medianScore: number;
+  medianAttempts: number;
+  medianDuration: string;
+};
+
+export type DailyGamePlayerStatsDto = {
+  score: number;
+  attemptsCount: number;
+  duration: string;
+  scoreBetterThanPercent: number;
+  attemptsCountBetterThanPercent: number;
+  durationBetterThanPercent: number;
+};
+
 export type ArcadeGameDto = {
   id: string;
   difficulty: Difficulty;
