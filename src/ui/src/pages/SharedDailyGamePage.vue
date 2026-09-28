@@ -137,7 +137,7 @@ function getResultPresentation(state: GameState | null) {
             <i class="pi pi-share-alt"></i>
           </span>
           <p class="shared-daily-context__title">
-            Отображется результат игрока {{ game.playerName }}
+            Отображается результат игрока {{ game.playerName }}
           </p>
         </div>
         <div class="shared-daily-context__actions">
