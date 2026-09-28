@@ -137,7 +137,8 @@ function getResultPresentation(state: GameState | null) {
             <i class="pi pi-share-alt"></i>
           </span>
           <p class="shared-daily-context__title">
-            Отображается результат игрока {{ game.playerName }}
+            Отображается результат игрока
+            <strong class="shared-daily-context__player-name">{{ game.playerName }}</strong>
           </p>
         </div>
         <div class="shared-daily-context__actions">
@@ -243,6 +244,11 @@ function getResultPresentation(state: GameState | null) {
   color: var(--color-gray-800);
   font-size: 13px;
   line-height: 1.35;
+}
+
+.shared-daily-context__player-name {
+  color: var(--color-primary-700);
+  font-weight: 600;
 }
 
 .shared-daily-context__actions,
