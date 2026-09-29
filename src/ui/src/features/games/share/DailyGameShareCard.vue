@@ -206,7 +206,7 @@ async function revokeShare() {
     showToast({
       status: "success",
       title: "Публикация удалена",
-      message: "Результат больше нельзя открыть по ссылке.",
+      message: "Результат больше недоступен по ссылке.",
     });
   } catch {
     if (currentRequestId !== requestId) return;
