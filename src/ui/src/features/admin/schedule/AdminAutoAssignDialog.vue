@@ -310,10 +310,10 @@ async function submit() {
       </div>
       <p v-if="error" class="auto-assign__error">{{ error }}</p>
       <div class="admin-actions auto-assign__actions">
-        <UiButton type="submit" :loading="submitting">Назначить</UiButton>
         <UiButton variant="outlined" :disabled="submitting" @click="close">
           Отмена
         </UiButton>
+        <UiButton type="submit" :loading="submitting">Назначить</UiButton>
       </div>
     </form>
   </Dialog>

@@ -7,10 +7,11 @@ const props = defineProps<{
   place: number | null;
   emptyPlaceInfo?: string;
   emphasized?: boolean;
+  decorated?: boolean;
 }>();
 
 const medalClass = computed(() =>
-  props.place !== null && props.place >= 1 && props.place <= 3
+  props.decorated !== false && props.place !== null && props.place >= 1 && props.place <= 3
     ? `leaderboard-place--${props.place}`
     : null,
 );

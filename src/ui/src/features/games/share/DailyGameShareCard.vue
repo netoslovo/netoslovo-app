@@ -206,7 +206,7 @@ async function revokeShare() {
     showToast({
       status: "success",
       title: "Публикация удалена",
-      message: "Результат больше нельзя открыть по ссылке.",
+      message: "Результат больше недоступен по ссылке.",
     });
   } catch {
     if (currentRequestId !== requestId) return;
@@ -353,10 +353,10 @@ function formatDay(day: string) {
         Ссылка на результат перестанет работать. Позже результат можно будет опубликовать снова.
       </p>
       <div class="share-dialog-confirmation__actions">
+        <UiButton variant="outlined" :disabled="revoking" @click="revokeConfirmationOpen = false">Назад</UiButton>
         <UiButton class="share-card__danger" :loading="revoking" loading-label="Удаление публикации"
           @click="revokeShare">
           Удалить</UiButton>
-        <UiButton variant="outlined" :disabled="revoking" @click="revokeConfirmationOpen = false">Назад</UiButton>
       </div>
     </div>
   </Dialog>

@@ -138,8 +138,8 @@ function revealWords() {
         Будут раскрыты слова ближайших игр дня. Это может испортить вашу игру.
       </p>
       <div class="dialog-actions">
-        <UiButton @click="revealWords">Показать</UiButton>
         <UiButton variant="outlined" @click="spoilerDialogOpen = false">Отмена</UiButton>
+        <UiButton @click="revealWords">Показать</UiButton>
       </div>
     </Dialog>
 

@@ -258,11 +258,11 @@ function formatDateTime(value: string) {
       </div>
 
       <div v-else class="username-dialog__actions">
-        <UiButton type="submit" :loading="submitting">
-          Сохранить
-        </UiButton>
         <UiButton variant="outlined" :disabled="submitting" @click="dismissDialog">
           Отмена
+        </UiButton>
+        <UiButton type="submit" :loading="submitting">
+          Сохранить
         </UiButton>
       </div>
     </form>
@@ -315,11 +315,11 @@ function formatDateTime(value: string) {
       </p>
 
       <div class="username-dialog__actions">
-        <UiButton :loading="submitting" @click="confirmUserNameChange">
-          Подтвердить
-        </UiButton>
         <UiButton variant="outlined" :disabled="submitting" @click="closeConfirmationDialog">
           Отмена
+        </UiButton>
+        <UiButton :loading="submitting" @click="confirmUserNameChange">
+          Подтвердить
         </UiButton>
       </div>
     </div>

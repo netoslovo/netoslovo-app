@@ -198,11 +198,11 @@ function closeCancelUploadDialog() {
         Загрузка версии {{ cancelCandidate.wordsVersion }} будет остановлена.
       </p>
       <div class="dialog-actions">
-        <UiButton class="cancel-upload-button" :loading="canceling" @click="confirmCancelUpload">
-          Отменить
-        </UiButton>
         <UiButton variant="outlined" :disabled="canceling" @click="closeCancelUploadDialog">
           Закрыть
+        </UiButton>
+        <UiButton class="cancel-upload-button" :loading="canceling" @click="confirmCancelUpload">
+          Отменить
         </UiButton>
       </div>
     </Dialog>

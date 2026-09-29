@@ -198,11 +198,11 @@ onBeforeUnmount(() => {
         </p>
       </div>
       <div class="dialog-actions">
-        <UiButton :loading="publishing" loading-label="Публикация" @click="confirmPublish">
-          Опубликовать
-        </UiButton>
         <UiButton variant="outlined" :disabled="publishing" @click="closeConfirmation">
           Отмена
+        </UiButton>
+        <UiButton :loading="publishing" loading-label="Публикация" @click="confirmPublish">
+          Опубликовать
         </UiButton>
       </div>
     </Dialog>
