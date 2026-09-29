@@ -144,7 +144,7 @@ function getResultPresentation(state: GameState | null) {
         <div class="shared-daily-context__actions">
           <UiButton class="shared-daily-context__action" size="sm" variant="soft"
             :to="{ name: 'daily', params: { day: game.day } }">
-            Открыть эту игру
+            Перейти к игре
             <i class="pi pi-arrow-right" aria-hidden="true"></i>
           </UiButton>
         </div>
@@ -172,8 +172,8 @@ function getResultPresentation(state: GameState | null) {
 
     <section v-else-if="notFound" class="shared-daily-state">
       <i class="shared-daily-state__icon pi pi-link" aria-hidden="true"></i>
-      <h2 class="shared-daily-state__title">Ссылка недоступна</h2>
-      <p class="shared-daily-state__text">Возможно, владелец отключил её, или адрес указан неверно.</p>
+      <h2 class="shared-daily-state__title">Результат недоступен</h2>
+      <p class="shared-daily-state__text">Возможно, владелец удалил публикацию или адрес указан неверно.</p>
       <UiButton :to="{ name: 'home' }">На главную</UiButton>
     </section>
 

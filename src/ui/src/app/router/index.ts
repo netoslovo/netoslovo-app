@@ -125,7 +125,8 @@ const router = createRouter({
       meta: { pageTitle: "Лучшие игроки слова дня", showBack: true },
     },
     {
-      path: "/daily/shared/:publicId",
+      path: "/s/:publicId",
+      alias: "/daily/shared/:publicId",
       name: "shared-daily",
       component: SharedDailyGamePage,
       meta: { pageTitle: "Результат слова дня", showBack: true },

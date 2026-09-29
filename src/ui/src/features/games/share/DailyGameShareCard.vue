@@ -3,6 +3,7 @@ import Dialog from "primevue/dialog";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { isApiRequestCanceled } from "../../../shared/api/apiError";
+import { getAppOrigin } from "../../../shared/config/app";
 import { showToast } from "../../../shared/notifications/toastStore";
 import UiButton from "../../../shared/ui/UiButton.vue";
 import UiIconButton from "../../../shared/ui/UiIconButton.vue";
@@ -46,7 +47,7 @@ const shareUrl = computed(() => {
     name: "shared-daily",
     params: { publicId: publicId.value },
   }).href;
-  return new URL(path, window.location.origin).href;
+  return `${getAppOrigin()}${path}`;
 });
 const nativeShareData = computed<ShareData>(() => ({
   text: `Мой результат в игре дня за ${formatDay(props.day)}\n\n${shareUrl.value}`,
@@ -204,15 +205,15 @@ async function revokeShare() {
     resetCopyFeedback();
     showToast({
       status: "success",
-      title: "Ссылка отключена",
-      message: "Открыть результат по прошлой ссылке больше нельзя.",
+      title: "Публикация удалена",
+      message: "Результат больше нельзя открыть по ссылке.",
     });
   } catch {
     if (currentRequestId !== requestId) return;
     showToast({
       status: "error",
-      title: "Публичная ссылка",
-      message: "Не удалось отключить ссылку. Попробуйте ещё раз.",
+      title: "Удаление публикации",
+      message: "Не удалось удалить публикацию. Попробуйте ещё раз.",
     });
   } finally {
     if (currentRequestId === requestId) revoking.value = false;
@@ -229,7 +230,7 @@ function formatDay(day: string) {
 </script>
 
 <template>
-  <section class="share-card" aria-label="Публичная ссылка на результат"
+  <section class="share-card" aria-label="Публикация результата"
     :aria-busy="state === 'loading' || creating || revoking || copying || sharing">
     <div class="share-card__content">
       <div v-if="state === 'loading'" class="share-card__loading">
@@ -237,17 +238,17 @@ function formatDay(day: string) {
           <UiSkeleton width="150px" height="15px" border-radius="5px" />
           <UiSkeleton width="100%" height="34px" border-radius="8px" />
         </div>
-        <span class="visually-hidden" role="status">Проверка публичной ссылки</span>
+        <span class="visually-hidden" role="status">Проверка статуса публикации</span>
       </div>
 
       <template v-else>
         <div v-if="state === 'failed'" class="share-card__failure">
-          <p class="share-card__error" role="alert">Не удалось проверить публичную ссылку.</p>
+          <p class="share-card__error" role="alert">Не удалось проверить статус публикации.</p>
         </div>
 
         <template v-else-if="state === 'missing'">
           <p v-if="createError" class="share-card__error" role="alert">
-            Не удалось создать ссылку. Попробуйте ещё раз.
+            Не удалось опубликовать результат. Попробуйте ещё раз.
           </p>
         </template>
 
@@ -255,7 +256,7 @@ function formatDay(day: string) {
           <div class="share-card__status-row">
             <p class="share-card__status" role="status">
               <i class="pi pi-check-circle" aria-hidden="true"></i>
-              Доступ по ссылке включён
+              Результат опубликован
             </p>
           </div>
 
@@ -273,8 +274,8 @@ function formatDay(day: string) {
                 </Transition>
               </UiIconButton>
             </div>
-            <UiIconButton class="share-card__revoke" size="sm" label="Отключить публичную ссылку"
-              loading-label="Отключение публичной ссылки" :loading="revoking" :disabled="copying || sharing"
+            <UiIconButton class="share-card__revoke" size="sm" label="Удалить публикацию результата"
+              loading-label="Удаление публикации" :loading="revoking" :disabled="copying || sharing"
               @click="requestRevoke">
               <i class="pi pi-trash" aria-hidden="true"></i>
             </UiIconButton>
@@ -289,13 +290,13 @@ function formatDay(day: string) {
           <div class="share-card__policy">
             <i class="pi pi-info-circle" aria-hidden="true"></i>
             <span>
-              Любой, у кого есть ссылка, сможет увидеть ваше имя пользователя, результат, попытки и статистику.
-              Ссылку можно отключить в любой момент.
+              Опубликованный результат доступен любому, у кого есть ссылка. Вместе с ним будут видны ваше
+              имя пользователя, попытки и статистика. Публикацию можно удалить в любой момент.
             </span>
           </div>
           <div class="share-card__policy">
             <i class="pi pi-info-circle" aria-hidden="true"></i>
-            <span>Загаданное слово и слова попыток скроем от тех, кто ещё не завершил игру дня.</span>
+            <span>Загаданное слово и слова попыток останутся скрытыми от тех, кто ещё не завершил игру дня.</span>
           </div>
         </div>
 
@@ -307,9 +308,9 @@ function formatDay(day: string) {
         </div>
 
         <div v-else-if="state === 'missing'" class="share-card__actions">
-          <UiButton :loading="creating" loading-label="Создание ссылки" @click="createShare()">
-            <i class="pi pi-link" aria-hidden="true"></i>
-            Создать ссылку
+          <UiButton :loading="creating" loading-label="Публикация результата" @click="createShare()">
+            <i class="pi pi-share-alt" aria-hidden="true"></i>
+            Опубликовать результат
           </UiButton>
         </div>
 
@@ -345,16 +346,17 @@ function formatDay(day: string) {
 
   <Dialog :visible="revokeConfirmationOpen" modal :dismissable-mask="!revoking" :closable="!revoking"
     :close-on-escape="!revoking" :content-props="{ 'aria-busy': revoking ? 'true' : undefined }"
-    header="Отключить публичную ссылку?" class="game-dialog"
+    header="Удалить публикацию результата?" class="game-dialog"
     @update:visible="value => { if (!revoking) revokeConfirmationOpen = value; }">
     <div class="share-dialog-confirmation">
       <p class="share-dialog-confirmation__text">
-        Текущая ссылка перестанет работать. Можно будет создать новую.
+        Ссылка на результат перестанет работать. Позже результат можно будет опубликовать снова.
       </p>
       <div class="share-dialog-confirmation__actions">
-        <UiButton class="share-card__danger" :loading="revoking" loading-label="Отключение ссылки" @click="revokeShare">
-          Отключить</UiButton>
-        <UiButton variant="outlined" :disabled="revoking" @click="revokeConfirmationOpen = false">Отмена</UiButton>
+        <UiButton class="share-card__danger" :loading="revoking" loading-label="Удаление публикации"
+          @click="revokeShare">
+          Удалить</UiButton>
+        <UiButton variant="outlined" :disabled="revoking" @click="revokeConfirmationOpen = false">Назад</UiButton>
       </div>
     </div>
   </Dialog>
