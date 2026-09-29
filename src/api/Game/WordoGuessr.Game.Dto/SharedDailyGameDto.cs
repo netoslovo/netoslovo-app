@@ -2,7 +2,6 @@ namespace WordoGuessr.Game.Dto;
 
 public sealed record SharedDailyGameDto(
     GameStateDto GameState,
-    SharedGuessDto? CurrentGuess,
     IReadOnlyCollection<SharedGuessDto> AllGuesses,
     DisplayWordDto? DisplayWord,
     int Score,

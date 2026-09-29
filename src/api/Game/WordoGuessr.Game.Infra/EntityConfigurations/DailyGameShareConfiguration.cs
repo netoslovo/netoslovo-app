@@ -25,15 +25,9 @@ public sealed class DailyGameShareConfiguration : IEntityTypeConfiguration<Daily
         builder.Property(ssg => ssg.CreatedAt)
             .HasColumnName("created_at");
 
-        builder.Property(ssg => ssg.UpdatedAt)
-            .HasColumnName("updated_at");
-
         builder.HasOne(ssg => ssg.SingleGame)
             .WithOne()
             .HasForeignKey<DailyGameShare>(s => s.Id)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.Property<uint>("version")
-            .IsRowVersion();
     }
 }

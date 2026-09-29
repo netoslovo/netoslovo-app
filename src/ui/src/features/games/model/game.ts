@@ -99,7 +99,6 @@ export type SharedGuess = {
 
 export type SharedDailyGame = {
   gameState: GameState;
-  currentGuess: SharedGuess | null;
   allGuesses: SharedGuess[];
   displayWord: DisplayWord | null;
   score: number;

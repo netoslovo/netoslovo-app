@@ -96,7 +96,7 @@ internal sealed class GetSharedGameHandler
         var viewerGame = await GetViewerDailyGame(viewerPlayerId, game, ct);
         var canViewSpoilers = CanViewDailySpoilers(viewerGame, out var spoilersHideReason);
 
-        var (currentGuess, allGuesses) = BuildGuesses(
+        var guesses = BuildGuesses(
             game,
             totalWords,
             showWords: canViewSpoilers);
@@ -119,8 +119,7 @@ internal sealed class GetSharedGameHandler
         var score = game.GetScore();
         var result = new SharedDailyGameDto(
             game.StateCode.MapToDto(),
-            currentGuess,
-            allGuesses,
+            guesses,
             canViewSpoilers ? _displayWordDtoBuilder.Build(game) : null,
             score.Value,
             score.MapToDto(),
@@ -194,12 +193,12 @@ internal sealed class GetSharedGameHandler
                game.DayOfDailyGame == today;
     }
 
-    private static (SharedGuessDto? CurrentGuess, IReadOnlyCollection<SharedGuessDto> AllGuesses) BuildGuesses(
+    private static IReadOnlyCollection<SharedGuessDto> BuildGuesses(
         SingleGame game,
         ushort totalWords,
         bool showWords)
     {
-        var allGuesses = game.Guesses
+        return game.Guesses
             .Select((guess, index) => new SharedGuessDto(
                 showWords ? guess.Word.Text : null,
                 guess.Distance,
@@ -207,7 +206,5 @@ internal sealed class GetSharedGameHandler
                 GuessFillPercentageCalculator.Calculate(guess.Distance, totalWords),
                 guess.Source.MapToDto()))
             .ToArray();
-
-        return (allGuesses.LastOrDefault(), allGuesses);
     }
 }

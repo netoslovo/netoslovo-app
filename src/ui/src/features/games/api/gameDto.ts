@@ -88,7 +88,6 @@ export type SharedGuessDto = {
 
 export type SharedDailyGameDto = {
   gameState: GameStateDto;
-  currentGuess: SharedGuessDto | null;
   allGuesses: SharedGuessDto[];
   displayWord: DisplayWordDto | null;
   score: number;

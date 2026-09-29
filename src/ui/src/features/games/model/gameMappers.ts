@@ -133,7 +133,6 @@ function mapSharedGuess(dto: SharedGuessDto): SharedGuess {
 export function mapSharedDailyGame(dto: SharedDailyGameDto): SharedDailyGame {
   return {
     gameState: mapKnownValue(gameStates, dto.gameState, "game state"),
-    currentGuess: dto.currentGuess ? mapSharedGuess(dto.currentGuess) : null,
     allGuesses: dto.allGuesses.map(mapSharedGuess),
     displayWord: dto.displayWord ? mapDisplayWord(dto.displayWord) : null,
     score: dto.score,

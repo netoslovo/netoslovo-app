@@ -10,8 +10,6 @@ public sealed class DailyGameShare : DomainEntity<Guid>
 
     public DateTimeOffset CreatedAt { get; }
 
-    public DateTimeOffset UpdatedAt { get; private set; }
-
     public DailyGameShare(
         Guid gameId,
         DateTimeOffset createdAt)
@@ -19,7 +17,6 @@ public sealed class DailyGameShare : DomainEntity<Guid>
     {
         PublicId = Guid.NewGuid();
         CreatedAt = createdAt;
-        UpdatedAt = createdAt;
     }
 
     private DailyGameShare() { }
