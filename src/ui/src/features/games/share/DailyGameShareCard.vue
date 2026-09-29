@@ -3,6 +3,7 @@ import Dialog from "primevue/dialog";
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useRouter } from "vue-router";
 import { isApiRequestCanceled } from "../../../shared/api/apiError";
+import { getAppOrigin } from "../../../shared/config/app";
 import { showToast } from "../../../shared/notifications/toastStore";
 import UiButton from "../../../shared/ui/UiButton.vue";
 import UiIconButton from "../../../shared/ui/UiIconButton.vue";
@@ -46,7 +47,7 @@ const shareUrl = computed(() => {
     name: "shared-daily",
     params: { publicId: publicId.value },
   }).href;
-  return new URL(path, window.location.origin).href;
+  return `${getAppOrigin()}${path}`;
 });
 const nativeShareData = computed<ShareData>(() => ({
   text: `Мой результат в игре дня за ${formatDay(props.day)}\n\n${shareUrl.value}`,
