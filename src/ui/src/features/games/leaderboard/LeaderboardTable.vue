@@ -23,12 +23,14 @@ const props = withDefaults(
     metricNavigation?: boolean;
     compactPlacePlayerGap?: boolean;
     denseOnShortViewport?: boolean;
+    decorateTopPlaces?: boolean;
   }>(),
   {
     tableLabel: undefined,
     metricNavigation: false,
     compactPlacePlayerGap: false,
     denseOnShortViewport: false,
+    decorateTopPlaces: true,
   },
 );
 
@@ -147,6 +149,7 @@ const tableStyle = computed(() => ({
                     <LeaderboardPlace
                       :place="row.place"
                       :emphasized="row.placeEmphasized"
+                      :decorated="decorateTopPlaces"
                       :empty-place-info="row.emptyPlaceInfo"
                     />
                   </td>
@@ -156,7 +159,11 @@ const tableStyle = computed(() => ({
                       :emphasized="row.playerNameEmphasized"
                     />
                   </td>
-                  <td>{{ row.metric }}</td>
+                  <td>
+                    <slot name="metric" :row="row" :value="row.metric">
+                      {{ row.metric }}
+                    </slot>
+                  </td>
                 </tr>
               </template>
             </tbody>

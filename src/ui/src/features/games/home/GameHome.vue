@@ -4,6 +4,7 @@ import Popover from "primevue/popover";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRouter, type RouteLocationRaw } from "vue-router";
 import type { DailyGame, DailyGameStreak } from "../model/game";
+import { dailyStreakTierLegend } from "../lib/dailyStreakPresentation";
 import { useInfoPopoverSemantics } from "../../../shared/composables/useInfoPopover";
 import { userNoticeCodes } from "../../user-notices/model/userNoticeCodes";
 import { useUserNoticeStore } from "../../user-notices/model/userNoticeStore";
@@ -11,6 +12,7 @@ import { showToast } from "../../../shared/notifications/toastStore";
 import DailyCompactTile from "./DailyCompactTile.vue";
 import DailyTodayCard from "./DailyTodayCard.vue";
 import NewArcadeGameDialog from "./NewArcadeGameDialog.vue";
+import DailyStreakBadge from "../components/DailyStreakBadge.vue";
 import GameGuide from "../components/GameGuide.vue";
 import UiButton from "../../../shared/ui/UiButton.vue";
 
@@ -55,20 +57,6 @@ const dailyStreakTierClasses: Record<DailyGameStreak["tier"], string> = {
   century: "daily-streak--tier-century",
   legend: "daily-streak--tier-legend",
 };
-
-const dailyStreakTierLegend: Array<{
-  tier: DailyGameStreak["tier"];
-  range: string;
-}> = [
-    { tier: "started", range: "1+" },
-    { tier: "steady", range: "3+" },
-    { tier: "week", range: "7+" },
-    { tier: "twoWeeks", range: "14+" },
-    { tier: "month", range: "30+" },
-    { tier: "season", range: "60+" },
-    { tier: "century", range: "100+" },
-    { tier: "legend", range: "365+" },
-  ];
 
 const loginInfoPopover = ref<PopoverRef | null>(null);
 const dailyInfoPopover = ref<PopoverRef | null>(null);
@@ -341,9 +329,8 @@ function formatLocalDay(date: Date) {
                   пропустить день, активная серия сбросится.</p>
                 <p>Есть несколько уровней в зависимости от длины серии:</p>
                 <ul class="daily-streak-legend" aria-label="Уровни серии">
-                  <li v-for="item in dailyStreakTierLegend" :key="item.tier" class="daily-streak-legend__item"
-                    :class="dailyStreakTierClasses[item.tier]">
-                    <span class="daily-streak-legend__range">{{ item.range }}</span>
+                  <li v-for="item in dailyStreakTierLegend" :key="item.tier" class="daily-streak-legend__item">
+                    <DailyStreakBadge :value="item.range" :tier="item.tier" :label="`Серия ${item.range}`" />
                   </li>
                 </ul>
               </div>
@@ -737,20 +724,7 @@ function formatLocalDay(date: Date) {
 
 .daily-streak-legend__item {
   min-width: 0;
-}
-
-.daily-streak-legend__range {
-  min-width: 0;
-  padding: 2px 6px;
-  border: 1px solid var(--daily-streak-border);
-  border-radius: 6px;
-  background: var(--daily-streak-bg);
-  color: var(--daily-streak-value);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.2;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
+  display: flex;
 }
 
 .daily-chain {

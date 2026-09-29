@@ -12,6 +12,8 @@ import type {
   DailyGameStreakTopCurrentPlayerEntry,
   DailyGameStreakTopEntry,
 } from "../features/games/model/game";
+import DailyStreakBadge from "../features/games/components/DailyStreakBadge.vue";
+import { getDailyStreakTier } from "../features/games/lib/dailyStreakPresentation";
 import LeaderboardShell from "../features/games/leaderboard/LeaderboardShell.vue";
 import LeaderboardTable from "../features/games/leaderboard/LeaderboardTable.vue";
 import {
@@ -65,7 +67,7 @@ const displayedRows = computed(() => {
       metric: entry.streak,
       current,
       placeEmphasized: current,
-      playerNameEmphasized: shouldEmphasizePlayerName(entry, current),
+      playerNameEmphasized: current,
     };
   });
 
@@ -80,7 +82,7 @@ const displayedRows = computed(() => {
       metric: currentPlayer.streak,
       current: true,
       placeEmphasized: currentPlayer.place !== null,
-      playerNameEmphasized: shouldEmphasizePlayerName(currentPlayer, true),
+      playerNameEmphasized: true,
       emptyPlaceInfo: "Начните серию, чтобы попасть в таблицу лидеров",
     },
     topN,
@@ -133,12 +135,6 @@ function isSameEntry(
   );
 }
 
-function shouldEmphasizePlayerName(
-  entry: DailyGameStreakTopEntry | DailyGameStreakTopCurrentPlayerEntry,
-  current: boolean,
-) {
-  return entry.place !== null && (entry.place <= 3 || current);
-}
 </script>
 
 <template>
@@ -168,7 +164,12 @@ function shouldEmphasizePlayerName(
     <LeaderboardTable :rows="displayedRows" metric-label="Серия" metric-column-width="82px"
       narrow-metric-column-width="64px" metric-skeleton-width="28px" :skeleton-visible="initialSkeletonVisible"
       :failed="loadFailed" :retry-loading="loading" :refresh-skeleton-visible="refreshSkeletonVisible"
-      :transition-key="mode" :table-label="modeTitle" dense-on-short-viewport @retry="load" />
+      :transition-key="mode" :table-label="modeTitle" :decorate-top-places="false" dense-on-short-viewport
+      @retry="load">
+      <template #metric="{ value }">
+        <DailyStreakBadge :value="value" :tier="getDailyStreakTier(Number(value))" :label="`Серия ${value}`" />
+      </template>
+    </LeaderboardTable>
   </LeaderboardShell>
 </template>
 
