@@ -6,7 +6,7 @@ withDefaults(
   defineProps<{
     type?: "button" | "submit";
     size?: "sm" | "md" | "lg";
-    variant?: "primary" | "primary-light" | "soft" | "ghost" | "outlined";
+    variant?: "primary" | "primary-light" | "tonal" | "soft" | "ghost" | "outlined";
     loading?: boolean;
     loadingLabel?: string;
     disabled?: boolean;
@@ -55,7 +55,7 @@ withDefaults(
     :type="type"
     :disabled="disabled"
     :loading="loading"
-    :severity="variant === 'soft' || variant === 'ghost' || variant === 'outlined' ? 'secondary' : undefined"
+    :severity="variant === 'tonal' || variant === 'soft' || variant === 'ghost' || variant === 'outlined' ? 'secondary' : undefined"
     :variant="variant === 'ghost' ? 'text' : undefined"
     :outlined="variant === 'outlined' || variant === 'primary-light'"
   >
@@ -134,6 +134,12 @@ a.ui-button.p-button {
   color: var(--color-primary-600);
 }
 
+.ui-button--tonal.p-button {
+  border-color: transparent;
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
 .ui-button--ghost.p-button {
   border-color: transparent;
   background: transparent;
@@ -163,6 +169,12 @@ a.ui-button.p-button {
     border-color: var(--color-gray-400);
     background: var(--color-gray-100);
     color: var(--color-primary-600);
+  }
+
+  .ui-button--tonal.p-button:not(:disabled):hover {
+    border-color: transparent;
+    background: var(--color-primary-200);
+    color: var(--color-primary-700);
   }
 
   .ui-button--ghost.p-button:not(:disabled):hover {
@@ -197,6 +209,12 @@ a.ui-button.p-button {
     color: var(--color-primary-600);
   }
 
+  .ui-button--tonal.p-button:not(:disabled):hover {
+    border-color: transparent;
+    background: var(--color-primary-100);
+    color: var(--color-primary-700);
+  }
+
   .ui-button--outlined.p-button:not(:disabled):hover {
     border-color: var(--color-gray-300);
     background: white;
@@ -226,6 +244,12 @@ a.ui-button.p-button {
   border-color: var(--color-gray-400);
   background: var(--color-gray-100);
   color: var(--color-primary-600);
+}
+
+.ui-button--tonal.p-button:not(:disabled):active {
+  border-color: transparent;
+  background: var(--color-primary-200);
+  color: var(--color-primary-700);
 }
 
 .ui-button--ghost.p-button:not(:disabled):active {

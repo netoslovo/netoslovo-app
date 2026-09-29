@@ -268,17 +268,16 @@ function formatDateTime(value: string) {
     </form>
   </Dialog>
 
-  <Dialog :visible="keepCurrentConfirmationOpen" modal :dismissable-mask="!dismissPending"
-    :closable="!dismissPending" :close-on-escape="!dismissPending" header="Текущее имя пользователя"
-    class="game-dialog" @update:visible="(value) => !value && closeKeepCurrentConfirmation()">
+  <Dialog :visible="keepCurrentConfirmationOpen" modal :dismissable-mask="!dismissPending" :closable="!dismissPending"
+    :close-on-escape="!dismissPending" header="Текущее имя пользователя" class="game-dialog"
+    @update:visible="(value) => !value && closeKeepCurrentConfirmation()">
     <div class="username-dialog">
       <p class="username-dialog__text">
         У вас останется имя пользователя <strong>{{ profile.userName }}</strong>. Его всегда можно изменить в профиле.
       </p>
 
       <div class="username-dialog__do-not-show">
-        <Checkbox input-id="username-prompt-do-not-show" v-model="doNotShowAgain" binary
-          :disabled="dismissPending" />
+        <Checkbox input-id="username-prompt-do-not-show" v-model="doNotShowAgain" binary :disabled="dismissPending" />
         <label for="username-prompt-do-not-show">Больше не предлагать смену имени</label>
       </div>
 

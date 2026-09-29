@@ -6,7 +6,7 @@ import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useInfoPopover } from "../../../shared/composables/useInfoPopover";
 import type { Difficulty, Game, Guess } from "../model/game";
 import type { DailyGameResultStatsState } from "./useDailyGameResultStats";
-import type { GuessPresentationEvent } from "./useGameSession";
+import type { FinishedGameDataState, GuessPresentationEvent } from "./useGameSession";
 import UiButton from "../../../shared/ui/UiButton.vue";
 import UiSkeleton from "../../../shared/ui/UiSkeleton.vue";
 import DailyGameStatsCard from "./DailyGameStatsCard.vue";
@@ -42,10 +42,12 @@ const props = defineProps<{
   animatedHintWord: string | null;
   guessPresentationEvent: GuessPresentationEvent | null;
   guessing: boolean;
-  finishedGameRefreshing: boolean;
+  finishedGameDataState: FinishedGameDataState;
   modeConfig: GameBoardModeConfig;
   actions: GameplayActions;
 }>();
+
+type ResultPresentationPhase = "idle" | "entering" | "ready" | "failed";
 
 const resultConfig = {
   guessed: {
@@ -66,6 +68,10 @@ const gameSourceRemovedDialogOpen = ref(false);
 const dailyStatsDialogOpen = ref(false);
 const celebrateGuessed = ref(false);
 const resultAnimationsReady = ref(true);
+const resultPresentationPhase = ref<ResultPresentationPhase>(
+  props.game.gameState === "active" ? "idle" : "entering",
+);
+const resultAnimationScope = ref<HTMLElement | null>(null);
 const gameBoard = ref<HTMLElement | null>(null);
 const guessWord = ref("");
 const displayedPresentationEvent = ref<GuessPresentationEvent | null>(null);
@@ -80,6 +86,9 @@ const dailyResultStats = computed(() => dailyConfig.value?.stats.state ?? emptyD
 const dailyStatsLoading = computed(() =>
   dailyConfig.value?.stats.state.aggregate.status === "loading"
   || dailyConfig.value?.stats.state.player.status === "loading",
+);
+const resultNoticeReady = computed(() =>
+  resultPresentationPhase.value === "ready" && props.finishedGameDataState === "ready",
 );
 const dailyResultState = computed((): Extract<Game["gameState"], "guessed" | "surrendered"> | null => {
   if (!dailyConfig.value) return null;
@@ -109,6 +118,43 @@ watch(
     displayedAnimatedHintWord.value = animatedHintWord;
   },
   { flush: "pre" },
+);
+
+watch(
+  [
+    () => props.game.id,
+    () => props.game.gameState,
+    () => props.finishedGameDataState,
+  ],
+  async ([gameId, gameState, dataState], _, onCleanup) => {
+    let cancelled = false;
+    onCleanup(() => { cancelled = true; });
+
+    if (gameState === "active") {
+      resultPresentationPhase.value = "idle";
+      return;
+    }
+    if (dataState === "failed") {
+      resultPresentationPhase.value = "failed";
+      return;
+    }
+
+    resultPresentationPhase.value = "entering";
+    if (dataState !== "ready") return;
+
+    await nextTick();
+    await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+    if (cancelled || props.game.id !== gameId) return;
+
+    const animations = resultAnimationScope.value
+      ?.getAnimations({ subtree: true })
+      .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity) ?? [];
+    await Promise.allSettled(animations.map((animation) => animation.finished));
+    if (cancelled || props.game.id !== gameId || props.finishedGameDataState !== "ready") return;
+
+    resultPresentationPhase.value = "ready";
+  },
+  { immediate: true, flush: "post" },
 );
 
 onBeforeUnmount(() => {
@@ -157,7 +203,9 @@ watch(
       if (usesMobileScrollLayout()) gameBoard.value?.scrollTo({ top: 0, behavior: "instant" });
       if (sequence === resultSequence) {
         resultAnimationsReady.value = true;
-        if (props.game.gameState === "guessed") celebrateGuessed.value = true;
+        if (props.game.gameState === "guessed") {
+          celebrateGuessed.value = true;
+        }
       }
     } else if (previous?.id !== current.id || current.state === "active") {
       resultSequence += 1;
@@ -173,17 +221,21 @@ watch(
   <div ref="gameBoard" class="game-board" :class="{ 'game-board--active': game.gameState === 'active' }">
     <template v-if="game.gameState !== 'active'">
       <div class="game-board__win">
-        <GameWordCard :difficulty-name="game.difficulty.name" :mode-label="modeConfig.title"
-          :mode-detail="modeConfig.detail" :mode-variant="modeConfig.mode"
-          :result-label="resultConfig[game.gameState].label" :result-icon="resultConfig[game.gameState].icon"
-          :game-state="game.gameState"
-          :celebrate-guessed="celebrateGuessed" :animations-enabled="resultAnimationsReady">
-          <template v-if="$slots['result-header-action']" #header-action>
-            <slot name="result-header-action" />
-          </template>
-          <DisplayWordTiles :display-word="game.displayWord" :game-state="game.gameState"
-            :word-loading="finishedGameRefreshing" :animations-enabled="resultAnimationsReady" />
-        </GameWordCard>
+        <slot v-if="resultNoticeReady && $slots['result-notice']" name="result-notice" />
+
+        <div ref="resultAnimationScope" class="game-result-animation-scope">
+          <GameWordCard :key="game.id" :difficulty-name="game.difficulty.name" :mode-label="modeConfig.title"
+            :mode-detail="modeConfig.detail" :mode-variant="modeConfig.mode"
+            :result-label="resultConfig[game.gameState].label" :result-icon="resultConfig[game.gameState].icon"
+            :game-state="game.gameState"
+            :celebrate-guessed="celebrateGuessed" :animations-enabled="resultAnimationsReady">
+            <template v-if="$slots['result-header-action']" #header-action>
+              <slot name="result-header-action" />
+            </template>
+            <DisplayWordTiles :display-word="game.displayWord" :game-state="game.gameState"
+              :word-loading="finishedGameDataState === 'loading'" :animations-enabled="resultAnimationsReady" />
+          </GameWordCard>
+        </div>
         <section v-if="dailyConfig" class="game-result-summary-card" aria-label="Итоги игры дня">
           <GameScoreCard :score="game.score" :score-details="game.scoreDetails" embedded />
           <template v-if="dailyResultState">
@@ -307,6 +359,10 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.game-result-animation-scope {
+  display: contents;
 }
 
 .game-board__word {

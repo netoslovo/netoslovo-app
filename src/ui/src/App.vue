@@ -1,5 +1,9 @@
 <template>
   <ToastStack />
+  <Dialog v-model:visible="welcomeOpen" modal dismissable-mask header="Об игре" class="game-dialog"
+    @show="onWelcomeShown">
+    <GameGuide :open="welcomeOpen" show-welcome @close="welcomeOpen = false" />
+  </Dialog>
   <div class="app-shell" :class="{ 'app-shell--game': gameLayout }" :aria-busy="appBusy">
     <AppHeader :actions-disabled="headerActionsDisabled" :back-visible="headerBackVisible" @back="goBack"
       @logout-pending-change="logoutPending = $event" />
@@ -26,20 +30,29 @@
 </template>
 
 <script setup lang="ts">
+import Dialog from "primevue/dialog";
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { RouterView, useRoute, useRouter } from "vue-router";
 import { getRoutePageIdentity, getRoutePageTitle, routeNavigationLoading } from "./app/router";
 import AppHeader from "./app/components/AppHeader.vue";
 import ToastStack from "./app/components/ToastStack.vue";
+import GameGuide from "./features/games/components/GameGuide.vue";
+import { userNoticeCodes } from "./features/user-notices/model/userNoticeCodes";
+import { useUserNoticeStore } from "./features/user-notices/model/userNoticeStore";
 import UiSkeletonHandoff from "./shared/ui/UiSkeletonHandoff.vue";
 import { useDelayedLoadingState } from "./shared/composables/useDelayedLoading";
 import { provideSkeletonHandoff } from "./shared/composables/useSkeletonHandoff";
 import { useVisualViewportCssVariables } from "./shared/composables/useVisualViewportCssVariables";
-import { authBootstrapState, bootstrapAuthState } from "./features/auth/model/authSession";
+import { authBootstrapState, authState, bootstrapAuthState } from "./features/auth/model/authSession";
 
 const gameMedia = window.matchMedia("(width < 1024px)");
 const mobileLayout = ref(gameMedia.matches);
 const route = useRoute();
+const userNotices = useUserNoticeStore();
+const welcomeOpen = ref(false);
+const welcomeShownActorIds = new Set<string>();
+let welcomeActorId: string | null = null;
+let welcomeCheckId = 0;
 const gameLayout = computed(() => mobileLayout.value && (
   route.name === "daily" || route.name === "arcade-game" || route.name === "shared-daily"
 ));
@@ -73,8 +86,34 @@ const headerActionsDisabled = computed(
   () => logoutPending.value || authBootstrapState.value !== "ready" || contentLoading.value || routeNavigationLoading.value,
 );
 const appBusy = computed(() => appContentBlocked.value || logoutPending.value);
+const welcomeRouteEligible = computed(() =>
+  route.name !== "login"
+  && route.name !== "profile"
+  && !route.matched.some((record) => record.path === "/admin"),
+);
 
 useVisualViewportCssVariables();
+
+watch(
+  [
+    welcomeRouteEligible,
+    appContentBlocked,
+    () => authBootstrapState.value,
+    () => authState.value?.id ?? null,
+    () => getRoutePageIdentity(route),
+  ],
+  () => {
+    if (
+      !welcomeRouteEligible.value
+      || appContentBlocked.value
+      || (welcomeActorId !== null && welcomeActorId !== authState.value?.id)
+    ) {
+      welcomeOpen.value = false;
+    }
+    void openWelcomeWhenReady();
+  },
+  { immediate: true },
+);
 
 watch(
   () => getRoutePageIdentity(route),
@@ -87,6 +126,66 @@ watch(
 
 function goBack() {
   router.back();
+}
+
+async function openWelcomeWhenReady() {
+  const checkId = ++welcomeCheckId;
+  const actorId = authState.value?.id ?? null;
+  if (
+    actorId === null
+    || welcomeShownActorIds.has(actorId)
+    || welcomeOpen.value
+    || !welcomeRouteEligible.value
+    || appContentBlocked.value
+    || authBootstrapState.value !== "ready"
+  ) {
+    return;
+  }
+
+  const context = {
+    checkId,
+    actorId,
+    routeIdentity: getRoutePageIdentity(route),
+  };
+
+  await nextTick();
+  if (!isWelcomeCheckCurrent(context)) {
+    return;
+  }
+
+  const shouldShow = await userNotices.shouldShowUserNotice(
+    userNoticeCodes.gameGuide,
+  );
+  if (!shouldShow || !isWelcomeCheckCurrent(context)) {
+    return;
+  }
+
+  welcomeActorId = actorId;
+  welcomeOpen.value = true;
+}
+
+function onWelcomeShown() {
+  const actorId = authState.value?.id ?? null;
+  if (actorId === null || welcomeActorId !== actorId) {
+    welcomeOpen.value = false;
+    return;
+  }
+  if (welcomeShownActorIds.has(actorId)) return;
+  welcomeShownActorIds.add(actorId);
+  void userNotices.saveOneTimeUserNoticeView(userNoticeCodes.gameGuide);
+}
+
+function isWelcomeCheckCurrent(context: {
+  checkId: number;
+  actorId: string;
+  routeIdentity: string;
+}) {
+  return context.checkId === welcomeCheckId
+    && authState.value?.id === context.actorId
+    && getRoutePageIdentity(route) === context.routeIdentity
+    && authBootstrapState.value === "ready"
+    && welcomeRouteEligible.value
+    && !appContentBlocked.value;
 }
 
 if (authBootstrapState.value !== "ready") {

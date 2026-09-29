@@ -80,24 +80,13 @@ const dailyInfoSemantics = useInfoPopoverSemantics();
 const streakInfoSemantics = useInfoPopoverSemantics();
 const arcadeInfoSemantics = useInfoPopoverSemantics();
 const howToPlayOpen = ref(false);
-const gameGuideShowWelcome = ref(true);
 const newGamePromptOpen = ref(false);
 const newGamePromptChecking = ref(false);
 const newGamePromptSaving = ref(false);
 let mounted = false;
 
-onMounted(async () => {
+onMounted(() => {
   mounted = true;
-  const shouldShow = await userNotices.shouldShowUserNotice(
-    userNoticeCodes.gameGuide,
-  );
-  if (!mounted || !shouldShow || props.statusMessage) {
-    return;
-  }
-
-  gameGuideShowWelcome.value = true;
-  howToPlayOpen.value = true;
-  void userNotices.saveOneTimeUserNoticeView(userNoticeCodes.gameGuide);
 });
 
 onUnmounted(() => {
@@ -184,7 +173,6 @@ async function requestArcadeCreate() {
 }
 
 function openGameGuide() {
-  gameGuideShowWelcome.value = false;
   howToPlayOpen.value = true;
 }
 
@@ -291,7 +279,8 @@ function formatLocalDay(date: Date) {
           <Popover ref="loginInfoPopover" :pt="loginInfoSemantics.popoverPt" class="entry-card__popover info-popover"
             @show="onPopoverShow('login')" @hide="onPopoverHide('login')">
             <div class="entry-card__popover-content">
-              Авторизуйтесь, чтобы сохранять свой игровой прогресс
+              Пока вы не авторизованы, игровой прогресс привязан к временной гостевой сессии и может быть потерян
+              после её завершения. После входа результаты сохраняются в профиле и доступны на других устройствах.
             </div>
           </Popover>
         </div>
@@ -453,8 +442,7 @@ function formatLocalDay(date: Date) {
             Не удалось загрузить данные случайной игры.
           </div>
 
-          <UiButton size="md" :loading="newGamePromptChecking" :disabled="arcadeLocked"
-            @click="requestArcadeCreate">
+          <UiButton size="md" :loading="newGamePromptChecking" :disabled="arcadeLocked" @click="requestArcadeCreate">
             Новая игра
           </UiButton>
 
@@ -478,7 +466,7 @@ function formatLocalDay(date: Date) {
 
     <Dialog v-if="!statusMessage" v-model:visible="howToPlayOpen" modal dismissable-mask header="Об игре"
       class="game-dialog">
-      <GameGuide :open="howToPlayOpen" :show-welcome="gameGuideShowWelcome" @close="howToPlayOpen = false" />
+      <GameGuide :open="howToPlayOpen" @close="howToPlayOpen = false" />
     </Dialog>
 
     <NewArcadeGameDialog :visible="newGamePromptOpen" :saving="newGamePromptSaving" @dismiss="dismissNewGamePrompt"
