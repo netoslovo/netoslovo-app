@@ -4,8 +4,8 @@ import { useRoute, useRouter } from "vue-router";
 import GameBoard from "../features/games/play/GameBoard.vue";
 import GameBoardSkeleton from "../features/games/play/GameBoardSkeleton.vue";
 import { useGameSession } from "../features/games/play/useGameSession";
-import { useGuestLoginPrompt } from "../features/games/play/useGuestLoginPrompt";
-import GuestLoginPrompt from "../features/games/components/GuestLoginPrompt.vue";
+import { useGuestProgressNotice } from "../features/games/play/useGuestProgressNotice";
+import GuestProgressNotice from "../features/games/components/GuestProgressNotice.vue";
 import { useHandoffDelayedLoadingState } from "../shared/composables/useSkeletonHandoff";
 import UiSkeletonHandoff from "../shared/ui/UiSkeletonHandoff.vue";
 
@@ -20,7 +20,7 @@ const session = useGameSession(
   () => void router.replace({ name: "home" }),
   replayAvailable,
 );
-const guestLoginPrompt = useGuestLoginPrompt(computed(() => session.game.value?.gameState ?? null));
+const guestProgressNotice = useGuestProgressNotice(session.game);
 const loadingState = useHandoffDelayedLoadingState(session.loading);
 const actions = {
   submitGuess: session.submitGuess,
@@ -45,9 +45,7 @@ const modeConfig = computed(() => ({
 }));
 
 function replay() {
-  return guestLoginPrompt.runBeforeLeaving(() =>
-    session.replay((game) => router.push({ name: "arcade-game", params: { id: game.id } })),
-  );
+  return session.replay((game) => router.push({ name: "arcade-game", params: { id: game.id } }));
 }
 </script>
 
@@ -64,11 +62,15 @@ function replay() {
       :animated-hint-word="session.animatedHintWord.value"
       :guess-presentation-event="session.guessPresentationEvent.value"
       :guessing="session.guessing.value"
-      :finished-game-refreshing="session.finishedGameRefreshing.value"
+      :finished-game-data-state="session.finishedGameDataState.value"
       :mode-config="modeConfig"
       :actions="actions"
-    />
+    >
+      <template #result-notice>
+        <GuestProgressNotice v-if="guestProgressNotice.visible.value" :saving="guestProgressNotice.saving.value"
+          @dismiss="guestProgressNotice.dismiss"
+          @login="guestProgressNotice.requestLogin" />
+      </template>
+    </GameBoard>
   </UiSkeletonHandoff>
-  <GuestLoginPrompt :visible="guestLoginPrompt.visible.value" @continue="guestLoginPrompt.continueNavigation"
-    @login="guestLoginPrompt.requestLogin" />
 </template>

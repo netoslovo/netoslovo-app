@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { isApiRequestCanceled, toApiError } from "../shared/api/apiError";
-import { useHandoffDelayedLoadingState } from "../shared/composables/useSkeletonHandoff";
-import UiButton from "../shared/ui/UiButton.vue";
-import UiSkeleton from "../shared/ui/UiSkeleton.vue";
-import UiSkeletonHandoff from "../shared/ui/UiSkeletonHandoff.vue";
+import { authState } from "../features/auth/model/authSession";
 import { getSharedDailyGame } from "../features/games/api/gameApi";
 import type { GameState, SharedDailyGame } from "../features/games/model/game";
 import DailyGameStatsCard from "../features/games/play/DailyGameStatsCard.vue";
@@ -15,6 +11,12 @@ import GameScoreCard from "../features/games/play/GameScoreCard.vue";
 import GameWordCard from "../features/games/play/GameWordCard.vue";
 import type { DailyGameResultStatsState } from "../features/games/play/useDailyGameResultStats";
 import SharedGuessesList from "../features/games/share/SharedGuessesList.vue";
+import { isApiRequestCanceled, toApiError } from "../shared/api/apiError";
+import { useHandoffDelayedLoadingState } from "../shared/composables/useSkeletonHandoff";
+import UiActionNotice from "../shared/ui/UiActionNotice.vue";
+import UiButton from "../shared/ui/UiButton.vue";
+import UiSkeleton from "../shared/ui/UiSkeleton.vue";
+import UiSkeletonHandoff from "../shared/ui/UiSkeletonHandoff.vue";
 
 const route = useRoute();
 const publicId = computed(() => typeof route.params.publicId === "string" ? route.params.publicId : null);
@@ -23,6 +25,13 @@ const loading = ref(true);
 const notFound = ref(false);
 const failed = ref(false);
 const loadingState = useHandoffDelayedLoadingState(loading);
+const viewerGameNotFinished = computed(() =>
+  game.value?.spoilersHideReason === "viewerGameNotFinished",
+);
+const guestGameNotFinished = computed(() =>
+  authState.value?.isAuthenticated === false &&
+  viewerGameNotFinished.value,
+);
 let controller: AbortController | null = null;
 let requestId = 0;
 
@@ -55,11 +64,12 @@ const hiddenWordCaption = computed(() => {
   }
 
   if (game.value?.spoilersHideReason === "viewerGameNotFinished") {
-    return "Загаданное слово и слова попыток откроются после того, как вы завершите свою игру за этот день.";
+    return "Слово откроется после завершения вашей игры.";
   }
 
   return null;
 });
+
 watch(publicId, () => void load(), { immediate: true });
 
 onBeforeUnmount(() => {
@@ -120,35 +130,50 @@ function getResultPresentation(state: GameState | null) {
       <GameBoardSkeleton>
         <template #context>
           <div class="shared-daily-context-skeleton__message">
-            <UiSkeleton width="30px" height="30px" border-radius="50%" />
-            <UiSkeleton class="shared-daily-context-skeleton__text" width="280px" height="15px" />
+            <UiSkeleton class="shared-daily-context-skeleton__icon" width="24px" height="24px" border-radius="6px" />
+            <UiSkeleton class="shared-daily-context-skeleton__text" width="100%" height="15px" />
           </div>
           <div class="shared-daily-context-skeleton__actions">
-            <UiSkeleton class="shared-daily-context-skeleton__action" width="190px" height="34px" border-radius="8px" />
+            <UiSkeleton class="shared-daily-context-skeleton__action" width="100%" height="34px" border-radius="8px" />
           </div>
         </template>
       </GameBoardSkeleton>
     </template>
 
     <div v-if="game" class="shared-daily-result">
-      <aside class="shared-daily-context" aria-label="Опубликованный результат">
-        <div class="shared-daily-context__message">
-          <span class="shared-daily-context__icon" aria-hidden="true">
-            <i class="pi pi-share-alt"></i>
+      <UiActionNotice class="shared-daily-context" :title="`Отображается результат игрока ${game.playerName}`"
+        icon="pi pi-share-alt" :compact="!viewerGameNotFinished">
+        <template #title>
+          Вы смотрите результат игрока:
+          <span class="shared-daily-context__player-name">
+            <span class="shared-daily-context__player-avatar" aria-hidden="true">
+              <i class="pi pi-user"></i>
+            </span>
+            {{ game.playerName }}
           </span>
-          <p class="shared-daily-context__title">
-            Отображается результат игрока
-            <strong class="shared-daily-context__player-name">{{ game.playerName }}</strong>
+        </template>
+
+        <template v-if="viewerGameNotFinished">
+          <p>
+            Загаданное слово и попытки пока скрыты. Они станут доступны, когда вы завершите эту игру дня.<template
+              v-if="guestGameNotFinished"> Если вы уже играли, войдите, чтобы увидеть результат.</template>
           </p>
-        </div>
-        <div class="shared-daily-context__actions">
-          <UiButton class="shared-daily-context__action" size="sm" variant="soft"
-            :to="{ name: 'daily', params: { day: game.day } }">
-            Перейти к игре
+        </template>
+
+        <template #actions>
+          <UiButton v-if="guestGameNotFinished" size="sm" variant="outlined"
+            :to="{ name: 'login', query: { returnTo: route.fullPath } }">
+            Войти
+          </UiButton>
+          <UiButton v-if="viewerGameNotFinished" size="sm" :to="{ name: 'daily', params: { day: game.day } }">
+            Играть
+          </UiButton>
+          <UiButton v-else size="sm" variant="tonal" :to="{ name: 'daily', params: { day: game.day } }">
+            Открыть мою игру
             <i class="pi pi-arrow-right" aria-hidden="true"></i>
           </UiButton>
-        </div>
-      </aside>
+        </template>
+      </UiActionNotice>
 
       <div class="shared-daily-result__summary">
         <GameWordCard mode-label="Слово дня" :mode-detail="formattedDay" mode-variant="daily"
@@ -195,19 +220,36 @@ function getResultPresentation(state: GameState | null) {
   gap: 8px;
 }
 
-.shared-daily-context {
-  width: 100%;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--color-primary-100);
-  border-radius: 8px;
-  background: var(--color-primary-50);
+.shared-daily-context :deep(.ui-button .pi) {
+  font-size: 11px;
+  line-height: 1;
 }
 
-.shared-daily-context__message,
+.shared-daily-context__player-name {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  overflow-wrap: anywhere;
+  font-weight: 400;
+}
+
+.shared-daily-context__player-avatar {
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-primary-50);
+  color: var(--color-primary-600);
+}
+
+.shared-daily-context__player-avatar .pi {
+  font-size: 11px;
+}
+
 .shared-daily-context-skeleton__message {
   min-width: 0;
   display: flex;
@@ -215,77 +257,29 @@ function getResultPresentation(state: GameState | null) {
   gap: 9px;
 }
 
-.shared-daily-context__icon {
-  width: 30px;
-  min-width: 30px;
-  height: 30px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: white;
-  color: var(--color-primary-600);
-}
-
-.shared-daily-context__icon .pi {
-  font-size: 14px;
+.shared-daily-context-skeleton__icon {
+  flex: 0 0 auto;
 }
 
 .shared-daily-context-skeleton__text {
   min-width: 0;
-  flex: 1;
+  max-width: 280px;
 }
 
-.shared-daily-context__title {
-  min-width: 0;
-  flex: 1;
-  margin: 0;
-  overflow-wrap: anywhere;
-  color: var(--color-gray-800);
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-.shared-daily-context__player-name {
-  color: var(--color-primary-700);
-  font-weight: 600;
-}
-
-.shared-daily-context__actions,
 .shared-daily-context-skeleton__actions {
-  display: flex;
-  justify-content: flex-start;
+  width: 100%;
 }
 
-.shared-daily-context__action,
 .shared-daily-context-skeleton__action {
   width: 100% !important;
 }
 
-.shared-daily-context__action .pi {
-  font-size: 11px;
-  line-height: 1;
-}
-
-.shared-daily-context__action.ui-button.ui-button--soft.p-button {
-  border-color: transparent;
-  background: var(--color-primary-100);
-  color: var(--color-primary-700);
-  font-weight: 500;
-}
-
-.shared-daily-context__action.ui-button.ui-button--soft.p-button:not(:disabled):is(:hover, :active) {
-  border-color: transparent;
-  background: var(--color-primary-200);
-  color: var(--color-primary-700);
-}
-
 @media (hover: hover) and (pointer: fine) {
-  .shared-daily-context__action .pi {
+  .shared-daily-context :deep(.ui-button .pi) {
     transition: transform 0.16s ease;
   }
 
-  .shared-daily-context__action:hover .pi {
+  .shared-daily-context :deep(.ui-button:hover .pi) {
     transform: translateX(2px);
   }
 }
@@ -315,8 +309,8 @@ function getResultPresentation(state: GameState | null) {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  text-align: center;
   padding: 24px 16px;
+  text-align: center;
 }
 
 .shared-daily-state__icon {
@@ -356,16 +350,6 @@ function getResultPresentation(state: GameState | null) {
     padding: 10px 12px;
   }
 
-  .shared-daily-context__action {
-    width: auto !important;
-    min-width: 140px;
-  }
-
-  .shared-daily-context-skeleton__action {
-    width: 200px !important;
-  }
-
-  .shared-daily-context,
   :deep(.game-board-skeleton__context) {
     flex-direction: row;
     align-items: center;
@@ -373,13 +357,12 @@ function getResultPresentation(state: GameState | null) {
     gap: 16px;
   }
 
-  .shared-daily-context__message,
   .shared-daily-context-skeleton__message {
     flex: 1;
   }
 
-  .shared-daily-context__actions,
   .shared-daily-context-skeleton__actions {
+    width: 180px;
     flex: 0 0 auto;
   }
 }

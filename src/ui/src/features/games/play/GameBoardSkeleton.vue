@@ -62,7 +62,7 @@ import UiSkeleton from "../../../shared/ui/UiSkeleton.vue";
 .game-board-skeleton__context {
   min-height: 48px;
   gap: 8px;
-  padding: 8px 10px;
+  padding: 10px;
   border-color: var(--color-primary-100);
   background: var(--color-primary-50);
 }
@@ -136,6 +136,10 @@ import UiSkeleton from "../../../shared/ui/UiSkeleton.vue";
 @media (min-width: 768px) {
   .game-board-skeleton {
     gap: 12px;
+  }
+
+  .game-board-skeleton__context {
+    padding: 12px;
   }
 
   .game-board-skeleton__word-card {

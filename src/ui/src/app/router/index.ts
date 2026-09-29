@@ -76,8 +76,7 @@ const DailyGamePage = () => import("../../pages/DailyGamePage.vue");
 const DailyHistoryPage = () => import("../../pages/DailyHistoryPage.vue");
 const DailyLeaderboardPage = () =>
   import("../../pages/DailyLeaderboardPage.vue");
-const SharedDailyGamePage = () =>
-  import("../../pages/SharedDailyGamePage.vue");
+const SharedDailyGamePage = () => import("../../pages/SharedDailyGamePage.vue");
 const HomePage = () => import("../../pages/HomePage.vue");
 const LoginPage = () => import("../../pages/LoginPage.vue");
 const ProfilePage = () => import("../../pages/ProfilePage.vue");

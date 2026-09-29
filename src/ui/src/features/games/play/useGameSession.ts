@@ -30,6 +30,7 @@ import {
 import { getCreateGameErrorMessage, isDailyScheduleNotFound } from "../lib/gameErrors";
 
 export type GameMode = "arcade" | "daily";
+export type FinishedGameDataState = "idle" | "loading" | "ready" | "failed";
 export type GuessPresentationEvent = {
   id: number;
   word: string;
@@ -48,7 +49,7 @@ export function useGameSession(
   const unavailable = ref(false);
   const failed = ref(false);
   const guessing = ref(false);
-  const finishedGameRefreshing = ref(false);
+  const finishedGameDataState = ref<FinishedGameDataState>("idle");
   const animatedHintWord = ref<string | null>(null);
   const guessPresentationEvent = ref<GuessPresentationEvent | null>(null);
   const difficulties = ref<Difficulty[]>([]);
@@ -58,6 +59,7 @@ export function useGameSession(
   const replayDifficultiesLoaded = ref(false);
   let loadRequestId = 0;
   let actionRequestId = 0;
+  let finishedGameRefreshRequestId = 0;
   let guessPresentationEventId = 0;
   let controller: AbortController | null = null;
 
@@ -90,6 +92,7 @@ export function useGameSession(
   onBeforeUnmount(() => {
     loadRequestId += 1;
     actionRequestId += 1;
+    finishedGameRefreshRequestId += 1;
     controller?.abort();
   });
 
@@ -99,9 +102,11 @@ export function useGameSession(
     controller = abortController;
     const requestId = ++loadRequestId;
     actionRequestId += 1;
+    finishedGameRefreshRequestId += 1;
     loading.value = true;
     unavailable.value = false;
     failed.value = false;
+    finishedGameDataState.value = "idle";
     animatedHintWord.value = null;
     guessPresentationEvent.value = null;
     replayDifficultiesRequestLoading.value = false;
@@ -112,6 +117,7 @@ export function useGameSession(
         : await loadArcade(routeKey.value, abortController.signal);
       if (requestId !== loadRequestId) return;
       game.value = loadedGame;
+      finishedGameDataState.value = loadedGame && loadedGame.gameState !== "active" ? "ready" : "idle";
       if (!loadedGame && mode === "arcade") onMissing?.();
       loading.value = false;
       if (loadedGame?.gameState !== "active" && mode === "arcade" && toValue(replayAvailable)) {
@@ -310,15 +316,27 @@ export function useGameSession(
 
   async function refreshFinishedGame() {
     const id = game.value?.id;
-    finishedGameRefreshing.value = true;
+    const requestId = ++finishedGameRefreshRequestId;
+    finishedGameDataState.value = "loading";
     try {
       const refreshed = mode === "daily" && routeKey.value
         ? await getDailyGameForDay(routeKey.value)
         : id ? await getArcadeGameById(id) : null;
-      if (id && game.value?.id === id && refreshed) game.value = refreshed;
+
+      if (requestId !== finishedGameRefreshRequestId || !id || game.value?.id !== id) return;
+      if (!refreshed) {
+        finishedGameDataState.value = "failed";
+        return;
+      }
+
+      game.value = refreshed;
+      finishedGameDataState.value = "ready";
       if (mode === "arcade" && toValue(replayAvailable)) await loadReplayDifficulties();
-    } finally {
-      finishedGameRefreshing.value = false;
+    } catch (error) {
+      if (requestId === finishedGameRefreshRequestId && game.value?.id === id) {
+        finishedGameDataState.value = "failed";
+      }
+      throw error;
     }
   }
 
@@ -327,7 +345,11 @@ export function useGameSession(
     const refreshed = mode === "daily" && routeKey.value
       ? await getDailyGameForDay(routeKey.value)
       : id ? await getArcadeGameById(id) : null;
-    if (id && game.value?.id === id && refreshed) game.value = refreshed;
+    if (id && game.value?.id === id && refreshed) {
+      finishedGameRefreshRequestId += 1;
+      game.value = refreshed;
+      finishedGameDataState.value = refreshed.gameState === "active" ? "idle" : "ready";
+    }
     if (refreshed?.gameState !== "active" && mode === "arcade" && toValue(replayAvailable)) {
       await loadReplayDifficulties();
     }
@@ -357,7 +379,7 @@ export function useGameSession(
     unavailable,
     failed,
     guessing,
-    finishedGameRefreshing,
+    finishedGameDataState,
     animatedHintWord,
     guessPresentationEvent,
     currentGuess,
