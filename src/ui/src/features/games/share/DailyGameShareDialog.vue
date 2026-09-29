@@ -132,8 +132,8 @@ async function saveNoticeView() {
 }
 
 .daily-game-share-trigger:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring-primary);
+  outline: 2px solid var(--color-primary-600);
+  outline-offset: 2px;
 }
 
 @media (hover: hover) and (pointer: fine) {
