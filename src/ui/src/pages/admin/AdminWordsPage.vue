@@ -305,10 +305,10 @@ onBeforeUnmount(() => {
         <span v-if="pendingReview.approved">Если оно уже назначено, backend запретит действие.</span>
       </p>
       <div class="dialog-actions">
+        <UiButton variant="outlined" :disabled="savingReview" @click="closeReviewDialog">Отмена</UiButton>
         <UiButton :loading="savingReview" @click="confirmReviewChange">
           Подтвердить
         </UiButton>
-        <UiButton variant="outlined" :disabled="savingReview" @click="closeReviewDialog">Отмена</UiButton>
       </div>
     </Dialog>
   </div>

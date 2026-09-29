@@ -34,11 +34,11 @@ function onVisibleUpdate(value: boolean) {
       <p class="game-dialog__footnote"> * Если это сегодняшняя игра дня, загаданное слово будет показано завтра. </p>
 
       <div class="game-dialog__actions">
-        <UiButton size="md" class="surrender-confirm" :loading="loading" @click="emit('confirm')">
-          Сдаться
-        </UiButton>
         <UiButton size="md" variant="outlined" :disabled="loading" @click="emit('close')">
           Отмена
+        </UiButton>
+        <UiButton size="md" class="surrender-confirm" :loading="loading" @click="emit('confirm')">
+          Сдаться
         </UiButton>
       </div>
     </div>
