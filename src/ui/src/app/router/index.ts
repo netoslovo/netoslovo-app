@@ -76,6 +76,8 @@ const DailyGamePage = () => import("../../pages/DailyGamePage.vue");
 const DailyHistoryPage = () => import("../../pages/DailyHistoryPage.vue");
 const DailyLeaderboardPage = () =>
   import("../../pages/DailyLeaderboardPage.vue");
+const SharedDailyGamePage = () =>
+  import("../../pages/SharedDailyGamePage.vue");
 const HomePage = () => import("../../pages/HomePage.vue");
 const LoginPage = () => import("../../pages/LoginPage.vue");
 const ProfilePage = () => import("../../pages/ProfilePage.vue");
@@ -121,6 +123,12 @@ const router = createRouter({
       name: "daily-leaderboard",
       component: DailyLeaderboardPage,
       meta: { pageTitle: "Лучшие игроки слова дня", showBack: true },
+    },
+    {
+      path: "/daily/shared/:publicId",
+      name: "shared-daily",
+      component: SharedDailyGamePage,
+      meta: { pageTitle: "Результат слова дня", showBack: true },
     },
     {
       path: "/daily/:day",

@@ -13,6 +13,7 @@ public interface IGameStore
     DbSet<ApprovedDailyGameSource> ApprovedDailyGameSources { get; }
     DbSet<GameSource> GameSources { get; }
     DbSet<VersionedGameSource> VersionedGameSources { get; }
+    DbSet<DailyGameShare> DailyGameShares { get; }
 
     IQueryable<SingleGame> SingleGamesForGuessAction();
     IQueryable<SingleGame> SingleGamesForTextHintAction();

@@ -335,8 +335,8 @@ function formatDateTime(value: string) {
 }
 
 .profile-hero__edit:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 @media (hover: hover) and (pointer: fine) {

@@ -8,7 +8,6 @@ namespace WordoGuessr.Game.App.UseCases.Statistics.GetDailyGameStats;
 internal sealed class GetDailyGameStatsHandler
     : IQueryHandler<GetDailyGameStatsQuery, Result<DailyGameStatsDto, GetDailyGameStatsError>>
 {
-    private const int MinValuableStatsCount = 10;
     private readonly IGameReadModelStore _gameReadStore;
 
     public GetDailyGameStatsHandler(IGameReadModelStore gameReadStore)
@@ -28,7 +27,7 @@ internal sealed class GetDailyGameStatsHandler
             return Result<DailyGameStatsDto, GetDailyGameStatsError>.Failure(GetDailyGameStatsError.GameNotFound);
         }
 
-        if (data.TotalPlays < MinValuableStatsCount)
+        if (data.TotalPlays < Const.MinValuableStatsCount)
         {
             return Result<DailyGameStatsDto, GetDailyGameStatsError>.Failure(GetDailyGameStatsError.NotEnoughData);
         }

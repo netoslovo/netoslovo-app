@@ -29,9 +29,13 @@ using WordoGuessr.Game.API.UseCases.SingleGames.Common.RevealWordLength;
 using WordoGuessr.Game.API.UseCases.SingleGames.Common.Surrender;
 using WordoGuessr.Game.API.UseCases.SingleGames.Daily.GetForDay;
 using WordoGuessr.Game.API.UseCases.SingleGames.Daily.GetHistory;
+using WordoGuessr.Game.API.UseCases.SingleGames.Daily.GetShare;
+using WordoGuessr.Game.API.UseCases.SingleGames.Daily.GetSharedGame;
 using WordoGuessr.Game.API.UseCases.SingleGames.Daily.GetToday;
+using WordoGuessr.Game.API.UseCases.SingleGames.Daily.Share;
 using WordoGuessr.Game.API.UseCases.SingleGames.Daily.StartForDay;
 using WordoGuessr.Game.API.UseCases.SingleGames.Daily.StartToday;
+using WordoGuessr.Game.API.UseCases.SingleGames.Daily.Unshare;
 using WordoGuessr.Game.API.UseCases.Statistics.GetArcadeGameTopPlayers;
 using WordoGuessr.Game.API.UseCases.Statistics.GetDailyGameCurrentPlayerStreak;
 using WordoGuessr.Game.API.UseCases.Statistics.GetDailyGameCurrentStreakTop;
@@ -114,7 +118,12 @@ public static class GameApiExtensions
             .MapSurrenderSingleGame()
             .MapRevealHalfwayWord()
             .MapRevealWordLengthSinglGame()
-            .MapRevealRandomLetterSingleGame();
+            .MapRevealRandomLetterSingleGame()
+
+            .MapShareSingleGame()
+            .MapGetShareSingleGame()
+            .MapGetSharedGame()
+            .MapUnshareSingleGame();
 
         return app;
     }

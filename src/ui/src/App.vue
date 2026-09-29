@@ -40,7 +40,9 @@ import { authBootstrapState, bootstrapAuthState } from "./features/auth/model/au
 const gameMedia = window.matchMedia("(width < 1024px)");
 const mobileLayout = ref(gameMedia.matches);
 const route = useRoute();
-const gameLayout = computed(() => mobileLayout.value && (route.name === "daily" || route.name === "arcade-game"));
+const gameLayout = computed(() => mobileLayout.value && (
+  route.name === "daily" || route.name === "arcade-game" || route.name === "shared-daily"
+));
 function updateMobileLayout() {
   mobileLayout.value = gameMedia.matches;
 }

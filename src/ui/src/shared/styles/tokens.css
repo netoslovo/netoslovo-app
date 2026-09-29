@@ -31,6 +31,12 @@
   --color-orange-200: #e8d6c3;
   --color-yellow-300: #e6e0be;
   --color-green-200: #aee1c7;
+  --focus-border-primary: var(--color-primary-500);
+  --focus-border-danger: var(--color-red-600);
+  --focus-ring-primary: 0 0 0 2px color-mix(in srgb, var(--p-primary-color) 10%, transparent);
+  --focus-ring-danger: 0 0 0 2px rgb(177 70 70 / 10%);
+  --focus-ring-inverse: 0 0 0 2px color-mix(in srgb, var(--p-primary-contrast-color) 30%, transparent);
+  --focus-ring-neutral: 0 0 0 2px color-mix(in srgb, var(--color-gray-500) 12%, transparent);
   --shadow-menu: 0 12px 32px rgba(25, 32, 43, 0.16);
   --container-sm: 640px;
   --app-header-height: 50px;

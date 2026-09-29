@@ -235,8 +235,8 @@ function validateWord(value: string, showRequired: boolean) {
 }
 
 .guess-form__submit:focus-visible {
-  outline: 2px solid var(--p-primary-hover-color);
-  outline-offset: -4px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .guess-form__submit:not(.guess-form__submit--error):not(:disabled):active {
@@ -259,7 +259,7 @@ function validateWord(value: string, showRequired: boolean) {
 }
 
 .guess-form__submit--error:focus-visible {
-  outline-color: rgba(177, 70, 70, 0.28);
+  box-shadow: var(--focus-ring-danger);
 }
 
 .guess-form__submit :deep(.pi) {
@@ -395,14 +395,14 @@ function validateWord(value: string, showRequired: boolean) {
   }
 
   .guess-form :deep(.ui-input-wrap.p-inputgroup:focus-within) {
-    border-color: var(--color-primary-500);
-    box-shadow: 0 0 0 2px color-mix(in srgb, var(--p-primary-color) 10%, transparent);
+    border-color: var(--focus-border-primary);
+    box-shadow: var(--focus-ring-primary);
   }
 
   .guess-form :deep(.ui-input-wrap.ui-input-wrap--invalid.p-inputgroup),
   .guess-form :deep(.ui-input-wrap.ui-input-wrap--invalid.p-inputgroup:focus-within) {
-    border-color: var(--color-red-600);
-    box-shadow: 0 0 0 2px rgb(177 70 70 / 10%);
+    border-color: var(--focus-border-danger);
+    box-shadow: var(--focus-ring-danger);
   }
 
   .guess-form :deep(.ui-input-wrap__addon--right.p-inputgroupaddon) {

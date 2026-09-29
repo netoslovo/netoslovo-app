@@ -379,18 +379,18 @@ onBeforeUnmount(() => {
 }
 
 .ui-input-wrap.p-inputgroup:focus-within {
-  border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-primary-color) 16%, transparent);
+  border-color: var(--focus-border-primary);
+  box-shadow: var(--focus-ring-primary);
 }
 
 .ui-input-wrap--invalid.p-inputgroup {
-  border-color: var(--color-red-600);
-  box-shadow: 0 0 0 3px rgba(177, 70, 70, 0.12);
+  border-color: var(--focus-border-danger);
+  box-shadow: var(--focus-ring-danger);
 }
 
 .ui-input-wrap--invalid.p-inputgroup:focus-within {
-  border-color: var(--color-red-600);
-  box-shadow: 0 0 0 3px rgba(177, 70, 70, 0.18);
+  border-color: var(--focus-border-danger);
+  box-shadow: var(--focus-ring-danger);
 }
 
 .ui-input-wrap--disabled.p-inputgroup {
@@ -494,8 +494,8 @@ onBeforeUnmount(() => {
 }
 
 .ui-input-wrap__warning:focus-visible {
-  outline: 2px solid rgba(177, 70, 70, 0.28);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-danger);
 }
 
 .ui-field__error {

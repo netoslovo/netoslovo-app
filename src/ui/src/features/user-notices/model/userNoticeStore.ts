@@ -8,7 +8,7 @@ import type { UserNoticeCode } from "./userNoticeCodes";
 
 const cachedVisibility = new Map<UserNoticeCode, boolean>();
 const pendingVisibility = new Map<UserNoticeCode, Promise<boolean>>();
-const pendingOneTimeViews = new Map<UserNoticeCode, Promise<void>>();
+const pendingOneTimeViews = new Map<UserNoticeCode, Promise<boolean>>();
 let cacheOwnerId: string | null = null;
 let cacheRevision = 0;
 
@@ -67,20 +67,24 @@ async function shouldShowUserNotice(code: UserNoticeCode): Promise<boolean> {
   return request;
 }
 
-function saveOneTimeUserNoticeView(code: UserNoticeCode): void {
+function saveOneTimeUserNoticeView(code: UserNoticeCode): Promise<boolean> {
   const ownerId = syncCacheOwner();
-  if (cachedVisibility.get(code) === false || pendingOneTimeViews.has(code)) return;
+  if (ownerId === null) return Promise.resolve(false);
+  if (cachedVisibility.get(code) === false) return Promise.resolve(true);
 
-  cachedVisibility.set(code, false);
+  const pending = pendingOneTimeViews.get(code);
+  if (pending) return pending;
+
   const request = saveOneTimeUserNoticeViewRequest(code)
     .then(() => markHiddenForOwner(code, ownerId))
-    .catch(() => undefined)
+    .catch(() => false)
     .finally(() => {
       if (pendingOneTimeViews.get(code) === request) {
         pendingOneTimeViews.delete(code);
       }
     });
   pendingOneTimeViews.set(code, request);
+  return request;
 }
 
 function saveRecurringUserNoticeView(
@@ -99,15 +103,16 @@ function saveRecurringUserNoticeView(
 function markHiddenForOwner(
   code: UserNoticeCode,
   requestOwnerId: string | null,
-) {
+): boolean {
   syncCacheOwner();
   if (requestOwnerId === null || cacheOwnerId !== requestOwnerId) {
-    return;
+    return false;
   }
 
   cacheRevision += 1;
   pendingVisibility.clear();
   cachedVisibility.set(code, false);
+  return true;
 }
 
 const userNoticeStore = {

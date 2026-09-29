@@ -277,8 +277,8 @@ const fillStyle = computed(() => ({
 }
 
 .guess-bar__hint-marker:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
   background: #fff6d8;
   color: #6f5427;
 }

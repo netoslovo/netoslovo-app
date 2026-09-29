@@ -98,8 +98,8 @@ onBeforeUnmount(() => {
 
 .moderation-closest-word__content:focus-visible {
   border-radius: 2px;
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .moderation-closest-word__full {

@@ -16,6 +16,9 @@ import type {
   GuessStatusDto,
   HintTypeDto,
   ScoreDetailsDto,
+  SharedDailyGameDto,
+  SharedGameSpoilersHideReasonDto,
+  SharedGuessDto,
   TextHintDto,
   UsedHintDto,
 } from "../api/gameDto";
@@ -37,6 +40,9 @@ import type {
   GuessStatus,
   HintType,
   ScoreDetails,
+  SharedDailyGame,
+  SharedGameSpoilersHideReason,
+  SharedGuess,
   TextHint,
   UsedHint,
 } from "./game";
@@ -75,6 +81,13 @@ const hintTypes: Record<HintTypeDto, HintType> = {
 const displayWordHideReasons: Record<DisplayWordHideReasonDto, DisplayWordHideReason> = {
   HiddenForToday: "hiddenForToday",
 };
+const sharedGameSpoilersHideReasons: Record<
+  SharedGameSpoilersHideReasonDto,
+  SharedGameSpoilersHideReason
+> = {
+  ViewerGameNotFinished: "viewerGameNotFinished",
+  HiddenForToday: "hiddenForToday",
+};
 
 function mapKnownValue<T extends string>(values: Record<string, T>, raw: string, field: string): T {
   const mapped = values[raw];
@@ -107,6 +120,35 @@ function mapUsedHint(dto: UsedHintDto): UsedHint {
 }
 function mapScoreDetails(dto: ScoreDetailsDto): ScoreDetails {
   return { guessesCount: dto.guessesCount, usedHints: dto.usedHints.map(mapUsedHint) };
+}
+function mapSharedGuess(dto: SharedGuessDto): SharedGuess {
+  return {
+    word: dto.word,
+    distance: dto.distance,
+    order: dto.order,
+    fillPercentage: dto.fillPercentage,
+    source: mapKnownValue(guessSources, dto.source, "guess source"),
+  };
+}
+export function mapSharedDailyGame(dto: SharedDailyGameDto): SharedDailyGame {
+  return {
+    gameState: mapKnownValue(gameStates, dto.gameState, "game state"),
+    allGuesses: dto.allGuesses.map(mapSharedGuess),
+    displayWord: dto.displayWord ? mapDisplayWord(dto.displayWord) : null,
+    score: dto.score,
+    scoreDetails: mapScoreDetails(dto.scoreDetails),
+    playerName: dto.playerName,
+    spoilersHideReason: dto.spoilersHideReason
+      ? mapKnownValue(
+        sharedGameSpoilersHideReasons,
+        dto.spoilersHideReason,
+        "shared game spoilers hide reason",
+      )
+      : null,
+    day: dto.day,
+    playerStats: dto.playerStats,
+    gameStats: dto.gameStats,
+  };
 }
 export function mapGuessOutcome(dto: GuessOutcomeDto): GuessOutcome {
   return {

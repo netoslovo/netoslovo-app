@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import Popover from "primevue/popover";
 import { computed } from "vue";
-import { type RouteLocationRaw } from "vue-router";
+import { type RouteLocationRaw, useRouter } from "vue-router";
 import type { ArcadeGame, GameState } from "../model/game";
 import HistoryDisplayWord from "./HistoryDisplayWord.vue";
 import UiButton from "../../../shared/ui/UiButton.vue";
 import { useInfoPopover } from "../../../shared/composables/useInfoPopover";
+import { isCardNavigationClick } from "../lib/cardNavigation";
+
+const router = useRouter();
 
 const props = defineProps<{
   arcadeGame: ArcadeGame;
@@ -62,10 +65,18 @@ const startedAt = computed(() =>
   }).format(new Date(props.arcadeGame.createdAt)),
 );
 
+function openCard(event: MouseEvent) {
+  if (!props.to || !isCardNavigationClick(event)) return;
+  void router.push(props.to);
+}
+
 </script>
 
 <template>
-  <article class="arcade-game-card" :class="`arcade-game-card--status-${config.status}`">
+  <article class="arcade-game-card" :class="[
+    `arcade-game-card--status-${config.status}`,
+    { 'game-card--clickable': to },
+  ]" @click="openCard">
     <div class="arcade-game-card__layout">
       <div class="arcade-game-card__body">
         <div class="arcade-game-card__status-zone">
@@ -263,8 +274,8 @@ const startedAt = computed(() =>
 }
 
 .arcade-game-card__status:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .arcade-game-card__status .pi {
@@ -326,8 +337,32 @@ const startedAt = computed(() =>
   white-space: nowrap;
 }
 
+.arcade-game-card__action.ui-button.ui-button--soft.p-button {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-gray-700);
+}
+
+.arcade-game-card__action.ui-button.ui-button--soft.p-button:not(:disabled):is(:hover, :active) {
+  border-color: transparent;
+  background: transparent;
+  color: var(--color-gray-800);
+}
+
+.arcade-game-card__action.ui-button:focus-visible {
+  border-color: transparent;
+  box-shadow: var(--focus-ring-neutral);
+}
+
 .arcade-game-card__action .pi {
   font-size: 14px;
+  transition: transform 0.16s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .arcade-game-card__action:hover .pi {
+    transform: translateX(2px);
+  }
 }
 
 @container (max-width: 460px) {

@@ -5,7 +5,6 @@ import {
   useInfoPopover,
   useInfoPopoverSemantics,
 } from "../../../shared/composables/useInfoPopover";
-import UiButton from "../../../shared/ui/UiButton.vue";
 import UiSkeleton from "../../../shared/ui/UiSkeleton.vue";
 import type { DailyGameResultStatsState } from "./useDailyGameResultStats";
 import { formatDuration } from "../lib/formatDuration";
@@ -28,6 +27,7 @@ const props = withDefaults(
     showHeader?: boolean;
     showRefresh?: boolean;
     refresh?: () => Promise<void>;
+    playerName?: string | null;
   }>(),
   {
     embedded: false,
@@ -106,7 +106,9 @@ const rows = computed(() => {
 const statsDescription = computed(() =>
   props.resultState === "active"
     ? "Пока текущая игра активна, в статистике отображаются средние результаты других игроков. После завершения игры появятся ваш результат и его сравнение с другими игроками."
-    : "В статистике отображается ваш результат игры, его сравнение с остальными, а также средние результаты других игроков.",
+    : props.playerName
+      ? `В статистике отображается результат игрока ${props.playerName}, его сравнение с остальными, а также средние результаты других игроков.`
+      : "В статистике отображается ваш результат игры, его сравнение с остальными, а также средние результаты других игроков.",
 );
 
 const {
@@ -170,25 +172,35 @@ function formatComparison(percent: number) {
     :class="{ 'daily-game-stats-card--embedded': embedded, 'daily-game-stats-card--headerless': !showHeader }"
     aria-label="Статистика дня">
     <div v-if="showHeader" class="daily-game-stats-card__header">
+      <button v-if="collapsible" class="daily-game-stats-card__toggle" type="button" :aria-expanded="statsOpen"
+        aria-controls="daily-game-stats-content" aria-label="Показать или скрыть статистику"
+        @click="statsOpen = !statsOpen">
+        <span class="daily-game-stats-card__toggle-icon" aria-hidden="true">
+          <i class="pi pi-chevron-down"></i>
+        </span>
+      </button>
+
       <div class="daily-game-stats-card__title-group">
         <span class="daily-game-stats-card__title">Статистика</span>
-        <button class="daily-game-stats-card__header-info"
+        <button v-if="!showRefresh || !refresh || (collapsible && !statsOpen)"
+          class="daily-game-stats-card__header-info"
           :class="{ 'daily-game-stats-card__header-info--open': statsInfoPopoverVisible }" type="button"
           :id="statsInfoTriggerId" aria-label="О статистике дня" :aria-describedby="statsInfoPanelId"
           @mouseenter="showStatsInfo" @mouseleave="hideStatsInfo"
           @pointerdown="onStatsInfoPointerDown" @focus="showStatsInfo" @blur="hideStatsInfo" @click.stop>
           <i class="pi pi-info-circle" aria-hidden="true"></i>
         </button>
+        <button v-if="(!collapsible || statsOpen) && showRefresh && refresh"
+          class="daily-game-stats-card__header-refresh" type="button"
+          :disabled="statsLoading" :aria-label="statsLoading ? 'Обновление статистики' : 'Обновить статистику'"
+          :title="statsLoading ? 'Обновление статистики' : 'Обновить статистику'" @click.stop="refresh">
+          <i class="pi pi-refresh" :class="{ 'pi-spin': statsLoading }" aria-hidden="true"></i>
+        </button>
       </div>
-
-      <button v-if="collapsible" class="daily-game-stats-card__toggle" type="button" :aria-expanded="statsOpen"
-        aria-label="Показать или скрыть статистику" @click="statsOpen = !statsOpen">
-        <i class="pi pi-chevron-down" aria-hidden="true"></i>
-      </button>
     </div>
 
     <template v-if="!collapsible || statsOpen">
-      <div class="daily-game-stats-card__body" :aria-busy="statsLoading">
+      <div id="daily-game-stats-content" class="daily-game-stats-card__body" :aria-busy="statsLoading">
         <div v-if="statsStatusMessage" class="daily-game-stats-card__overlay">
           <p>{{ statsStatusMessage }}</p>
         </div>
@@ -256,13 +268,6 @@ function formatComparison(percent: number) {
         </div>
       </div>
 
-      <div v-if="showRefresh && refresh" class="daily-game-stats-card__actions">
-        <UiButton variant="outlined" :loading="statsLoading" loading-label="Обновление статистики"
-          @click="refresh">
-          <i class="pi pi-refresh" aria-hidden="true"></i>
-          Обновить
-        </UiButton>
-      </div>
     </template>
 
     <Popover v-if="showHeader" :ref="setStatsInfoPopover" :pt="statsInfoPopoverPt"
@@ -316,6 +321,8 @@ function formatComparison(percent: number) {
 }
 
 .daily-game-stats-card__header {
+  position: relative;
+  min-height: 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -323,10 +330,13 @@ function formatComparison(percent: number) {
 }
 
 .daily-game-stats-card__title-group {
+  position: relative;
+  z-index: 1;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 2px;
+  pointer-events: none;
 }
 
 .daily-game-stats-card__title {
@@ -334,16 +344,6 @@ function formatComparison(percent: number) {
   font-size: var(--daily-game-stats-card-title-font-size);
   font-weight: 400;
   line-height: 1.1;
-}
-
-.daily-game-stats-card__actions {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.daily-game-stats-card__actions > .ui-button {
-  width: 100%;
-  font-size: 14px;
 }
 
 .daily-game-stats-card__body {
@@ -499,6 +499,7 @@ function formatComparison(percent: number) {
 }
 
 .daily-game-stats-card__header-info,
+.daily-game-stats-card__header-refresh,
 .daily-game-stats-card__benchmark-info,
 .daily-game-stats-card__toggle {
   border: 0;
@@ -513,12 +514,23 @@ function formatComparison(percent: number) {
     background-color 0.16s ease;
 }
 
-.daily-game-stats-card__header-info {
+.daily-game-stats-card__header-info,
+.daily-game-stats-card__header-refresh {
   width: var(--daily-game-stats-card-info-size);
   min-width: var(--daily-game-stats-card-info-size);
   height: var(--daily-game-stats-card-info-size);
   padding: 0;
   border-radius: 50%;
+  pointer-events: auto;
+}
+
+.daily-game-stats-card__header-refresh {
+  cursor: pointer;
+}
+
+.daily-game-stats-card__header-refresh:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .daily-game-stats-card__benchmark-info {
@@ -532,25 +544,42 @@ function formatComparison(percent: number) {
 }
 
 .daily-game-stats-card__toggle {
-  width: 28px;
-  min-width: 28px;
-  height: 28px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
   padding: 0;
   border-radius: 8px;
+  justify-content: flex-end;
   cursor: pointer;
 }
 
-.daily-game-stats-card__toggle i {
+.daily-game-stats-card__toggle-icon {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition:
+    color 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.daily-game-stats-card__toggle-icon i {
   font-size: 14px;
   line-height: 1;
   transition: transform 0.16s ease;
 }
 
-.daily-game-stats-card__toggle[aria-expanded="true"] i {
+.daily-game-stats-card__toggle[aria-expanded="true"] .daily-game-stats-card__toggle-icon i {
   transform: rotate(180deg);
 }
 
-.daily-game-stats-card__header-info i {
+.daily-game-stats-card__header-info i,
+.daily-game-stats-card__header-refresh i {
   font-size: var(--daily-game-stats-card-info-icon-size);
   line-height: 1;
 }
@@ -569,18 +598,24 @@ function formatComparison(percent: number) {
 @media (hover: hover) and (pointer: fine) {
 
   .daily-game-stats-card__header-info:hover,
-  .daily-game-stats-card__benchmark-info:hover,
-  .daily-game-stats-card__toggle:hover {
+  .daily-game-stats-card__header-refresh:not(:disabled):hover,
+  .daily-game-stats-card__benchmark-info:hover {
+    background: var(--color-primary-50);
+    color: var(--color-primary-700);
+  }
+
+  .daily-game-stats-card__toggle-icon:hover {
     background: var(--color-primary-50);
     color: var(--color-primary-700);
   }
 }
 
 .daily-game-stats-card__header-info:focus-visible,
+.daily-game-stats-card__header-refresh:focus-visible,
 .daily-game-stats-card__benchmark-info:focus-visible,
 .daily-game-stats-card__toggle:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .daily-game-stats-card__popover-text {
@@ -655,10 +690,6 @@ function formatComparison(percent: number) {
     padding: 9px 0;
   }
 
-  .daily-game-stats-card__actions > .ui-button {
-    width: auto;
-    font-size: 15px;
-  }
 }
 
 @media (min-width: 1024px) {
@@ -672,8 +703,5 @@ function formatComparison(percent: number) {
     --daily-game-stats-card-info-icon-size: 16px;
   }
 
-  .daily-game-stats-card__actions > .ui-button {
-    font-size: 16px;
-  }
 }
 </style>

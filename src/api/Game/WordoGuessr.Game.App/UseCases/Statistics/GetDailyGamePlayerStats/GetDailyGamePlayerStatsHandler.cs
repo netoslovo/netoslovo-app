@@ -1,6 +1,7 @@
 using WordoGuessr.API.BuildingBlocks.CQRS;
 using WordoGuessr.Common.Domain;
 using WordoGuessr.Game.App.Abstractions;
+using WordoGuessr.Game.App.Mapping;
 using WordoGuessr.Game.Dto;
 
 namespace WordoGuessr.Game.App.UseCases.Statistics.GetDailyGamePlayerStats;
@@ -29,30 +30,6 @@ internal sealed class GetDailyGamePlayerStatsHandler
                 .Failure(GetDailyGamePlayerStatsError.GameNotFound);
         }
 
-        var anyOtherPlays = result.OtherPlaysCount > 0;
-        var percentIfNoAnyOtherGames = 100;
-
-        var scoreBetterThan = anyOtherPlays
-            ? (int)(100.0 * result.PlayersWithWorseScore / result.OtherPlaysCount)
-            : percentIfNoAnyOtherGames;
-
-        var attemptsCountBetterThan = anyOtherPlays
-            ? (int)(100.0 * result.PlayersWithMoreAttempts / result.OtherPlaysCount)
-            : percentIfNoAnyOtherGames;
-
-        var durationBetterThan = anyOtherPlays
-            ? (int)(100.0 * result.PlayersWithWorseTime / result.OtherPlaysCount)
-            : percentIfNoAnyOtherGames;
-
-        var resultDto = new DailyGamePlayerStatsDto(
-            Score: result.Score,
-            AttemptsCount: result.AttemptsCount,
-            Duration: result.Duration,
-            ScoreBetterThanPercent: scoreBetterThan,
-            AttemptsCountBetterThanPercent: attemptsCountBetterThan,
-            DurationBetterThanPercent: durationBetterThan
-        );
-
-        return Result<DailyGamePlayerStatsDto, GetDailyGamePlayerStatsError>.Success(resultDto);
+        return Result<DailyGamePlayerStatsDto, GetDailyGamePlayerStatsError>.Success(result.MapToDto());
     }
 }

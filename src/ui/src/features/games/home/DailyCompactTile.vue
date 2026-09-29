@@ -88,13 +88,18 @@ const showOnTimeBadge = computed(() => wasGuessedOnReleaseDay(props.dailyGame));
 }
 
 .daily-compact-tile__action:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
   background: var(--color-gray-100);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .daily-compact-tile__action:hover {
+    background: var(--color-gray-50);
+  }
+
+  .daily-compact-tile--status-notStarted .daily-compact-tile__action:hover,
+  .daily-compact-tile--status-cancelled .daily-compact-tile__action:hover {
     background: var(--color-gray-100);
   }
 }

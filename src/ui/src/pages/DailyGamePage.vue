@@ -9,6 +9,7 @@ import { useGuestLoginPrompt } from "../features/games/play/useGuestLoginPrompt"
 import GuestLoginPrompt from "../features/games/components/GuestLoginPrompt.vue";
 import { useHandoffDelayedLoadingState } from "../shared/composables/useSkeletonHandoff";
 import UiSkeletonHandoff from "../shared/ui/UiSkeletonHandoff.vue";
+import DailyGameShareDialog from "../features/games/share/DailyGameShareDialog.vue";
 
 const route = useRoute();
 const day = computed(() => typeof route.params.day === "string" ? route.params.day : null);
@@ -56,7 +57,12 @@ const modeConfig = computed(() => ({
       :finished-game-refreshing="session.finishedGameRefreshing.value"
       :mode-config="modeConfig"
       :actions="actions"
-    />
+    >
+      <template #result-header-action>
+        <DailyGameShareDialog v-if="day" :game-id="session.game.value.id" :day="day"
+          :attention-enabled="session.game.value.gameState === 'guessed'" />
+      </template>
+    </GameBoard>
     <div v-else class="daily-preview">
       {{ session.unavailable.value ? "Слово дня недоступно." : "Не удалось открыть слово дня." }}
     </div>

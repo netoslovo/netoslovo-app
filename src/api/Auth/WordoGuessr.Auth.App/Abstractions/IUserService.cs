@@ -22,5 +22,7 @@ public interface IUserService
 
     Task<Result<UserErrorCode>> SetUserName(ApplicationUser user, string userName);
 
+    Task<string?> GetUserName(Guid userId, CancellationToken ct = default);
+
     Task<IReadOnlyDictionary<Guid, string>> GetUserNames(IReadOnlyList<Guid> userIds);
 }

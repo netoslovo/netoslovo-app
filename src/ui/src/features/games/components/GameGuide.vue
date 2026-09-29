@@ -282,8 +282,8 @@ function resetTouch() {
 }
 
 .game-guide__page:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 3px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .game-guide__actions {

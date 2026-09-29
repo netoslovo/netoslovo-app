@@ -234,8 +234,8 @@ async function decide(approved: boolean) {
 }
 
 .moderation-source__toggle:focus-visible {
-  outline: 2px solid var(--color-primary-600);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring-primary);
 }
 
 .moderation-source__lanes {
