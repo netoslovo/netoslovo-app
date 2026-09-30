@@ -15,8 +15,7 @@ public interface IGameStore
     DbSet<VersionedGameSource> VersionedGameSources { get; }
     DbSet<DailyGameShare> DailyGameShares { get; }
 
-    IQueryable<SingleGame> SingleGamesForGuessAction();
-    IQueryable<SingleGame> SingleGamesForTextHintAction();
+    IQueryable<SingleGame> SingleGamesForAction();
     IQueryable<SingleGame> SingleGamesForDetails();
     IQueryable<SingleGame> SingleGamesForSummary();
     IQueryable<VersionedGameSource> VersionedGameSourcesForGameCreation();

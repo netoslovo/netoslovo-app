@@ -20,7 +20,6 @@ internal sealed class GetSharedGameHandler
     private readonly IAuthModule _authModule;
     private readonly IGameReadModelStore _gameReadStore;
     private readonly IWordsModule _wordsModule;
-    private readonly DisplayWordDtoBuilder _displayWordDtoBuilder;
     private readonly TimeProvider _timeProvider;
 
     public GetSharedGameHandler(
@@ -28,14 +27,12 @@ internal sealed class GetSharedGameHandler
         IAuthModule authModule,
         IGameReadModelStore gameReadStore,
         IWordsModule wordsModule,
-        DisplayWordDtoBuilder displayWordDtoBuilder,
         TimeProvider timeProvider)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _authModule = authModule ?? throw new ArgumentNullException(nameof(authModule));
         _gameReadStore = gameReadStore ?? throw new ArgumentNullException(nameof(gameReadStore));
         _wordsModule = wordsModule ?? throw new ArgumentNullException(nameof(wordsModule));
-        _displayWordDtoBuilder = displayWordDtoBuilder ?? throw new ArgumentNullException(nameof(displayWordDtoBuilder));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
@@ -44,6 +41,9 @@ internal sealed class GetSharedGameHandler
         CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(query);
+
+        var now = _timeProvider.GetUtcNow();
+        var today = DailyGameClock.GetDateOnly(now);
 
         var share = await _dbContext.DailyGameShares
             .AsNoTracking()
@@ -77,6 +77,7 @@ internal sealed class GetSharedGameHandler
             playerName,
             query.ViewerPlayerId,
             wordsData.TotalWords,
+            today,
             ct);
     }
 
@@ -85,6 +86,7 @@ internal sealed class GetSharedGameHandler
         string playerName,
         Guid viewerPlayerId,
         ushort totalWords,
+        DateOnly today,
         CancellationToken ct)
     {
         var game = share.SingleGame;
@@ -120,7 +122,9 @@ internal sealed class GetSharedGameHandler
         var result = new SharedDailyGameDto(
             game.StateCode.MapToDto(),
             guesses,
-            canViewSpoilers ? _displayWordDtoBuilder.Build(game) : null,
+            canViewSpoilers
+                ? game.GetDisplayWord(today, out var unavailableReason).MapToDto(unavailableReason)
+                : null,
             score.Value,
             score.MapToDto(),
             playerName,

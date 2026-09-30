@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WordoGuessr.API.BuildingBlocks.CQRS;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
+using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.Domain;
 using WordoGuessr.Game.Dto;
 
@@ -10,20 +11,22 @@ namespace WordoGuessr.Game.App.UseCases.SingleGames.Arcade.GetLatestActive;
 internal sealed class GetLatestActiveArcadeHandler : IQueryHandler<GetLatestActiveArcadeQuery, ArcadeGameInfoDto?>
 {
     private readonly IGameStore _dbContext;
-    private readonly DisplayWordDtoBuilder _displayWordDtoBuilder;
+    private readonly TimeProvider _timeProvider;
 
     public GetLatestActiveArcadeHandler(
         IGameStore dbContext,
-        DisplayWordDtoBuilder displayWordDtoBuilder)
+        TimeProvider timeProvider)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        _displayWordDtoBuilder = displayWordDtoBuilder ?? throw new ArgumentNullException(nameof(displayWordDtoBuilder));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     public async Task<ArcadeGameInfoDto?> Handle(GetLatestActiveArcadeQuery query, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(query);
 
+        var now = _timeProvider.GetUtcNow();
+        var today = DailyGameClock.GetDateOnly(now);
         var game = await _dbContext.SingleGamesForSummary()
             .Where(sg => sg.PlayerId == query.PlayerId &&
                 sg.StateCode == SingleGameStateCode.Active &&
@@ -36,6 +39,6 @@ internal sealed class GetLatestActiveArcadeHandler : IQueryHandler<GetLatestActi
             return null;
         }
 
-        return game.MapToArcadeGameInfoDto(_displayWordDtoBuilder.Build(game));
+        return game.MapToArcadeGameInfoDto(today);
     }
 }

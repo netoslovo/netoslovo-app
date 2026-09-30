@@ -40,35 +40,29 @@ public sealed class GameDbContext : DbContext, IGameStore
     internal DbSet<DailyGameStreakInfo> DailyGameStreaksInfo { get; set; }
     internal DbSet<ArcadeGameStats> ArcadeGameStats { get; set; }
 
-    public IQueryable<SingleGame> SingleGamesForGuessAction() =>
-        SingleGames
+    public IQueryable<SingleGame> SingleGamesForAction() =>
+        SingleGamesWithSource()
             .AsSplitQuery()
-            .Include(sg => sg.Guesses)
-            .Include(sg => sg.VersionedGameSource)
-                .ThenInclude(vgs => vgs.GameSource);
-
-    public IQueryable<SingleGame> SingleGamesForTextHintAction() =>
-        SingleGames
-            .AsSplitQuery()
-            .Include(sg => sg.Guesses)
-            .Include(sg => sg.VersionedGameSource);
+            .Include(g => g.Guesses);
 
     public IQueryable<SingleGame> SingleGamesForDetails() =>
-        SingleGames
+        SingleGamesWithSource()
             .AsNoTracking()
             .AsSplitQuery()
-            .Include(sg => sg.VersionedGameSource)
-                .ThenInclude(vgs => vgs.GameSource)
-            .Include(sg => sg.Guesses.OrderByDescending(g => g.Id));
+            .Include(g => g.Guesses.OrderByDescending(guess => guess.Id));
 
     public IQueryable<SingleGame> SingleGamesForSummary() =>
-        SingleGames
-            .AsNoTracking()
-            .Include(sg => sg.VersionedGameSource);
+        SingleGamesWithSource()
+            .AsNoTracking();
 
     public IQueryable<VersionedGameSource> VersionedGameSourcesForGameCreation() =>
         VersionedGameSources
             .Include(vgs => vgs.GameSource);
+
+    private IQueryable<SingleGame> SingleGamesWithSource() =>
+        SingleGames
+            .Include(g => g.VersionedGameSource)
+                .ThenInclude(source => source.GameSource);
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {

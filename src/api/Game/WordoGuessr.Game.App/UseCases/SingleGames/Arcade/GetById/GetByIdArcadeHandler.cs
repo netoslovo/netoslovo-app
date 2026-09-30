@@ -13,22 +13,24 @@ internal sealed class GetByIdArcadeHandler : IQueryHandler<GetByIdArcadeQuery, G
 {
     private readonly IGameStore _dbContext;
     private readonly IWordsModule _wordsModule;
-    private readonly DisplayWordDtoBuilder _displayWordDtoBuilder;
+    private readonly TimeProvider _timeProvider;
 
     public GetByIdArcadeHandler(
         IGameStore dbContext,
         IWordsModule wordsModule,
-        DisplayWordDtoBuilder displayWordDtoBuilder)
+        TimeProvider timeProvider)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _wordsModule = wordsModule ?? throw new ArgumentNullException(nameof(wordsModule));
-        _displayWordDtoBuilder = displayWordDtoBuilder ?? throw new ArgumentNullException(nameof(displayWordDtoBuilder));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     public async Task<GameDto?> Handle(GetByIdArcadeQuery query, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(query);
 
+        var now = _timeProvider.GetUtcNow();
+        var today = DailyGameClock.GetDateOnly(now);
         var singleGame = await _dbContext.SingleGamesForDetails()
             .FirstOrDefaultAsync(sg =>
                 sg.PlayerId == query.PlayerId &&
@@ -51,9 +53,6 @@ internal sealed class GetByIdArcadeHandler : IQueryHandler<GetByIdArcadeQuery, G
             .Select(guess => guess.MapToDto(GuessFillPercentageCalculator.Calculate(guess.Distance, totalWordsResult.TotalWords)))
             .ToList();
 
-        return singleGame.MapToDto(
-            _displayWordDtoBuilder.Build(singleGame),
-            lastGuessDto,
-            guessesDto);
+        return singleGame.MapToDto(today, lastGuessDto, guessesDto);
     }
 }

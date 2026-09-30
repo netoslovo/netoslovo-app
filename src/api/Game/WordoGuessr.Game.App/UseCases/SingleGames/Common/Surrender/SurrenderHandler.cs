@@ -36,7 +36,7 @@ internal sealed class SurrenderHandler : ICommandHandler<SurrenderCommand, Resul
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var game = await _dbContext.SingleGamesForGuessAction()
+        var game = await _dbContext.SingleGamesForAction()
             .FirstOrDefaultAsync(
                 sg =>
                     sg.PlayerId == command.PlayerId &&

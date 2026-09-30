@@ -11,6 +11,8 @@ public sealed class DisplayWordView
         Cells = cells;
     }
 
+    public static DisplayWordView UnknownLength() => new DisplayWordView(null);
+
     public static DisplayWordView FromWordRevealed(Word word)
     {
         var cells = word.Text

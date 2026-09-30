@@ -8,6 +8,7 @@ using WordoGuessr.Game.Domain.SingleGameEvents;
 
 namespace WordoGuessr.Game.Domain;
 
+// TODO: упорядочить члены класса
 public sealed class SingleGame : DomainEntity<Guid>
 {
     public const int HalfwayWordHintsTotal = 3;
@@ -32,12 +33,88 @@ public sealed class SingleGame : DomainEntity<Guid>
 
     public Guess? LastGuess => _guesses.LastOrDefault();
 
-    private readonly DisplayWord _displayWord = null!;
-    public DisplayWordView GetCurrentDisplayWord() =>
-        _displayWord.ToView();
+    private Word _secretWord => VersionedGameSource.GameSource.Word;
 
-    public DisplayWordView GetRevealedDisplayWord() =>
-        _displayWord.ToRevealedView();
+    private readonly DisplayWord _displayWord = null!;
+
+    public Result<Word, SecretWordUnavailableReason> GetSecretWord(DateOnly today)
+    {
+        return StateCode switch
+        {
+            SingleGameStateCode.Guessed =>
+                Result<Word, SecretWordUnavailableReason>.Success(_secretWord),
+
+            SingleGameStateCode.Surrendered when !IsDailyFor(today) =>
+                Result<Word, SecretWordUnavailableReason>.Success(_secretWord),
+
+            SingleGameStateCode.Active =>
+                Result<Word, SecretWordUnavailableReason>.Failure(SecretWordUnavailableReason.GameInProgress),
+
+            SingleGameStateCode.Cancelled =>
+                Result<Word, SecretWordUnavailableReason>.Failure(SecretWordUnavailableReason.GameCancelled),
+
+            SingleGameStateCode.Surrendered =>
+                Result<Word, SecretWordUnavailableReason>.Failure(SecretWordUnavailableReason.SurrenderedHiddenForToday),
+
+            _ =>
+                throw new InvalidOperationException($"Unknown single game state: {StateCode}")
+        };
+    }
+
+    private bool ShouldShowRevealedDisplayWord(DateOnly today, out DisplayWordUnavailableReason? hideReason)
+    {
+        if (StateCode == SingleGameStateCode.Guessed)
+        {
+            hideReason = null;
+            return true;
+        }
+
+        if (StateCode == SingleGameStateCode.Surrendered && IsDailyFor(today))
+        {
+            hideReason = DisplayWordUnavailableReason.HiddenForToday;
+            return false;
+        }
+
+        if (StateCode == SingleGameStateCode.Surrendered)
+        {
+            hideReason = null;
+            return true;
+        }
+
+        hideReason = null;
+        return false;
+    }
+
+    public DisplayWordView GetDisplayWord(DateOnly today, out DisplayWordUnavailableReason? unavailableReason)
+    {
+        return ShouldShowRevealedDisplayWord(today, out unavailableReason)
+            ? DisplayWordView.FromWordRevealed(_secretWord)
+            : BuildCurrentDisplayWord();
+    }
+
+    private DisplayWordView BuildCurrentDisplayWord()
+    {
+        if (!RevealLengthHintUsed)
+        {
+            return DisplayWordView.UnknownLength();
+        }
+
+        var revealedIndexes = _orderedLettersIndexesForReveal
+            .Take(_revealLetterHintsUsedCount)
+            .ToHashSet();
+
+        var cells = _secretWord.Text
+            .Select((letter, index) =>
+            {
+                var indexRevealed = revealedIndexes.Contains(index);
+                return new DisplayWordCellView(
+                    indexRevealed ? letter : null,
+                    indexRevealed);
+            })
+            .ToArray();
+
+        return new DisplayWordView(cells);
+    }
 
     private readonly List<Hint> _usedHints = [];
     public IList<Hint> UsedHints => _usedHints.AsReadOnly();
@@ -305,6 +382,10 @@ public sealed class SingleGame : DomainEntity<Guid>
         VersionedGameSource = versionedGameSource;
         UpdatedAt = at;
     }
+
+    public bool IsDailyFor(DateOnly day) =>
+        Mode == SingleGameMode.Daily &&
+        DayOfDailyGame == day;
 
     private void AddGameFinishedEvent()
     {

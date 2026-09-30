@@ -7,7 +7,7 @@ internal static class GameMapping
 {
     public static GameDto MapToDto(
         this SingleGame singleGame,
-        DisplayWordDto displayWord,
+        DateOnly today,
         GuessDto? lastGuess = default,
         IReadOnlyCollection<GuessDto>? guesses = default)
     {
@@ -19,7 +19,8 @@ internal static class GameMapping
             singleGame.StateCode.MapToDto(),
             lastGuess,
             guesses ?? [],
-            displayWord,
+            singleGame.GetDisplayWord(today, out var unavailableReason).MapToDto(unavailableReason),
+            singleGame.GetSecretWord(today).MapToDto(),
             Helpers.BuildHintsInfo(singleGame),
             score.Value,
             score.MapToDto());

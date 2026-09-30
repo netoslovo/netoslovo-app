@@ -44,7 +44,7 @@ internal sealed class RevealHalfwayWordHandler
 
         var now = _timeProvider.GetUtcNow();
 
-        var game = await _dbContext.SingleGamesForGuessAction()
+        var game = await _dbContext.SingleGamesForAction()
             .FirstOrDefaultAsync(
                 sg =>
                     sg.PlayerId == command.PlayerId &&

@@ -14,16 +14,13 @@ internal sealed class GetTodayDailyGameHandler
 {
     private readonly IGameStore _dbContext;
     private readonly TimeProvider _timeProvider;
-    private readonly DisplayWordDtoBuilder _displayWordDtoBuilder;
 
     public GetTodayDailyGameHandler(
         IGameStore dbContext,
-        TimeProvider timeProvider,
-        DisplayWordDtoBuilder displayWordDtoBuilder)
+        TimeProvider timeProvider)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
-        _displayWordDtoBuilder = displayWordDtoBuilder ?? throw new ArgumentNullException(nameof(displayWordDtoBuilder));
     }
 
     public async Task<Result<DailyGameInfoDto?, GetDailyError>> Handle(GetTodayDailyGameQuery query, CancellationToken ct)
@@ -54,7 +51,7 @@ internal sealed class GetTodayDailyGameHandler
             return Result<DailyGameInfoDto?, GetDailyError>.Success(null);
         }
 
-        var dto = game.MapToDailyGameInfoDto(today, today, _displayWordDtoBuilder.Build(game));
+        var dto = game.MapToDailyGameInfoDto(today, today);
 
         return Result<DailyGameInfoDto?, GetDailyError>.Success(dto);
     }
