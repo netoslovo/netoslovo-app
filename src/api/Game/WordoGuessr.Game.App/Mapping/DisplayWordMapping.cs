@@ -17,4 +17,10 @@ internal static class DisplayWordMapping
             DisplayWordUnavailableReason.HiddenForToday => DisplayWordHideReasonDto.HiddenForToday,
             _ => throw new ArgumentOutOfRangeException(nameof(hideReason), hideReason, "Unknown hide reason")
         };
+
+    public static DisplayWordDtoV2 MapToDtoV2(this DisplayWordView displayWord) =>
+        new DisplayWordDtoV2(displayWord.Cells?.Select(c => c.MapToDtoV2()).ToArray());
+
+    public static DisplayWordCellDtoV2 MapToDtoV2(this DisplayWordCellView displayWordCell) =>
+        new DisplayWordCellDtoV2(displayWordCell.Value, displayWordCell.Revealed);
 }

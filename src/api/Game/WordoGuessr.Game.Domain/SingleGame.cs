@@ -37,27 +37,23 @@ public sealed class SingleGame : DomainEntity<Guid>
 
     private readonly DisplayWord _displayWord = null!;
 
-    public Result<Word, SecretWordUnavailableReason> GetSecretWord(DateOnly today)
+    public Result<Word, SecretWordUnavailableReason> GetSecretWord()
     {
         return StateCode switch
         {
-            SingleGameStateCode.Guessed =>
-                Result<Word, SecretWordUnavailableReason>.Success(_secretWord),
-
-            SingleGameStateCode.Surrendered when !IsDailyFor(today) =>
+            SingleGameStateCode.Guessed or
+            SingleGameStateCode.Surrendered =>
                 Result<Word, SecretWordUnavailableReason>.Success(_secretWord),
 
             SingleGameStateCode.Active =>
-                Result<Word, SecretWordUnavailableReason>.Failure(SecretWordUnavailableReason.GameInProgress),
+                Result<Word, SecretWordUnavailableReason>.Failure(
+                    SecretWordUnavailableReason.GameInProgress),
 
             SingleGameStateCode.Cancelled =>
-                Result<Word, SecretWordUnavailableReason>.Failure(SecretWordUnavailableReason.GameCancelled),
+                Result<Word, SecretWordUnavailableReason>.Failure(
+                    SecretWordUnavailableReason.GameCancelled),
 
-            SingleGameStateCode.Surrendered =>
-                Result<Word, SecretWordUnavailableReason>.Failure(SecretWordUnavailableReason.SurrenderedHiddenForToday),
-
-            _ =>
-                throw new InvalidOperationException($"Unknown single game state: {StateCode}")
+            _ => throw new InvalidOperationException($"Unknown single game state: {StateCode}")
         };
     }
 
@@ -85,7 +81,10 @@ public sealed class SingleGame : DomainEntity<Guid>
         return false;
     }
 
-    public DisplayWordView GetDisplayWord(DateOnly today, out DisplayWordUnavailableReason? unavailableReason)
+    public DisplayWordView GetDisplayWord() =>
+        BuildCurrentDisplayWord();
+
+    public DisplayWordView GetDisplayWordLegacy(DateOnly today, out DisplayWordUnavailableReason? unavailableReason)
     {
         return ShouldShowRevealedDisplayWord(today, out unavailableReason)
             ? DisplayWordView.FromWordRevealed(_secretWord)
@@ -420,6 +419,8 @@ public sealed class SingleGame : DomainEntity<Guid>
             DayOfDailyGame: DayOfDailyGame
         ));
     }
+
+
 
     private HintPenalty[] BuildPenalties()
     {

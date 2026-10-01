@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using WordoGuessr.API.BuildingBlocks.CQRS;
 using WordoGuessr.Auth.Contract;
@@ -96,7 +95,11 @@ internal sealed class GetSharedGameHandler
         }
 
         var viewerGame = await GetViewerDailyGame(viewerPlayerId, game, ct);
-        var canViewSpoilers = CanViewDailySpoilers(viewerGame, out var spoilersHideReason);
+        var canViewSpoilers = GameSpoilersPolicy.CanViewDailySpoilers(
+            game,
+            viewerGame,
+            today,
+            out var spoilersHideReason);
 
         var guesses = BuildGuesses(
             game,
@@ -119,16 +122,27 @@ internal sealed class GetSharedGameHandler
                 : null;
 
         var score = game.GetScore();
+
+        SharedDailyGameSpoilersDto spoilers = canViewSpoilers
+            ? new VisibleSharedDailyGameSpoilersDto(
+                game.BuildSharedGameWordDto(),
+                BuildVisibleGuesses(game, totalWords))
+            : new HiddenSharedDailyGameSpoilersDto(
+                spoilersHideReason!.Value.MapToDtoV2(),
+                BuildHiddenGuesses(game, totalWords)
+            );
+
         var result = new SharedDailyGameDto(
             game.StateCode.MapToDto(),
             guesses,
             canViewSpoilers
-                ? game.GetDisplayWord(today, out var unavailableReason).MapToDto(unavailableReason)
+                ? game.GetDisplayWordLegacy(today, out var unavailableReason).MapToDto(unavailableReason)
                 : null,
+            spoilers,
             score.Value,
             score.MapToDto(),
             playerName,
-            spoilersHideReason,
+            spoilersHideReason?.MapToDto(),
             game.DayOfDailyGame.Value,
             playerStats?.MapToDto(),
             gameStatsDto);
@@ -155,48 +169,6 @@ internal sealed class GetSharedGameHandler
                 ct);
     }
 
-    private bool CanViewDailySpoilers(
-        SingleGame? viewerGame,
-        [NotNullWhen(false)] out SharedGameSpoilersHideReason? hideReason)
-    {
-        if (viewerGame is null)
-        {
-            hideReason = SharedGameSpoilersHideReason.ViewerGameNotFinished;
-            return false;
-        }
-
-        switch (viewerGame.StateCode)
-        {
-            case SingleGameStateCode.Guessed:
-            case SingleGameStateCode.Cancelled:
-            case SingleGameStateCode.Surrendered when !IsCurrentDailyGame(viewerGame):
-                hideReason = null;
-                return true;
-
-            case SingleGameStateCode.Active:
-                hideReason = SharedGameSpoilersHideReason.ViewerGameNotFinished;
-                return false;
-
-            case SingleGameStateCode.Surrendered:
-                hideReason = SharedGameSpoilersHideReason.HiddenForToday;
-                return false;
-
-            default:
-                throw new ArgumentOutOfRangeException(
-                    nameof(viewerGame),
-                    viewerGame.StateCode,
-                    "Unknown single game state");
-        }
-    }
-
-    private bool IsCurrentDailyGame(SingleGame game)
-    {
-        var today = DailyGameClock.GetDateOnly(_timeProvider.GetUtcNow());
-
-        return game.Mode == SingleGameMode.Daily &&
-               game.DayOfDailyGame == today;
-    }
-
     private static IReadOnlyCollection<SharedGuessDto> BuildGuesses(
         SingleGame game,
         ushort totalWords,
@@ -205,6 +177,33 @@ internal sealed class GetSharedGameHandler
         return game.Guesses
             .Select((guess, index) => new SharedGuessDto(
                 showWords ? guess.Word.Text : null,
+                guess.Distance,
+                index + 1,
+                GuessFillPercentageCalculator.Calculate(guess.Distance, totalWords),
+                guess.Source.MapToDto()))
+            .ToArray();
+    }
+
+    private static IReadOnlyCollection<VisibleSharedGuessDto> BuildVisibleGuesses(
+        SingleGame game,
+        ushort totalWords)
+    {
+        return game.Guesses
+            .Select((guess, index) => new VisibleSharedGuessDto(
+                guess.Word.Text,
+                guess.Distance,
+                index + 1,
+                GuessFillPercentageCalculator.Calculate(guess.Distance, totalWords),
+                guess.Source.MapToDto()))
+            .ToArray();
+    }
+
+    private static IReadOnlyCollection<HiddenSharedGuessDto> BuildHiddenGuesses(
+        SingleGame game,
+        ushort totalWords)
+    {
+        return game.Guesses
+            .Select((guess, index) => new HiddenSharedGuessDto(
                 guess.Distance,
                 index + 1,
                 GuessFillPercentageCalculator.Calculate(guess.Distance, totalWords),

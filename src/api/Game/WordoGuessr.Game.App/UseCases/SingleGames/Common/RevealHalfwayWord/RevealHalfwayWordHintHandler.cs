@@ -134,7 +134,7 @@ internal sealed class RevealHalfwayWordHandler
                 guessesDto,
                 score.Value,
                 score.MapToDto()),
-            Helpers.BuildHintsInfo(game)
+            game.BuildHintsInfoDto()
         );
 
         return Result<GuessHintDto, RevealHalfwayWordHintError>.Success(guessHintDto);

@@ -7,7 +7,7 @@ public sealed record GameDto(
     GuessDto? CurrentGuess,
     IReadOnlyCollection<GuessDto> AllGuesses,
     DisplayWordDto DisplayWord,
-    SecretWordDto SecretWord,
+    GameWordDto GameWord,
     HintsInfoDto HintInfo,
     int Score,
     ScoreDetailsDto ScoreDetails);
