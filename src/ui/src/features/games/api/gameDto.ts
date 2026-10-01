@@ -27,6 +27,28 @@ export type DisplayWordDto = {
   cells: DisplayWordCell[] | null;
   hideReason?: DisplayWordHideReasonDto | null;
 };
+export type DisplayWordDtoV2 = {
+  cells: DisplayWordCell[] | null;
+};
+
+export type SecretWordUnavailableReasonDto =
+  | "GameInProgress"
+  | "GameCancelled"
+  | "SurrenderedHiddenForToday";
+export type GameWordUnavailableReasonDto = "GameCancelled";
+export type GameWordDto =
+  | {
+    status: "display";
+    displayWord: DisplayWordDtoV2;
+    secretWordUnavailableReason: SecretWordUnavailableReasonDto;
+  }
+  | { status: "secret"; word: string }
+  | {
+    status: "displayAndSecret";
+    displayWord: DisplayWordDtoV2;
+    secretWord: string;
+  }
+  | { status: "unavailable"; reason: GameWordUnavailableReasonDto };
 
 export type UsedHintDto = { type: HintTypeDto; penalty: number; usedAt: string };
 export type ScoreDetailsDto = { guessesCount: number; usedHints: readonly UsedHintDto[] };
@@ -41,7 +63,7 @@ export type GuessOutcomeDto = {
 
 export type GuessHintDto = { guessOutcome: GuessOutcomeDto; hintsInfo: HintsInfo };
 export type TextHintDto = {
-  displayWord: DisplayWordDto;
+  displayWord: DisplayWordDtoV2;
   hintsInfo: HintsInfo;
   score: number;
   scoreDetails: ScoreDetailsDto;
@@ -54,6 +76,7 @@ export type GameDto = {
   currentGuess: GuessDto | null;
   allGuesses: GuessDto[];
   displayWord: DisplayWordDto;
+  gameWord?: GameWordDto;
   hintInfo: HintsInfo;
   score: number;
   scoreDetails: ScoreDetailsDto;
@@ -65,6 +88,7 @@ export type DailyGameDto = {
   guessedAtGameDay?: boolean | null;
   isToday: boolean;
   word: DisplayWordDto | null;
+  gameWord?: GameWordDto | null;
 };
 
 export type DailyGamesHistoryDto = { games: DailyGameDto[]; hasMore: boolean };
@@ -86,10 +110,28 @@ export type SharedGuessDto = {
   source: GuessSourceDto;
 };
 
+export type VisibleSharedGuessDto = Omit<SharedGuessDto, "word"> & { word: string };
+export type HiddenSharedGuessDto = Omit<SharedGuessDto, "word">;
+export type SharedGameSpoilersHideReasonDtoV2 =
+  | "ViewerGameNotFinished"
+  | "ViewerSurrenderedHiddenForToday";
+export type SharedDailyGameSpoilersDto =
+  | {
+    visibility: "visible";
+    gameWord: GameWordDto;
+    guesses: VisibleSharedGuessDto[];
+  }
+  | {
+    visibility: "hidden";
+    reason: SharedGameSpoilersHideReasonDtoV2;
+    guesses: HiddenSharedGuessDto[];
+  };
+
 export type SharedDailyGameDto = {
   gameState: GameStateDto;
   allGuesses: SharedGuessDto[];
   displayWord: DisplayWordDto | null;
+  spoilers?: SharedDailyGameSpoilersDto;
   score: number;
   scoreDetails: ScoreDetailsDto;
   playerName: string;
@@ -125,6 +167,7 @@ export type ArcadeGameDto = {
   createdAt: string;
   state: GameStateDto;
   word: DisplayWordDto | null;
+  gameWord?: GameWordDto;
 };
 
 export type ArcadeGamesHistoryDto = { games: ArcadeGameDto[]; hasMore: boolean };

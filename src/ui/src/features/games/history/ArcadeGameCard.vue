@@ -101,7 +101,7 @@ function openCard(event: MouseEvent) {
         </div>
 
         <div class="arcade-game-card__word">
-          <HistoryDisplayWord :display-word="arcadeGame.word" />
+          <HistoryDisplayWord :game-word="arcadeGame.gameWord" />
         </div>
       </div>
 

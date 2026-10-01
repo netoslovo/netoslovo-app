@@ -25,8 +25,28 @@ export type DisplayWordCell = { value: string | null; revealed: boolean };
 export type DisplayWordHideReason = "hiddenForToday";
 export type DisplayWord = {
   cells: DisplayWordCell[] | null;
+};
+export type LegacyDisplayWord = DisplayWord & {
   hideReason: DisplayWordHideReason | null;
 };
+export type SecretWordUnavailableReason =
+  | "gameInProgress"
+  | "gameCancelled"
+  | "surrenderedHiddenForToday";
+export type GameWord =
+  | {
+    status: "display";
+    displayWord: DisplayWord;
+    secretWordUnavailableReason: SecretWordUnavailableReason;
+  }
+  | { status: "secret"; secretWord: string }
+  | {
+    status: "displayAndSecret";
+    displayWord: DisplayWord;
+    secretWord: string;
+  }
+  | { status: "unavailable"; reason: "gameCancelled" }
+  | { status: "legacy"; displayWord: LegacyDisplayWord };
 
 export type HintsInfo = {
   revealLengthHintUsed: boolean;
@@ -64,7 +84,7 @@ export type Game = {
   gameState: GameState;
   currentGuess: Guess | null;
   allGuesses: Guess[];
-  displayWord: DisplayWord;
+  gameWord: GameWord;
   hintsInfo: HintsInfo;
   score: number;
   scoreDetails: ScoreDetails;
@@ -75,7 +95,7 @@ export type DailyGame = {
   state: GameState | null;
   guessedAtGameDay: boolean | null;
   isToday: boolean;
-  word: DisplayWord | null;
+  gameWord: GameWord | null;
 };
 
 export type DailyGamesHistory = { games: DailyGame[]; hasMore: boolean };
@@ -100,7 +120,7 @@ export type SharedGuess = {
 export type SharedDailyGame = {
   gameState: GameState;
   allGuesses: SharedGuess[];
-  displayWord: DisplayWord | null;
+  gameWord: GameWord | null;
   score: number;
   scoreDetails: ScoreDetails;
   playerName: string;
@@ -170,7 +190,7 @@ export type ArcadeGame = {
   difficulty: Difficulty;
   createdAt: string;
   state: GameState;
-  word: DisplayWord | null;
+  gameWord: GameWord | null;
 };
 
 export type ArcadeGamesHistory = { games: ArcadeGame[]; hasMore: boolean };

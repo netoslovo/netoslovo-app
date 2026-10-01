@@ -6,7 +6,9 @@ import type {
   DailyGameStreakTierDto,
   DailyGamesHistoryDto,
   DisplayWordDto,
+  DisplayWordDtoV2,
   DisplayWordHideReasonDto,
+  GameWordDto,
   GameDto,
   GameStateDto,
   GuessDto,
@@ -18,9 +20,12 @@ import type {
   ScoreDetailsDto,
   SharedDailyGameDto,
   SharedGameSpoilersHideReasonDto,
+  SharedGameSpoilersHideReasonDtoV2,
+  HiddenSharedGuessDto,
   SharedGuessDto,
   TextHintDto,
   UsedHintDto,
+  VisibleSharedGuessDto,
 } from "../api/gameDto";
 import type {
   ArcadeGame,
@@ -32,6 +37,7 @@ import type {
   DisplayWord,
   DisplayWordHideReason,
   Game,
+  GameWord,
   GameState,
   Guess,
   GuessHint,
@@ -39,6 +45,7 @@ import type {
   GuessSource,
   GuessStatus,
   HintType,
+  LegacyDisplayWord,
   ScoreDetails,
   SharedDailyGame,
   SharedGameSpoilersHideReason,
@@ -88,6 +95,18 @@ const sharedGameSpoilersHideReasons: Record<
   ViewerGameNotFinished: "viewerGameNotFinished",
   HiddenForToday: "hiddenForToday",
 };
+const sharedGameSpoilersHideReasonsV2: Record<
+  SharedGameSpoilersHideReasonDtoV2,
+  SharedGameSpoilersHideReason
+> = {
+  ViewerGameNotFinished: "viewerGameNotFinished",
+  ViewerSurrenderedHiddenForToday: "hiddenForToday",
+};
+const secretWordUnavailableReasons = {
+  GameInProgress: "gameInProgress",
+  GameCancelled: "gameCancelled",
+  SurrenderedHiddenForToday: "surrenderedHiddenForToday",
+} as const;
 
 function mapKnownValue<T extends string>(values: Record<string, T>, raw: string, field: string): T {
   const mapped = values[raw];
@@ -103,13 +122,48 @@ export function mapGuess(dto: GuessDto): Guess {
     source: mapKnownValue(guessSources, dto.source, "guess source"),
   };
 }
-export function mapDisplayWord(dto: DisplayWordDto): DisplayWord {
+export function mapDisplayWord(dto: DisplayWordDtoV2): DisplayWord {
+  return { cells: dto.cells ?? null };
+}
+function mapLegacyDisplayWord(dto: DisplayWordDto): LegacyDisplayWord {
   return {
     cells: dto.cells ?? null,
     hideReason: dto.hideReason
       ? mapKnownValue(displayWordHideReasons, dto.hideReason, "display word hide reason")
       : null,
   };
+}
+export function mapGameWord(dto: GameWordDto): GameWord {
+  switch (dto.status) {
+    case "display":
+      return {
+        status: "display",
+        displayWord: mapDisplayWord(dto.displayWord),
+        secretWordUnavailableReason: mapKnownValue(
+          secretWordUnavailableReasons,
+          dto.secretWordUnavailableReason,
+          "secret word unavailable reason",
+        ),
+      };
+    case "secret":
+      return { status: "secret", secretWord: dto.word };
+    case "displayAndSecret":
+      return {
+        status: "displayAndSecret",
+        displayWord: mapDisplayWord(dto.displayWord),
+        secretWord: dto.secretWord,
+      };
+    case "unavailable":
+      return {
+        status: "unavailable",
+        reason: mapKnownValue({ GameCancelled: "gameCancelled" }, dto.reason, "game word unavailable reason"),
+      };
+    default:
+      throw new Error(`Unknown game word status: ${String((dto as { status?: unknown }).status)}`);
+  }
+}
+function mapLegacyGameWord(dto: DisplayWordDto): GameWord {
+  return { status: "legacy", displayWord: mapLegacyDisplayWord(dto) };
 }
 function mapUsedHint(dto: UsedHintDto): UsedHint {
   return {
@@ -130,21 +184,54 @@ function mapSharedGuess(dto: SharedGuessDto): SharedGuess {
     source: mapKnownValue(guessSources, dto.source, "guess source"),
   };
 }
-export function mapSharedDailyGame(dto: SharedDailyGameDto): SharedDailyGame {
+function mapVisibleSharedGuess(dto: VisibleSharedGuessDto): SharedGuess {
+  return mapSharedGuess(dto);
+}
+function mapHiddenSharedGuess(dto: HiddenSharedGuessDto): SharedGuess {
   return {
-    gameState: mapKnownValue(gameStates, dto.gameState, "game state"),
-    allGuesses: dto.allGuesses.map(mapSharedGuess),
-    displayWord: dto.displayWord ? mapDisplayWord(dto.displayWord) : null,
-    score: dto.score,
-    scoreDetails: mapScoreDetails(dto.scoreDetails),
-    playerName: dto.playerName,
-    spoilersHideReason: dto.spoilersHideReason
+    word: null,
+    distance: dto.distance,
+    order: dto.order,
+    fillPercentage: dto.fillPercentage,
+    source: mapKnownValue(guessSources, dto.source, "guess source"),
+  };
+}
+export function mapSharedDailyGame(dto: SharedDailyGameDto): SharedDailyGame {
+  const spoilers = dto.spoilers;
+  const gameWord = spoilers === undefined
+    ? dto.displayWord ? mapLegacyGameWord(dto.displayWord) : null
+    : spoilers.visibility === "visible"
+      ? mapGameWord(spoilers.gameWord)
+      : null;
+  const allGuesses = spoilers === undefined
+    ? dto.allGuesses.map(mapSharedGuess)
+    : spoilers.visibility === "visible"
+      ? spoilers.guesses.map(mapVisibleSharedGuess)
+      : spoilers.guesses.map(mapHiddenSharedGuess);
+  const spoilersHideReason = spoilers === undefined
+    ? dto.spoilersHideReason
       ? mapKnownValue(
         sharedGameSpoilersHideReasons,
         dto.spoilersHideReason,
         "shared game spoilers hide reason",
       )
-      : null,
+      : null
+    : spoilers.visibility === "hidden"
+      ? mapKnownValue(
+        sharedGameSpoilersHideReasonsV2,
+        spoilers.reason,
+        "shared game spoilers hide reason",
+      )
+      : null;
+
+  return {
+    gameState: mapKnownValue(gameStates, dto.gameState, "game state"),
+    allGuesses,
+    gameWord,
+    score: dto.score,
+    scoreDetails: mapScoreDetails(dto.scoreDetails),
+    playerName: dto.playerName,
+    spoilersHideReason,
     day: dto.day,
     playerStats: dto.playerStats,
     gameStats: dto.gameStats,
@@ -176,7 +263,9 @@ export function mapDailyGame(dto: DailyGameDto): DailyGame {
     state: dto.state ? mapKnownValue(gameStates, dto.state, "game state") : null,
     guessedAtGameDay: dto.guessedAtGameDay ?? null,
     isToday: dto.isToday,
-    word: dto.word ? mapDisplayWord(dto.word) : null,
+    gameWord: dto.gameWord !== undefined
+      ? dto.gameWord ? mapGameWord(dto.gameWord) : null
+      : dto.word ? mapLegacyGameWord(dto.word) : null,
   };
 }
 export function mapDailyGamesHistory(dto: DailyGamesHistoryDto): DailyGamesHistory {
@@ -194,7 +283,9 @@ export function mapArcadeGame(dto: ArcadeGameDto): ArcadeGame {
     difficulty: dto.difficulty,
     createdAt: dto.createdAt,
     state: mapKnownValue(gameStates, dto.state, "game state"),
-    word: dto.word ? mapDisplayWord(dto.word) : null,
+    gameWord: dto.gameWord !== undefined
+      ? mapGameWord(dto.gameWord)
+      : dto.word ? mapLegacyGameWord(dto.word) : null,
   };
 }
 export function mapArcadeGamesHistory(dto: ArcadeGamesHistoryDto): ArcadeGamesHistory {
@@ -207,7 +298,9 @@ export function mapGame(dto: GameDto): Game {
     gameState: mapKnownValue(gameStates, dto.gameState, "game state"),
     currentGuess: dto.currentGuess ? mapGuess(dto.currentGuess) : null,
     allGuesses: dto.allGuesses.map(mapGuess),
-    displayWord: mapDisplayWord(dto.displayWord),
+    gameWord: dto.gameWord !== undefined
+      ? mapGameWord(dto.gameWord)
+      : mapLegacyGameWord(dto.displayWord),
     hintsInfo: dto.hintInfo,
     score: dto.score,
     scoreDetails: mapScoreDetails(dto.scoreDetails),
