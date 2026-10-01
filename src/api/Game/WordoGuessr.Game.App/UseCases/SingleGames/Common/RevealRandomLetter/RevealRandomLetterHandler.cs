@@ -5,7 +5,6 @@ using WordoGuessr.Common.App.Exceptions.Persistence;
 using WordoGuessr.Common.Domain;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
-using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.Domain;
 using WordoGuessr.Game.Dto;
 
@@ -39,7 +38,6 @@ internal sealed class RevealRandomLetterHandler
         ArgumentNullException.ThrowIfNull(command);
 
         var now = _timeProvider.GetUtcNow();
-        var today = DailyGameClock.GetDateOnly(now);
 
         var game = await _dbContext.SingleGamesForAction()
             .FirstOrDefaultAsync(

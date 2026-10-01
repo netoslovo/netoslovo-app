@@ -5,7 +5,6 @@ using WordoGuessr.Common.App.Exceptions.Persistence;
 using WordoGuessr.Common.Domain;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
-using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.Domain;
 using WordoGuessr.Game.Dto;
 
@@ -50,7 +49,6 @@ internal sealed class RevealWordLengthHandler
         }
 
         var now = _timeProvider.GetUtcNow();
-        var today = DailyGameClock.GetDateOnly(now);
         var result = game.RevealWordLength(now);
 
         if (!result.IsSuccess)
