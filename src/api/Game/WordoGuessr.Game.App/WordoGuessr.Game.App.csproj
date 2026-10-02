@@ -21,4 +21,7 @@
     <ProjectReference Include="..\WordoGuessr.Game.Dto\WordoGuessr.Game.Dto.csproj" />
     <ProjectReference Include="..\WordoGuessr.Game.ReadModels\WordoGuessr.Game.ReadModels.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="WordoGuessr.Game.Tests" />
+  </ItemGroup>
 </Project>

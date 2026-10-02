@@ -226,7 +226,7 @@ const unavailableTodayDailyGame = computed<DailyGame>(() => ({
   state: null,
   guessedAtGameDay: null,
   isToday: true,
-  word: null,
+  gameWord: null,
 }));
 
 function formatLocalDay(date: Date) {

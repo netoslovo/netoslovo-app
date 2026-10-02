@@ -4,10 +4,11 @@ public sealed record SharedDailyGameDto(
     GameStateDto GameState,
     IReadOnlyCollection<SharedGuessDto> AllGuesses,
     DisplayWordDto? DisplayWord,
+    SharedDailyGameSpoilersDto Spoilers,
     int Score,
     ScoreDetailsDto ScoreDetails,
     string PlayerName,
-    SharedGameSpoilersHideReason? SpoilersHideReason,
+    SharedGameSpoilersHideReasonDto? SpoilersHideReason,
     DateOnly Day,
     DailyGamePlayerStatsDto? PlayerStats,
     DailyGameStatsDto? GameStats);

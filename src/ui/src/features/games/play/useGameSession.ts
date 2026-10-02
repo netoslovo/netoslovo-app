@@ -296,7 +296,11 @@ export function useGameSession(
       if (active.id !== game.value?.id) return;
       game.value = {
         ...active,
-        displayWord: hint.displayWord,
+        gameWord: {
+          status: "display",
+          displayWord: hint.displayWord,
+          secretWordUnavailableReason: "gameInProgress",
+        },
         hintsInfo: hint.hintsInfo,
         score: hint.score,
         scoreDetails: hint.scoreDetails,

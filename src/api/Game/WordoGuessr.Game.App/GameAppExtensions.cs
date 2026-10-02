@@ -2,8 +2,6 @@ using Microsoft.Extensions.DependencyInjection;
 using FluentValidation;
 using WordoGuessr.API.BuildingBlocks.CQRS;
 using WordoGuessr.Common.Domain;
-using WordoGuessr.Game.App.Mapping;
-using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.App.UseCases.Admin.Daily.Schedule.AssignSourceToDay;
 using WordoGuessr.Game.App.UseCases.Admin.Daily.Schedule.AutoAssignSourcesToEmptyDays;
 using WordoGuessr.Game.App.UseCases.Admin.Daily.Schedule.GetDailyGamesSchedule;
@@ -50,8 +48,6 @@ public static class GameAppExtensions
     public static IServiceCollection AddGameApp(this IServiceCollection services)
     {
         services.AddValidatorsFromAssemblyContaining<CreateArcadeValidator>(includeInternalTypes: true);
-        services.AddScoped<DisplayWordDtoBuilder>();
-        services.AddScoped<DailyGameMetadataExtractor>();
         services.AddSingleton<GameAppMetrics>();
 
         services

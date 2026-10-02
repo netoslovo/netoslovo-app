@@ -19,7 +19,6 @@ internal sealed class StartForDayDailyHandler
     private readonly IGameStoreUnitOfWork _unitOfWork;
     private readonly IWordsModule _wordsModule;
     private readonly TimeProvider _timeProvider;
-    private readonly DisplayWordDtoBuilder _displayWordDtoBuilder;
     private readonly ILogger<StartForDayDailyHandler> _logger;
 
     public StartForDayDailyHandler(
@@ -27,14 +26,12 @@ internal sealed class StartForDayDailyHandler
         IGameStoreUnitOfWork unitOfWork,
         IWordsModule wordsModule,
         TimeProvider timeProvider,
-        DisplayWordDtoBuilder displayWordDtoBuilder,
         ILogger<StartForDayDailyHandler> logger)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _wordsModule = wordsModule ?? throw new ArgumentNullException(nameof(wordsModule));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
-        _displayWordDtoBuilder = displayWordDtoBuilder ?? throw new ArgumentNullException(nameof(displayWordDtoBuilder));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -99,6 +96,6 @@ internal sealed class StartForDayDailyHandler
         }
 
         return Result<GameDto, StartDailyError>.Success(
-            dailyGame.MapToDto(_displayWordDtoBuilder.Build(dailyGame)));
+            dailyGame.MapToDto(today));
     }
 }

@@ -10,8 +10,8 @@ import type { FinishedGameDataState, GuessPresentationEvent } from "./useGameSes
 import UiButton from "../../../shared/ui/UiButton.vue";
 import UiSkeleton from "../../../shared/ui/UiSkeleton.vue";
 import DailyGameStatsCard from "./DailyGameStatsCard.vue";
-import DisplayWordTiles from "./DisplayWordTiles.vue";
 import GameWordCard from "./GameWordCard.vue";
+import GameWordDisplay from "./GameWordDisplay.vue";
 import GameScoreCard from "./GameScoreCard.vue";
 import GameSourceRemovedDialog from "./GameSourceRemovedDialog.vue";
 import GuessBar from "./GuessBar.vue";
@@ -83,6 +83,12 @@ const emptyDailyGameStats: DailyGameResultStatsState = {
 const arcadeConfig = computed(() => props.modeConfig.mode === "arcade" ? props.modeConfig : null);
 const dailyConfig = computed(() => props.modeConfig.mode === "daily" ? props.modeConfig : null);
 const dailyResultStats = computed(() => dailyConfig.value?.stats.state ?? emptyDailyGameStats);
+const activeDisplayWord = computed(() => {
+  const gameWord = props.game.gameWord;
+  return gameWord.status === "display" || gameWord.status === "displayAndSecret" || gameWord.status === "legacy"
+    ? gameWord.displayWord
+    : null;
+});
 const dailyStatsLoading = computed(() =>
   dailyConfig.value?.stats.state.aggregate.status === "loading"
   || dailyConfig.value?.stats.state.player.status === "loading",
@@ -232,7 +238,7 @@ watch(
             <template v-if="$slots['result-header-action']" #header-action>
               <slot name="result-header-action" />
             </template>
-            <DisplayWordTiles :display-word="game.displayWord" :game-state="game.gameState"
+            <GameWordDisplay :game-word="game.gameWord" :game-state="game.gameState"
               :word-loading="finishedGameDataState === 'loading'" :animations-enabled="resultAnimationsReady" />
           </GameWordCard>
         </div>
@@ -280,14 +286,14 @@ watch(
     <GameplayControls v-else :key="game.id" v-model="guessWord"
       :game-id="game.id" :presentation-event="guessPresentationEvent"
       :dialog-open="dailyStatsDialogOpen || gameSourceRemovedDialogOpen"
-      :loading="guessing" :word-length="game.displayWord.cells?.length ?? null"
+      :loading="guessing" :word-length="activeDisplayWord?.cells?.length ?? null"
       :hints-info="game.hintsInfo" :actions="actions"
       :show-statistics="dailyConfig ? showDailyStatsDialog : undefined">
       <template #word>
         <div class="game-board__word">
           <GameWordCard :difficulty-name="game.difficulty.name" :mode-label="modeConfig.title"
             :mode-detail="modeConfig.detail" :mode-variant="modeConfig.mode" :game-state="game.gameState">
-            <DisplayWordTiles :display-word="game.displayWord" :game-state="game.gameState" />
+            <GameWordDisplay :game-word="game.gameWord" :game-state="game.gameState" />
           </GameWordCard>
         </div>
       </template>

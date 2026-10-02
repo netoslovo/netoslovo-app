@@ -79,7 +79,7 @@ function openCard(event: MouseEvent) {
         </div>
 
         <div class="daily-history-card__word">
-          <HistoryDisplayWord :display-word="dailyGame.word" />
+          <HistoryDisplayWord :game-word="dailyGame.gameWord" />
         </div>
       </div>
 

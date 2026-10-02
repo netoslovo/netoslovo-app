@@ -5,6 +5,7 @@ using WordoGuessr.Common.App.Exceptions.Persistence;
 using WordoGuessr.Common.Domain;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
+using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.Domain;
 using WordoGuessr.Game.Dto;
 using WordoGuessr.Words.Contract;
@@ -17,7 +18,6 @@ internal sealed class CreateArcadeHandler : ICommandHandler<CreateArcadeCommand,
     private readonly IGameStoreUnitOfWork _unitOfWork;
     private readonly IWordsModule _wordsModule;
     private readonly TimeProvider _timeProvider;
-    private readonly DisplayWordDtoBuilder _displayWordDtoBuilder;
     private readonly ILogger<CreateArcadeHandler> _logger;
 
     public CreateArcadeHandler(
@@ -25,14 +25,12 @@ internal sealed class CreateArcadeHandler : ICommandHandler<CreateArcadeCommand,
         IGameStoreUnitOfWork unitOfWork,
         IWordsModule wordsModule,
         TimeProvider timeProvider,
-        DisplayWordDtoBuilder displayWordDtoBuilder,
         ILogger<CreateArcadeHandler> logger)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _wordsModule = wordsModule ?? throw new ArgumentNullException(nameof(wordsModule));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
-        _displayWordDtoBuilder = displayWordDtoBuilder ?? throw new ArgumentNullException(nameof(displayWordDtoBuilder));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -40,6 +38,8 @@ internal sealed class CreateArcadeHandler : ICommandHandler<CreateArcadeCommand,
     {
         ArgumentNullException.ThrowIfNull(command);
 
+        var now = _timeProvider.GetUtcNow();
+        var today = DailyGameClock.GetDateOnly(now);
         var difficulty = Difficulty.FromCode(command.DifficultyCode);
 
         var wordsVersionResult = await _wordsModule.LoadData(new WordsDataRequest(), ct);
@@ -77,7 +77,7 @@ internal sealed class CreateArcadeHandler : ICommandHandler<CreateArcadeCommand,
         var arcadeGame = SingleGame.CreateArcade(
             notPlayedSource,
             command.PlayerId,
-            _timeProvider.GetUtcNow());
+            now);
 
         _dbContext.SingleGames.Add(arcadeGame);
         try
@@ -91,6 +91,6 @@ internal sealed class CreateArcadeHandler : ICommandHandler<CreateArcadeCommand,
         }
 
         return Result<GameDto, CreateArcadeError>.Success(
-            arcadeGame.MapToDto(_displayWordDtoBuilder.Build(arcadeGame)));
+            arcadeGame.MapToDto(today));
     }
 }

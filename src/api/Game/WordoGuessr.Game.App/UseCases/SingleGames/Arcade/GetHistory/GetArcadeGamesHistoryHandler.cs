@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WordoGuessr.API.BuildingBlocks.CQRS;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
+using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.Dto;
 
 namespace WordoGuessr.Game.App.UseCases.SingleGames.Arcade.GetHistory;
@@ -10,18 +11,20 @@ internal sealed class GetArcadeGamesHistoryHandler
     : IQueryHandler<GetArcadeGamesHistoryQuery, ArcadeGamesHistoryDto>
 {
     private readonly IGameStore _dbContext;
-    private readonly DisplayWordDtoBuilder _displayWordDtoBuilder;
+    private readonly TimeProvider _timeProvider;
 
     public GetArcadeGamesHistoryHandler(
         IGameStore dbContext,
-        DisplayWordDtoBuilder displayWordDtoBuilder)
+        TimeProvider timeProvider)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-        _displayWordDtoBuilder = displayWordDtoBuilder ?? throw new ArgumentNullException(nameof(displayWordDtoBuilder));
+        _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
     }
 
     public async Task<ArcadeGamesHistoryDto> Handle(GetArcadeGamesHistoryQuery query, CancellationToken ct)
     {
+        var now = _timeProvider.GetUtcNow();
+        var today = DailyGameClock.GetDateOnly(now);
         var gamesFromDb = await _dbContext.SingleGamesForSummary()
             .Where(sg =>
                 sg.PlayerId == query.PlayerId &&
@@ -34,7 +37,7 @@ internal sealed class GetArcadeGamesHistoryHandler
         var hasMore = gamesFromDb.Length > query.Take;
         var games = gamesFromDb
             .Take(query.Take)
-            .Select(game => game.MapToArcadeGameInfoDto(_displayWordDtoBuilder.Build(game)))
+            .Select(game => game.MapToArcadeGameInfoDto(today))
             .ToArray();
 
         return new ArcadeGamesHistoryDto(games, hasMore);

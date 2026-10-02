@@ -11,6 +11,8 @@ public sealed class DisplayWordView
         Cells = cells;
     }
 
+    public static DisplayWordView UnknownLength() => new DisplayWordView(null);
+
     public static DisplayWordView FromWordRevealed(Word word)
     {
         var cells = word.Text
@@ -54,26 +56,8 @@ public sealed class DisplayWord
     {
         _cells[index].Reveal();
     }
-
-    public DisplayWordView ToView()
-    {
-        var cells = _cells.Count == 0
-            ? null
-            : _cells.Select(c => c.ToView()).ToArray();
-
-        return new DisplayWordView(cells);
-    }
-
-    public DisplayWordView ToRevealedView()
-    {
-        var cells = _word
-            .Select(DisplayWordCellView.CreateRevealed)
-            .ToArray();
-
-        return new DisplayWordView(cells);
-    }
-
 }
+
 public sealed class DisplayWordCell
 {
     public char? Value => Revealed ? _internalValue : null;

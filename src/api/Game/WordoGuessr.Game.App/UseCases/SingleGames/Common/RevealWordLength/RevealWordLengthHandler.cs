@@ -5,7 +5,6 @@ using WordoGuessr.Common.App.Exceptions.Persistence;
 using WordoGuessr.Common.Domain;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
-using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.Domain;
 using WordoGuessr.Game.Dto;
 
@@ -17,7 +16,6 @@ internal sealed class RevealWordLengthHandler
     private readonly IGameStore _dbContext;
     private readonly IGameStoreUnitOfWork _unitOfWork;
     private readonly TimeProvider _timeProvider;
-    private readonly DisplayWordDtoBuilder _displayWordDtoBuilder;
 
     private readonly ILogger<RevealWordLengthHandler> _logger;
 
@@ -25,13 +23,11 @@ internal sealed class RevealWordLengthHandler
         IGameStore dbContext,
         IGameStoreUnitOfWork unitOfWork,
         TimeProvider timeProvider,
-        DisplayWordDtoBuilder displayWordDtoBuilder,
         ILogger<RevealWordLengthHandler> logger)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
-        _displayWordDtoBuilder = displayWordDtoBuilder ?? throw new ArgumentNullException(nameof(displayWordDtoBuilder));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -39,7 +35,7 @@ internal sealed class RevealWordLengthHandler
     {
         ArgumentNullException.ThrowIfNull(command);
 
-        var game = await _dbContext.SingleGamesForTextHintAction()
+        var game = await _dbContext.SingleGamesForAction()
             .FirstOrDefaultAsync(
                 sg =>
                     sg.PlayerId == command.PlayerId &&
@@ -72,8 +68,8 @@ internal sealed class RevealWordLengthHandler
 
         var score = game.GetScore();
         var textHintDto = new TextHintDto(
-            _displayWordDtoBuilder.Build(game),
-            Helpers.BuildHintsInfo(game),
+            game.GetDisplayWord().MapToDtoV2(),
+            game.BuildHintsInfoDto(),
             score.Value,
             score.MapToDto()
         );

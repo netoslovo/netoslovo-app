@@ -1,10 +1,10 @@
 namespace WordoGuessr.Game.Dto;
 
-public sealed record DisplayWordDto(IReadOnlyCollection<DisplayWordCellDto>? Cells, DisplayWordDtoHideReason? HideReason = null);
+public sealed record DisplayWordDto(IReadOnlyCollection<DisplayWordCellDto>? Cells, DisplayWordHideReasonDto? HideReason = null);
 
 public sealed record DisplayWordCellDto(char? Value, bool Revealed);
 
-public enum DisplayWordDtoHideReason
+public enum DisplayWordHideReasonDto
 {
     HiddenForToday
 }

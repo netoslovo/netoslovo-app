@@ -5,10 +5,10 @@ import { authState } from "../features/auth/model/authSession";
 import { getSharedDailyGame } from "../features/games/api/gameApi";
 import type { GameState, SharedDailyGame } from "../features/games/model/game";
 import DailyGameStatsCard from "../features/games/play/DailyGameStatsCard.vue";
-import DisplayWordTiles from "../features/games/play/DisplayWordTiles.vue";
 import GameBoardSkeleton from "../features/games/play/GameBoardSkeleton.vue";
 import GameScoreCard from "../features/games/play/GameScoreCard.vue";
 import GameWordCard from "../features/games/play/GameWordCard.vue";
+import GameWordDisplay from "../features/games/play/GameWordDisplay.vue";
 import type { DailyGameResultStatsState } from "../features/games/play/useDailyGameResultStats";
 import SharedGuessesList from "../features/games/share/SharedGuessesList.vue";
 import { isApiRequestCanceled, toApiError } from "../shared/api/apiError";
@@ -179,7 +179,7 @@ function getResultPresentation(state: GameState | null) {
         <GameWordCard mode-label="Слово дня" :mode-detail="formattedDay" mode-variant="daily"
           :result-label="resultPresentation.label" :result-icon="resultPresentation.icon" :game-state="game.gameState"
           :animations-enabled="false">
-          <DisplayWordTiles :display-word="game.displayWord" :caption="hiddenWordCaption" :game-state="game.gameState"
+          <GameWordDisplay :game-word="game.gameWord" :caption="hiddenWordCaption" :game-state="game.gameState"
             :animations-enabled="false" />
         </GameWordCard>
 

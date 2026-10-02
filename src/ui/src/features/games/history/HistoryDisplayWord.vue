@@ -2,17 +2,35 @@
 import Popover from "primevue/popover";
 import { computed } from "vue";
 import { useInfoPopover } from "../../../shared/composables/useInfoPopover";
-import type { DisplayWord } from "../model/game";
+import type { DisplayWord, GameWord } from "../model/game";
 
 const props = defineProps<{
-  displayWord: DisplayWord | null;
+  gameWord: GameWord | null;
 }>();
 
-const cells = computed(() => props.displayWord?.cells ?? []);
+function fromSecretWord(secretWord: string): DisplayWord {
+  return {
+    cells: [...secretWord].map((value) => ({ value, revealed: true })),
+  };
+}
+
+const displayWord = computed((): DisplayWord | null => {
+  const gameWord = props.gameWord;
+  if (gameWord === null || gameWord.status === "unavailable") return null;
+  if (gameWord.status === "secret" || gameWord.status === "displayAndSecret") {
+    return fromSecretWord(gameWord.secretWord);
+  }
+  return gameWord.displayWord;
+});
+const cells = computed(() => displayWord.value?.cells ?? []);
 
 const isHiddenForToday = computed(
-  () => props.displayWord?.hideReason === "hiddenForToday",
+  () => props.gameWord?.status === "legacy"
+    ? props.gameWord.displayWord.hideReason === "hiddenForToday"
+    : props.gameWord?.status === "display"
+      && props.gameWord.secretWordUnavailableReason === "surrenderedHiddenForToday",
 );
+const isUnavailable = computed(() => props.gameWord?.status === "unavailable");
 
 const showHiddenInfo = computed(
   () => isHiddenForToday.value && cells.value.length > 0,
@@ -43,7 +61,7 @@ const tiles = computed(() =>
 );
 
 const ariaLabel = computed(() => {
-  if (!props.displayWord) {
+  if (!displayWord.value) {
     return null;
   }
 
@@ -93,6 +111,9 @@ const ariaLabel = computed(() => {
       </p>
     </Popover>
   </div>
+  <span v-else-if="isUnavailable" class="history-display-word__unknown-caption">
+    Слово недоступно
+  </span>
   <span v-else class="history-display-word__unknown-caption">
     Игра не начата
   </span>

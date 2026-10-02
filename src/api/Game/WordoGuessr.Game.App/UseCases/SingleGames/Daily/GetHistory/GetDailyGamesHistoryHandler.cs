@@ -13,16 +13,13 @@ internal sealed class GetDailyGamesHistoryHandler
 {
     private readonly IGameStore _dbContext;
     private readonly TimeProvider _timeProvider;
-    private readonly DisplayWordDtoBuilder _displayWordDtoBuilder;
 
     public GetDailyGamesHistoryHandler(
         IGameStore dbContext,
-        TimeProvider timeProvider,
-        DisplayWordDtoBuilder displayWordDtoBuilder)
+        TimeProvider timeProvider)
     {
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
-        _displayWordDtoBuilder = displayWordDtoBuilder ?? throw new ArgumentNullException(nameof(displayWordDtoBuilder));
     }
 
     public async Task<DailyGamesHistoryDto> Handle(GetDailyGamesHistoryQuery query, CancellationToken ct)
@@ -55,10 +52,7 @@ internal sealed class GetDailyGamesHistoryHandler
             .Take(query.Take)
             .Select(item => item.Game is null
                 ? SingleGameInfoMapping.MapToMissingDailyGameInfoDto(item.Day, today)
-                : item.Game.MapToDailyGameInfoDto(
-                    item.Day,
-                    today,
-                    _displayWordDtoBuilder.Build(item.Game)))
+                : item.Game.MapToDailyGameInfoDto(item.Day, today))
             .ToArray();
 
         return new DailyGamesHistoryDto(games, hasMore);

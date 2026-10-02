@@ -6,14 +6,13 @@ const props = defineProps<{
   displayWord: DisplayWord | null;
   caption?: string | null;
   gameState?: GameState | null;
+  hiddenForToday?: boolean;
+  showSurrenderedTitle?: boolean;
   wordLoading?: boolean;
   animationsEnabled?: boolean;
 }>();
 
 const cells = computed(() => props.displayWord?.cells ?? []);
-const isHiddenForToday = computed(
-  () => props.displayWord?.hideReason === "hiddenForToday",
-);
 const isUnknownLength = computed(
   () => props.displayWord !== null && cells.value.length === 0,
 );
@@ -40,21 +39,22 @@ const isMaskedWord = computed(
 const showSurrenderedWordTitle = computed(
   () =>
     props.gameState === "surrendered" &&
+    props.showSurrenderedTitle !== false &&
     props.displayWord !== null &&
-    !isHiddenForToday.value &&
+    props.hiddenForToday !== true &&
     (!isUnknownLength.value || props.wordLoading === true),
 );
 const showWordSkeleton = computed(
   () =>
     props.wordLoading === true &&
     props.displayWord !== null &&
-    !isHiddenForToday.value &&
+    props.hiddenForToday !== true &&
     (isUnknownLength.value || hasUnrevealedCells.value),
 );
 const caption = computed(() => {
   if (props.caption) return props.caption;
   if (props.displayWord === null) return "";
-  if (isHiddenForToday.value) {
+  if (props.hiddenForToday === true) {
     return "Слово скрыто, пока активна эта игра дня. Оно откроется завтра.";
   }
   if (isUnknownLength.value) return "Про загаданное слово ничего не известно";
@@ -105,7 +105,7 @@ const showFooter = computed(
 
     <div v-if="displayWord !== null && showFooter && !showWordSkeleton" class="word-tiles__footer">
       <div class="word-tiles__info">
-        <template v-if="isHiddenForToday">
+        <template v-if="hiddenForToday">
           <p class="word-tiles__helper">
             Слово будет показано завтра, когда завершится игра дня.
           </p>
@@ -113,7 +113,7 @@ const showFooter = computed(
 
         <template v-else-if="isUnknownLength">
           <p class="word-tiles__helper">Нет дополнительной информации о слове.</p>
-          <p class="word-tiles__helper word-tiles__helper--hint">
+          <p v-if="gameState === 'active'" class="word-tiles__helper word-tiles__helper--hint">
             Вы можете воспользоваться подсказками
             <i class="word-tiles__helper-icon pi pi-lightbulb" aria-hidden="true"></i>
           </p>

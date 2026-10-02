@@ -6,27 +6,26 @@ namespace WordoGuessr.Game.App.Mapping;
 
 internal static class SingleGameInfoMapping
 {
-    public static ArcadeGameInfoDto MapToArcadeGameInfoDto(
-        this SingleGame game,
-        DisplayWordDto word) =>
+    public static ArcadeGameInfoDto MapToArcadeGameInfoDto(this SingleGame game, DateOnly today) =>
         new(
             Id: game.Id,
             Difficulty: game.VersionedGameSource.Difficulty.MapToDto(),
             CreatedAt: game.CreatedAt,
             State: game.StateCode.MapToDto(),
-            Word: word);
+            Word: game.GetDisplayWordLegacy(today, out var unavailableReason).MapToDto(unavailableReason),
+            GameWord: game.BuildGameWordDto(today));
 
     public static DailyGameInfoDto MapToDailyGameInfoDto(
         this SingleGame game,
         DateOnly day,
-        DateOnly today,
-        DisplayWordDto word) =>
+        DateOnly today) =>
         new(
             Day: day,
             State: game.StateCode.MapToDto(),
             GuessedAtGameDay: GuessedAtGameDay(game),
             IsToday: day == today,
-            Word: word);
+            Word: game.GetDisplayWordLegacy(today, out var unavailableReason).MapToDto(unavailableReason),
+            GameWord: game.BuildGameWordDto(today));
 
     public static DailyGameInfoDto MapToMissingDailyGameInfoDto(DateOnly day, DateOnly today) =>
         new(
@@ -34,7 +33,8 @@ internal static class SingleGameInfoMapping
             State: null,
             GuessedAtGameDay: null,
             IsToday: day == today,
-            Word: null);
+            Word: null,
+            GameWord: null);
 
     private static bool GuessedAtGameDay(SingleGame singleGame) =>
         singleGame.StateCode == SingleGameStateCode.Guessed &&
