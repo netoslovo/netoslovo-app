@@ -12,7 +12,6 @@ internal static class SingleGameInfoMapping
             Difficulty: game.VersionedGameSource.Difficulty.MapToDto(),
             CreatedAt: game.CreatedAt,
             State: game.StateCode.MapToDto(),
-            Word: game.GetDisplayWordLegacy(today, out var unavailableReason).MapToDto(unavailableReason),
             GameWord: game.BuildGameWordDto(today));
 
     public static DailyGameInfoDto MapToDailyGameInfoDto(
@@ -24,7 +23,6 @@ internal static class SingleGameInfoMapping
             State: game.StateCode.MapToDto(),
             GuessedAtGameDay: GuessedAtGameDay(game),
             IsToday: day == today,
-            Word: game.GetDisplayWordLegacy(today, out var unavailableReason).MapToDto(unavailableReason),
             GameWord: game.BuildGameWordDto(today));
 
     public static DailyGameInfoDto MapToMissingDailyGameInfoDto(DateOnly day, DateOnly today) =>
@@ -33,7 +31,6 @@ internal static class SingleGameInfoMapping
             State: null,
             GuessedAtGameDay: null,
             IsToday: day == today,
-            Word: null,
             GameWord: null);
 
     private static bool GuessedAtGameDay(SingleGame singleGame) =>

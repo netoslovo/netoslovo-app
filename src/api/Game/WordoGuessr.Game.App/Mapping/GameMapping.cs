@@ -21,7 +21,6 @@ internal static class GameMapping
             singleGame.StateCode.MapToDto(),
             lastGuess,
             guesses ?? [],
-            singleGame.GetDisplayWordLegacy(today, out var unavailableReason).MapToDto(unavailableReason),
             singleGame.BuildGameWordDto(today),
             singleGame.BuildHintsInfoDto(),
             score.Value,
@@ -59,7 +58,7 @@ internal static class GameMapping
                 ? new UnavailableGameWordDto(
                     GameWordUnavailableReasonDto.GameCancelled)
                 : new DisplayGameWordDto(
-                    game.GetDisplayWord().MapToDtoV2(),
+                    game.GetDisplayWord().MapToDto(),
                     secretWordResult.Error.MapToDto());
         }
 
@@ -67,7 +66,7 @@ internal static class GameMapping
         // чтобы видеть, где игрок остановился
         return game.StateCode == SingleGameStateCode.Surrendered
             ? new DisplayAndSecretGameWordDto(
-                game.GetDisplayWord().MapToDtoV2(),
+                game.GetDisplayWord().MapToDto(),
                 secretWordResult.Value.Text)
             : new SecretGameWordDto(
                 secretWordResult.Value.Text);

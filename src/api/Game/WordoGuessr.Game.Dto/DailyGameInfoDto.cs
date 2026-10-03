@@ -5,5 +5,4 @@ public sealed record DailyGameInfoDto(
     GameStateDto? State,
     bool? GuessedAtGameDay,
     bool IsToday,
-    DisplayWordDto? Word,
     GameWordDto? GameWord);

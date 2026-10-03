@@ -128,21 +128,17 @@ internal sealed class GetSharedGameHandler
                 game.BuildSharedGameWordDto(),
                 BuildVisibleGuesses(game, totalWords))
             : new HiddenSharedDailyGameSpoilersDto(
-                spoilersHideReason!.Value.MapToDtoV2(),
+                spoilersHideReason!.Value.MapToDto(),
                 BuildHiddenGuesses(game, totalWords)
             );
 
         var result = new SharedDailyGameDto(
             game.StateCode.MapToDto(),
             guesses,
-            canViewSpoilers
-                ? game.GetDisplayWordLegacy(today, out var unavailableReason).MapToDto(unavailableReason)
-                : null,
             spoilers,
             score.Value,
             score.MapToDto(),
             playerName,
-            spoilersHideReason?.MapToDto(),
             game.DayOfDailyGame.Value,
             playerStats?.MapToDto(),
             gameStatsDto);

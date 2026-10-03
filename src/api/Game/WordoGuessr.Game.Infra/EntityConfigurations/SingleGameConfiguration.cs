@@ -67,29 +67,6 @@ public sealed class SingleGameConfiguration : IEntityTypeConfiguration<SingleGam
             .HasColumnName("ordered_letters_indexes_for_reveal")
             .UsePropertyAccessMode(PropertyAccessMode.Field);
 
-        builder.OwnsOne<DisplayWord>("_displayWord", displayWord =>
-        {
-            displayWord.ToJson("display_word");
-
-            displayWord.Property("_word")
-                .HasJsonPropertyName("word")
-                .UsePropertyAccessMode(PropertyAccessMode.Field);
-
-            displayWord
-                .OwnsMany<DisplayWordCell>("_cells", cells =>
-                {
-                    cells.HasJsonPropertyName("cells");
-
-                    cells.Property<char>("_internalValue")
-                        .HasJsonPropertyName("value");
-
-                    cells.Ignore(x => x.Value);
-
-                    cells.Property(x => x.Revealed)
-                        .HasJsonPropertyName("revealed");
-                });
-        });
-
         builder.ComplexCollection(g => g.UsedHints, hints =>
         {
             hints.ToJson("used_hints");

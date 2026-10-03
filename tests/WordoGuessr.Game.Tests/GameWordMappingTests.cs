@@ -120,7 +120,7 @@ public sealed class GameWordMappingTests : IClassFixture<GameDbContextFixture>
         AssertOneLetterRevealed(gameWord.DisplayWord);
     }
 
-    private static void AssertOneLetterRevealed(DisplayWordDtoV2 displayWord)
+    private static void AssertOneLetterRevealed(DisplayWordDto displayWord)
     {
         var cells = displayWord.Cells.ShouldNotBeNull();
         cells.Count(cell => cell.Revealed).ShouldBe(1);
