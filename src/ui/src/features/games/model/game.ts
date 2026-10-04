@@ -22,12 +22,8 @@ export type Guess = {
 };
 
 export type DisplayWordCell = { value: string | null; revealed: boolean };
-export type DisplayWordHideReason = "hiddenForToday";
 export type DisplayWord = {
   cells: DisplayWordCell[] | null;
-};
-export type LegacyDisplayWord = DisplayWord & {
-  hideReason: DisplayWordHideReason | null;
 };
 export type SecretWordUnavailableReason =
   | "gameInProgress"
@@ -45,8 +41,7 @@ export type GameWord =
     displayWord: DisplayWord;
     secretWord: string;
   }
-  | { status: "unavailable"; reason: "gameCancelled" }
-  | { status: "legacy"; displayWord: LegacyDisplayWord };
+  | { status: "unavailable"; reason: "gameCancelled" };
 
 export type HintsInfo = {
   revealLengthHintUsed: boolean;

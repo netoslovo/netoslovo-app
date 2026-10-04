@@ -5,5 +5,4 @@ public sealed record ArcadeGameInfoDto(
     DifficultyDto Difficulty,
     DateTimeOffset CreatedAt,
     GameStateDto State,
-    DisplayWordDto? Word,
     GameWordDto GameWord);

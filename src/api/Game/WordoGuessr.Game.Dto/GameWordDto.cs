@@ -10,7 +10,7 @@ namespace WordoGuessr.Game.Dto;
 public abstract record GameWordDto;
 
 public sealed record DisplayGameWordDto(
-    DisplayWordDtoV2 DisplayWord,
+    DisplayWordDto DisplayWord,
     SecretWordUnavailableReasonDto SecretWordUnavailableReason)
     : GameWordDto;
 
@@ -18,7 +18,7 @@ public sealed record SecretGameWordDto(string Word)
     : GameWordDto;
 
 public sealed record DisplayAndSecretGameWordDto(
-    DisplayWordDtoV2 DisplayWord,
+    DisplayWordDto DisplayWord,
     string SecretWord)
     : GameWordDto;
 

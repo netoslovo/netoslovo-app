@@ -35,8 +35,6 @@ public sealed class SingleGame : DomainEntity<Guid>
 
     private Word _secretWord => VersionedGameSource.GameSource.Word;
 
-    private readonly DisplayWord _displayWord = null!;
-
     public Result<Word, SecretWordUnavailableReason> GetSecretWord()
     {
         return StateCode switch
@@ -57,45 +55,14 @@ public sealed class SingleGame : DomainEntity<Guid>
         };
     }
 
-    private bool ShouldShowRevealedDisplayWord(DateOnly today, out DisplayWordUnavailableReason? hideReason)
-    {
-        if (StateCode == SingleGameStateCode.Guessed)
-        {
-            hideReason = null;
-            return true;
-        }
-
-        if (StateCode == SingleGameStateCode.Surrendered && IsDailyFor(today))
-        {
-            hideReason = DisplayWordUnavailableReason.HiddenForToday;
-            return false;
-        }
-
-        if (StateCode == SingleGameStateCode.Surrendered)
-        {
-            hideReason = null;
-            return true;
-        }
-
-        hideReason = null;
-        return false;
-    }
-
-    public DisplayWordView GetDisplayWord() =>
+    public DisplayWord GetDisplayWord() =>
         BuildCurrentDisplayWord();
 
-    public DisplayWordView GetDisplayWordLegacy(DateOnly today, out DisplayWordUnavailableReason? unavailableReason)
-    {
-        return ShouldShowRevealedDisplayWord(today, out unavailableReason)
-            ? DisplayWordView.FromWordRevealed(_secretWord)
-            : BuildCurrentDisplayWord();
-    }
-
-    private DisplayWordView BuildCurrentDisplayWord()
+    private DisplayWord BuildCurrentDisplayWord()
     {
         if (!RevealLengthHintUsed)
         {
-            return DisplayWordView.UnknownLength();
+            return DisplayWord.UnknownLength();
         }
 
         var revealedIndexes = _orderedLettersIndexesForReveal
@@ -106,13 +73,13 @@ public sealed class SingleGame : DomainEntity<Guid>
             .Select((letter, index) =>
             {
                 var indexRevealed = revealedIndexes.Contains(index);
-                return new DisplayWordCellView(
+                return new DisplayWordCell(
                     indexRevealed ? letter : null,
                     indexRevealed);
             })
             .ToArray();
 
-        return new DisplayWordView(cells);
+        return new DisplayWord(cells);
     }
 
     private readonly List<Hint> _usedHints = [];
@@ -153,7 +120,6 @@ public sealed class SingleGame : DomainEntity<Guid>
         Mode = mode;
         PlayerId = playerId;
         StateCode = SingleGameStateCode.Active;
-        _displayWord = new DisplayWord(versionedGameSource.GameSource.Word);
         CreatedAt = createdAt;
         UpdatedAt = createdAt;
         DayOfDailyGame = dayOfDailyGame;
@@ -309,8 +275,6 @@ public sealed class SingleGame : DomainEntity<Guid>
             return Result<SingleGameErrorCode>.Failure(SingleGameErrorCode.LengthAlreadyRevealed);
         }
 
-        _displayWord.InitCells();
-
         _usedHints.Add(Hint.RevealLength(at));
 
         StartedAt ??= at;
@@ -334,8 +298,6 @@ public sealed class SingleGame : DomainEntity<Guid>
         {
             return Result<SingleGameErrorCode>.Failure(SingleGameErrorCode.RevealLetterLimit);
         }
-
-        _displayWord.RevealAt(GetCurrentRevealLetterIndex());
 
         _usedHints.Add(Hint.RevealLetter(at));
         StartedAt ??= at;

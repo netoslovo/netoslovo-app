@@ -1,7 +1,7 @@
 namespace WordoGuessr.Game.Dto;
 
 public sealed record TextHintDto(
-    DisplayWordDtoV2 DisplayWord,
+    DisplayWordDto DisplayWord,
     HintsInfoDto HintsInfo,
     int Score,
     ScoreDetailsDto ScoreDetails);

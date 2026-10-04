@@ -13,6 +13,6 @@ public sealed record VisibleSharedDailyGameSpoilersDto(
     : SharedDailyGameSpoilersDto;
 
 public sealed record HiddenSharedDailyGameSpoilersDto(
-    SharedGameSpoilersHideReasonDtoV2 Reason,
+    SharedGameSpoilersHideReasonDto Reason,
     IReadOnlyCollection<HiddenSharedGuessDto> Guesses)
     : SharedDailyGameSpoilersDto;

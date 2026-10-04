@@ -29,11 +29,6 @@ const secretDisplayWord = computed(() => {
   <DisplayWordTiles v-if="gameWord === null" :display-word="null" :caption="caption"
     :game-state="gameState" :word-loading="wordLoading" :animations-enabled="animationsEnabled" />
 
-  <DisplayWordTiles v-else-if="gameWord.status === 'legacy'" :display-word="gameWord.displayWord"
-    :caption="caption" :game-state="gameState"
-    :hidden-for-today="gameWord.displayWord.hideReason === 'hiddenForToday'"
-    :word-loading="wordLoading" :animations-enabled="animationsEnabled" />
-
   <DisplayWordTiles v-else-if="gameWord.status === 'display'" :display-word="gameWord.displayWord"
     :caption="caption" :game-state="gameState"
     :hidden-for-today="gameWord.secretWordUnavailableReason === 'surrenderedHiddenForToday'"

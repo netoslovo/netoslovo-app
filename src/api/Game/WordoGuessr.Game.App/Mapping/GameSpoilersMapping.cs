@@ -12,22 +12,7 @@ internal static class GameSpoilersMapping
                 SharedGameSpoilersHideReasonDto.ViewerGameNotFinished,
 
             GameSpoilersHideReason.ViewerSurrenderedHiddenForToday =>
-                SharedGameSpoilersHideReasonDto.HiddenForToday,
-
-            _ => throw new ArgumentOutOfRangeException(
-                nameof(reason),
-                reason,
-                "Unknown game spoilers hide reason")
-        };
-
-    public static SharedGameSpoilersHideReasonDtoV2 MapToDtoV2(this GameSpoilersHideReason reason) =>
-        reason switch
-        {
-            GameSpoilersHideReason.ViewerGameNotFinished =>
-                SharedGameSpoilersHideReasonDtoV2.ViewerGameNotFinished,
-
-            GameSpoilersHideReason.ViewerSurrenderedHiddenForToday =>
-                SharedGameSpoilersHideReasonDtoV2.ViewerSurrenderedHiddenForToday,
+                SharedGameSpoilersHideReasonDto.ViewerSurrenderedHiddenForToday,
 
             _ => throw new ArgumentOutOfRangeException(
                 nameof(reason),

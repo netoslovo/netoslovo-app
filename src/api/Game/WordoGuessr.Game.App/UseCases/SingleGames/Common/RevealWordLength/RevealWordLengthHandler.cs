@@ -68,7 +68,7 @@ internal sealed class RevealWordLengthHandler
 
         var score = game.GetScore();
         var textHintDto = new TextHintDto(
-            game.GetDisplayWord().MapToDtoV2(),
+            game.GetDisplayWord().MapToDto(),
             game.BuildHintsInfoDto(),
             score.Value,
             score.MapToDto()
