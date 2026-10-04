@@ -85,7 +85,7 @@ const dailyConfig = computed(() => props.modeConfig.mode === "daily" ? props.mod
 const dailyResultStats = computed(() => dailyConfig.value?.stats.state ?? emptyDailyGameStats);
 const activeDisplayWord = computed(() => {
   const gameWord = props.game.gameWord;
-  return gameWord.status === "display" || gameWord.status === "displayAndSecret" || gameWord.status === "legacy"
+  return gameWord.status === "display" || gameWord.status === "displayAndSecret"
     ? gameWord.displayWord
     : null;
 });

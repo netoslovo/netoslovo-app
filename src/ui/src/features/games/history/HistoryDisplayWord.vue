@@ -25,10 +25,8 @@ const displayWord = computed((): DisplayWord | null => {
 const cells = computed(() => displayWord.value?.cells ?? []);
 
 const isHiddenForToday = computed(
-  () => props.gameWord?.status === "legacy"
-    ? props.gameWord.displayWord.hideReason === "hiddenForToday"
-    : props.gameWord?.status === "display"
-      && props.gameWord.secretWordUnavailableReason === "surrenderedHiddenForToday",
+  () => props.gameWord?.status === "display"
+    && props.gameWord.secretWordUnavailableReason === "surrenderedHiddenForToday",
 );
 const isUnavailable = computed(() => props.gameWord?.status === "unavailable");
 
