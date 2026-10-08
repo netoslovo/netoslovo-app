@@ -18,7 +18,7 @@ const sortToggleLabel = computed(() =>
 
 const sortedGuesses = computed(() => [...props.guesses].sort((left, right) =>
   sortMode.value === "distance"
-    ? left.distance - right.distance || left.order - right.order
+    ? left.distance - right.distance
     : right.order - left.order,
 ));
 

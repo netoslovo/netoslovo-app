@@ -279,7 +279,7 @@ watch(
           </div>
         </section>
       </div>
-      <GuessesList :key="game.id" :game-id="game.id" :current-guess="currentGuess" :guesses="game.allGuesses"
+      <GuessesList :key="game.id" :game-id="game.id" :current-guess="currentGuess" :guesses="game.allGuesses" sortable
         :animated-hint-word="displayedAnimatedHintWord" :presentation-event="displayedPresentationEvent" />
     </template>
 

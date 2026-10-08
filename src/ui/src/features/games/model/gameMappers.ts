@@ -10,7 +10,7 @@ import type {
   GameDto,
   GameStateDto,
   GuessDto,
-  GuessListItemDto,
+  GuessListEntryDto,
   GuessHintDto,
   GuessOutcomeDto,
   GuessSourceDto,
@@ -37,6 +37,7 @@ import type {
   GameWord,
   GameState,
   Guess,
+  GuessListEntry,
   GuessHint,
   GuessOutcome,
   GuessSource,
@@ -108,8 +109,11 @@ export function mapGuess(dto: GuessDto): Guess {
     source: mapKnownValue(guessSources, dto.source, "guess source"),
   };
 }
-function mapGuessListItem(dto: GuessListItemDto): Guess {
-  return mapGuess("guess" in dto ? dto.guess : dto);
+function mapGuessListEntry(dto: GuessListEntryDto): GuessListEntry {
+  return {
+    ...mapGuess(dto.guess),
+    order: dto.order,
+  };
 }
 export function mapDisplayWord(dto: DisplayWordDto): DisplayWord {
   return { cells: dto.cells ?? null };
@@ -207,7 +211,7 @@ export function mapGuessOutcome(dto: GuessOutcomeDto): GuessOutcome {
   return {
     guessStatus: mapKnownValue(guessStatuses, dto.guessStatus, "guess status"),
     currentGuess: mapGuess(dto.currentGuess),
-    allGuesses: dto.allGuesses.map(mapGuessListItem),
+    allGuesses: dto.allGuesses.map(mapGuessListEntry),
     score: dto.score,
     scoreDetails: mapScoreDetails(dto.scoreDetails),
   };
@@ -259,7 +263,7 @@ export function mapGame(dto: GameDto): Game {
     difficulty: dto.difficulty,
     gameState: mapKnownValue(gameStates, dto.gameState, "game state"),
     currentGuess: dto.currentGuess ? mapGuess(dto.currentGuess) : null,
-    allGuesses: dto.allGuesses.map(mapGuessListItem),
+    allGuesses: dto.allGuesses.map(mapGuessListEntry),
     gameWord: mapGameWord(dto.gameWord),
     hintsInfo: dto.hintInfo,
     score: dto.score,
