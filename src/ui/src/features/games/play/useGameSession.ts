@@ -236,6 +236,9 @@ export function useGameSession(
         score: outcome.score,
         scoreDetails: outcome.scoreDetails,
         gameState: outcome.guessStatus === "guessed" ? "guessed" : active.gameState,
+        gameWord: outcome.guessStatus === "guessed"
+          ? { status: "secret", secretWord: outcome.currentGuess.word }
+          : active.gameWord,
       };
       animatedHintWord.value = null;
       publishGuessPresentation(
@@ -246,7 +249,10 @@ export function useGameSession(
       if (outcome.guessStatus === "alreadyTried") {
         showToast({ status: "info", title: "Повтор слова", message: `Вы уже пробовали слово "${outcome.currentGuess.word}".` });
       }
-      if (outcome.guessStatus === "guessed") await refreshFinishedGame();
+      if (outcome.guessStatus === "guessed") {
+        finishedGameDataState.value = "ready";
+        if (mode === "arcade" && toValue(replayAvailable)) await loadReplayDifficulties();
+      }
     }, word);
   }
 
