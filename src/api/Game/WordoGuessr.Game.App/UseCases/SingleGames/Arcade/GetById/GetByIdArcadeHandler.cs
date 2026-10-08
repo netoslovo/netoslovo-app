@@ -44,14 +44,12 @@ internal sealed class GetByIdArcadeHandler : IQueryHandler<GetByIdArcadeQuery, G
         }
 
         var lastGuess = singleGame.StateCode == SingleGameStateCode.Active
-            ? singleGame.Guesses.FirstOrDefault()
+            ? singleGame.LastGuess
             : default;
 
         var totalWordsResult = await _wordsModule.LoadData(new WordsDataRequest(TotalWords: new RequestOperation.TotalWords()), ct);
-        var lastGuessDto = lastGuess?.MapToDto(GuessFillPercentageCalculator.Calculate(lastGuess.Distance, totalWordsResult.TotalWords));
-        var guessesDto = singleGame.GetGuessesOrderedByDistance()
-            .Select(guess => guess.MapToDto(GuessFillPercentageCalculator.Calculate(guess.Distance, totalWordsResult.TotalWords)))
-            .ToList();
+        var lastGuessDto = lastGuess?.MapToDto(totalWordsResult.TotalWords);
+        var guessesDto = singleGame.Guesses.MapToListDto(totalWordsResult.TotalWords);
 
         return singleGame.MapToDto(today, lastGuessDto, guessesDto);
     }

@@ -6,7 +6,6 @@ using WordoGuessr.Common.Domain;
 using WordoGuessr.Common.Domain.ValueObjects;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
-using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.Domain;
 using WordoGuessr.Game.Dto;
 using WordoGuessr.Words.Contract;
@@ -119,15 +118,8 @@ internal sealed class MakeGuessHandler : ICommandHandler<MakeGuessCommand, Resul
             _logger.LogWarning(ex, "Unique violation error occurred while making guess");
         }
 
-        var guessDto = new GuessDto(
-            inputWord.Text,
-            guessDistance,
-            GuessFillPercentageCalculator.Calculate(guessDistance, totalWords),
-            attempt.Source.MapToDto());
-
-        var guessesDto = game.GetGuessesOrderedByDistance()
-            .Select(guess => guess.MapToDto(GuessFillPercentageCalculator.Calculate(guess.Distance, totalWords)))
-            .ToList();
+        var guessDto = attempt.MapToDto(totalWords);
+        var guessesDto = game.Guesses.MapToListDto(totalWords);
 
         var score = game.GetScore();
         var guessOutcomeDto = new GuessOutcomeDto(

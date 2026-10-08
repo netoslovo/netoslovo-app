@@ -5,7 +5,7 @@ public sealed record GameDto(
     DifficultyDto Difficulty,
     GameStateDto GameState,
     GuessDto? CurrentGuess,
-    IReadOnlyCollection<GuessDto> AllGuesses,
+    IReadOnlyList<GuessListEntryDto> AllGuesses,
     GameWordDto GameWord,
     HintsInfoDto HintInfo,
     int Score,

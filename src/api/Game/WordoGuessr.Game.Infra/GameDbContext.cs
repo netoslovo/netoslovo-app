@@ -49,7 +49,7 @@ public sealed class GameDbContext : DbContext, IGameStore
         SingleGamesWithSource()
             .AsNoTracking()
             .AsSplitQuery()
-            .Include(g => g.Guesses.OrderByDescending(guess => guess.Id));
+            .Include(g => g.Guesses);
 
     public IQueryable<SingleGame> SingleGamesForSummary() =>
         SingleGamesWithSource()

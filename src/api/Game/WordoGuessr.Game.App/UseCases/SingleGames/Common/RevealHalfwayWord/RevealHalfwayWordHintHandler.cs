@@ -6,7 +6,6 @@ using WordoGuessr.Common.Domain;
 using WordoGuessr.Common.Domain.ValueObjects;
 using WordoGuessr.Game.App.Abstractions;
 using WordoGuessr.Game.App.Mapping;
-using WordoGuessr.Game.App.Services;
 using WordoGuessr.Game.Domain;
 using WordoGuessr.Game.Dto;
 using WordoGuessr.Words.Contract;
@@ -119,12 +118,8 @@ internal sealed class RevealHalfwayWordHandler
             _logger.LogWarning(ex, "Unique violation error occurred while revealing halfway word");
         }
 
-        var fillPercentage = GuessFillPercentageCalculator.Calculate(halfWayWordDistance, totalWords);
-        var guessDto = new GuessDto(halfWayWord.Text, halfWayWordDistance, fillPercentage, attempt.Source.MapToDto());
-
-        var guessesDto = game.GetGuessesOrderedByDistance()
-            .Select(guess => guess.MapToDto(GuessFillPercentageCalculator.Calculate(guess.Distance, totalWords)))
-            .ToList();
+        var guessDto = attempt.MapToDto(totalWords);
+        var guessesDto = game.Guesses.MapToListDto(totalWords);
 
         var score = game.GetScore();
         var guessHintDto = new GuessHintDto(
