@@ -22,6 +22,12 @@ export type GuessDto = {
   source: GuessSourceDto;
 };
 
+export type GuessListEntryDto = {
+  guess: GuessDto;
+  order: number;
+};
+export type GuessListItemDto = GuessDto | GuessListEntryDto;
+
 export type DisplayWordDto = {
   cells: DisplayWordCell[] | null;
 };
@@ -51,7 +57,7 @@ export type ScoreDetailsDto = { guessesCount: number; usedHints: readonly UsedHi
 export type GuessOutcomeDto = {
   guessStatus: GuessStatusDto;
   currentGuess: GuessDto;
-  allGuesses: GuessDto[];
+  allGuesses: GuessListItemDto[];
   score: number;
   scoreDetails: ScoreDetailsDto;
 };
@@ -69,7 +75,7 @@ export type GameDto = {
   difficulty: Difficulty;
   gameState: GameStateDto;
   currentGuess: GuessDto | null;
-  allGuesses: GuessDto[];
+  allGuesses: GuessListItemDto[];
   gameWord: GameWordDto;
   hintInfo: HintsInfo;
   score: number;

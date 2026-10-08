@@ -11,7 +11,7 @@ internal static class GameMapping
         this SingleGame singleGame,
         DateOnly today,
         GuessDto? lastGuess = default,
-        IReadOnlyCollection<GuessDto>? guesses = default)
+        IReadOnlyList<GuessListEntryDto>? guesses = default)
     {
         var score = singleGame.GetScore();
 

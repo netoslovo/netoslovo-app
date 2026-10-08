@@ -61,13 +61,11 @@ internal sealed class GetDailyGameForDayHandler
             return Result<GameDto?, GetDailyError>.Success(null);
         }
 
-        var lastGuess = game.Guesses.FirstOrDefault();
+        var lastGuess = game.LastGuess;
         var requset = new WordsDataRequest(TotalWords: new RequestOperation.TotalWords());
         var totalWordsResult = await _wordsModule.LoadData(requset, ct);
-        var lastGuessDto = lastGuess?.MapToDto(GuessFillPercentageCalculator.Calculate(lastGuess.Distance, totalWordsResult.TotalWords));
-        var guessesDto = game.GetGuessesOrderedByDistance()
-            .Select(guess => guess.MapToDto(GuessFillPercentageCalculator.Calculate(guess.Distance, totalWordsResult.TotalWords)))
-            .ToList();
+        var lastGuessDto = lastGuess?.MapToDto(totalWordsResult.TotalWords);
+        var guessesDto = game.Guesses.MapToListDto(totalWordsResult.TotalWords);
 
         return Result<GameDto?, GetDailyError>.Success(
             game.MapToDto(today, lastGuessDto, guessesDto));

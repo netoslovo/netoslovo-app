@@ -31,7 +31,7 @@ public sealed class SingleGame : DomainEntity<Guid>
     private readonly List<Guess> _guesses = [];
     public IReadOnlyList<Guess> Guesses => _guesses.AsReadOnly();
 
-    public Guess? LastGuess => _guesses.LastOrDefault();
+    public Guess? LastGuess => _guesses.MaxBy(guess => guess.Id);
 
     private Word _secretWord => VersionedGameSource.GameSource.Word;
 
@@ -186,11 +186,6 @@ public sealed class SingleGame : DomainEntity<Guid>
 
         return Result<GuessStatus, SingleGameErrorCode>.Success(status);
     }
-
-    public IReadOnlyCollection<Guess> GetGuessesOrderedByDistance() =>
-         _guesses
-            .OrderBy(guess => guess.Distance)
-            .ToArray();
 
     public Result<SingleGameErrorCode> CanRevealHalfwayWord()
     {

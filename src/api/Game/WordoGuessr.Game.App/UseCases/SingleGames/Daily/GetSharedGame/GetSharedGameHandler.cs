@@ -51,7 +51,7 @@ internal sealed class GetSharedGameHandler
                 .ThenInclude(sg => sg.VersionedGameSource)
                     .ThenInclude(vgs => vgs.GameSource)
             .Include(sgs => sgs.SingleGame)
-                .ThenInclude(sg => sg.Guesses.OrderBy(guess => guess.Id))
+                .ThenInclude(sg => sg.Guesses)
             .SingleOrDefaultAsync(
                 sgs =>
                     sgs.PublicId == query.PublicId &&
@@ -101,8 +101,7 @@ internal sealed class GetSharedGameHandler
             today,
             out var spoilersHideReason);
 
-        var guesses = BuildGuesses(
-            game,
+        var guesses = game.Guesses.MapToSharedListDto(
             totalWords,
             showWords: canViewSpoilers);
 
@@ -126,10 +125,10 @@ internal sealed class GetSharedGameHandler
         SharedDailyGameSpoilersDto spoilers = canViewSpoilers
             ? new VisibleSharedDailyGameSpoilersDto(
                 game.BuildSharedGameWordDto(),
-                BuildVisibleGuesses(game, totalWords))
+                game.Guesses.MapToVisibleSharedListDto(totalWords))
             : new HiddenSharedDailyGameSpoilersDto(
                 spoilersHideReason!.Value.MapToDto(),
-                BuildHiddenGuesses(game, totalWords)
+                game.Guesses.MapToHiddenSharedListDto(totalWords)
             );
 
         var result = new SharedDailyGameDto(
@@ -165,45 +164,4 @@ internal sealed class GetSharedGameHandler
                 ct);
     }
 
-    private static IReadOnlyCollection<SharedGuessDto> BuildGuesses(
-        SingleGame game,
-        ushort totalWords,
-        bool showWords)
-    {
-        return game.Guesses
-            .Select((guess, index) => new SharedGuessDto(
-                showWords ? guess.Word.Text : null,
-                guess.Distance,
-                index + 1,
-                GuessFillPercentageCalculator.Calculate(guess.Distance, totalWords),
-                guess.Source.MapToDto()))
-            .ToArray();
-    }
-
-    private static IReadOnlyCollection<VisibleSharedGuessDto> BuildVisibleGuesses(
-        SingleGame game,
-        ushort totalWords)
-    {
-        return game.Guesses
-            .Select((guess, index) => new VisibleSharedGuessDto(
-                guess.Word.Text,
-                guess.Distance,
-                index + 1,
-                GuessFillPercentageCalculator.Calculate(guess.Distance, totalWords),
-                guess.Source.MapToDto()))
-            .ToArray();
-    }
-
-    private static IReadOnlyCollection<HiddenSharedGuessDto> BuildHiddenGuesses(
-        SingleGame game,
-        ushort totalWords)
-    {
-        return game.Guesses
-            .Select((guess, index) => new HiddenSharedGuessDto(
-                guess.Distance,
-                index + 1,
-                GuessFillPercentageCalculator.Calculate(guess.Distance, totalWords),
-                guess.Source.MapToDto()))
-            .ToArray();
-    }
 }
