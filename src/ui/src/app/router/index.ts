@@ -25,6 +25,14 @@ import {
   type ActorStampChange,
 } from "../../shared/api/httpClient";
 import { showToast } from "../../shared/notifications/toastStore";
+import {
+  clearChunkReloadAttempt,
+  consumePendingPreloadError,
+  registerChunkLoadRecovery,
+  tryReloadForChunkError,
+} from "./chunkLoadRecovery";
+
+registerChunkLoadRecovery();
 
 const routeNavigationLoadingValue = ref(false);
 export const routeNavigationLoading = readonly(routeNavigationLoadingValue);
@@ -424,18 +432,28 @@ router.afterEach((to, _from, failure) => {
   routeNavigationLoadingValue.value = false;
 
   if (!failure) {
+    clearChunkReloadAttempt();
     document.title = getDocumentTitle(to);
   }
 });
 
-router.onError((_error, to) => {
+router.onError((error, to) => {
   routeNavigationLoadingValue.value = false;
+
+  const targetUrl = router.resolve(to).href;
+  if (
+    consumePendingPreloadError(error) &&
+    tryReloadForChunkError(targetUrl)
+  ) {
+    return;
+  }
+
   showToast({
     status: "error",
     title: "Навигация",
     message: "Не удалось открыть страницу. Попробуйте ещё раз.",
     actionLabel: "Повторить",
-    onAction: () => window.location.assign(router.resolve(to).href),
+    onAction: () => window.location.assign(targetUrl),
   });
 });
 
