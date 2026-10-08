@@ -21,6 +21,10 @@ export type Guess = {
   source: GuessSource;
 };
 
+export type GuessListEntry = Guess & {
+  order: number;
+};
+
 export type DisplayWordCell = { value: string | null; revealed: boolean };
 export type DisplayWord = {
   cells: DisplayWordCell[] | null;
@@ -60,7 +64,7 @@ export type ScoreDetails = { guessesCount: number; usedHints: readonly UsedHint[
 export type GuessOutcome = {
   guessStatus: GuessStatus;
   currentGuess: Guess;
-  allGuesses: Guess[];
+  allGuesses: GuessListEntry[];
   score: number;
   scoreDetails: ScoreDetails;
 };
@@ -78,7 +82,7 @@ export type Game = {
   difficulty: Difficulty;
   gameState: GameState;
   currentGuess: Guess | null;
-  allGuesses: Guess[];
+  allGuesses: GuessListEntry[];
   gameWord: GameWord;
   hintsInfo: HintsInfo;
   score: number;
