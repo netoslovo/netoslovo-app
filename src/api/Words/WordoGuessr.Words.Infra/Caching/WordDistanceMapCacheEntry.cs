@@ -4,10 +4,17 @@ using WordoGuessr.Words.Infra.WordsDistanceStorage;
 namespace WordoGuessr.Words.Infra.Caching;
 
 [MemoryPackable]
-internal sealed partial record WordDistanceMapCacheEntry(
-    ushort[] WordsIdsByDistance,
-    ushort[] DistanceByWordsIds)
+internal sealed partial class WordDistanceMapCacheEntry
 {
+    public ushort[] WordsIdsByDistance { get; }
+    public ushort[] DistanceByWordsIds { get; }
+
+    public WordDistanceMapCacheEntry(ushort[] wordsIdsByDistance, ushort[] distanceByWordsIds)
+    {
+        WordsIdsByDistance = wordsIdsByDistance ?? throw new ArgumentNullException(nameof(wordsIdsByDistance));
+        DistanceByWordsIds = distanceByWordsIds ?? throw new ArgumentNullException(nameof(distanceByWordsIds));
+    }
+
     public ushort GetWordIdByDistance(ushort distance)
     {
         if (distance >= WordsIdsByDistance.Length)

@@ -2,10 +2,19 @@ using StackExchange.Redis;
 
 namespace WordoGuessr.WebAPI.Redis;
 
-internal sealed record RedisConnections(
-    Lazy<IConnectionMultiplexer> InMemory,
-    Lazy<IConnectionMultiplexer> Persistent) : IDisposable
+internal sealed class RedisConnections : IDisposable
 {
+    public Lazy<IConnectionMultiplexer> InMemory { get; }
+    public Lazy<IConnectionMultiplexer> Persistent { get; }
+
+    public RedisConnections(
+        Lazy<IConnectionMultiplexer> inMemory,
+        Lazy<IConnectionMultiplexer> persistent)
+    {
+        InMemory = inMemory ?? throw new ArgumentNullException(nameof(inMemory));
+        Persistent = persistent ?? throw new ArgumentNullException(nameof(persistent));
+    }
+
     public void Dispose()
     {
         if (InMemory.IsValueCreated)

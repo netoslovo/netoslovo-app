@@ -4,7 +4,7 @@ using WordoGuessr.Auth.Domain;
 
 namespace WordoGuessr.Auth.App.UseCases.User.ShouldShowUserNotice;
 
-internal sealed record ShouldShowUserNoticeHandler
+internal sealed class ShouldShowUserNoticeHandler
     : IQueryHandler<ShouldShowUserNoticeQuery, bool>
 {
     private readonly IUserNoticeViewStore _userNoticeViewStore;
