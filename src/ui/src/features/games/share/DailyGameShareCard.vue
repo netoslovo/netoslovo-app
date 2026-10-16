@@ -8,6 +8,8 @@ import { showToast } from "../../../shared/notifications/toastStore";
 import UiButton from "../../../shared/ui/UiButton.vue";
 import UiIconButton from "../../../shared/ui/UiIconButton.vue";
 import UiSkeleton from "../../../shared/ui/UiSkeleton.vue";
+import { formatDuration } from "../lib/formatDuration";
+import type { Game } from "../model/game";
 import {
   getDailyGameShare,
   shareDailyGame,
@@ -15,8 +17,9 @@ import {
 } from "../api/gameApi";
 
 const props = defineProps<{
-  gameId: string;
+  game: Game;
   day: string;
+  duration: string | null;
 }>();
 type CardState = "loading" | "missing" | "ready" | "failed";
 type CopyFeedbackTarget = "field" | "button";
@@ -34,7 +37,7 @@ const copying = ref(false);
 const sharing = ref(false);
 const shareSent = ref(false);
 const createError = ref(false);
-const copyError = ref(false);
+const copyError = ref<string | null>(null);
 let fieldCopiedTimeout: ReturnType<typeof setTimeout> | undefined;
 let buttonCopiedTimeout: ReturnType<typeof setTimeout> | undefined;
 let shareSentTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -49,15 +52,22 @@ const shareUrl = computed(() => {
   }).href;
   return `${getAppOrigin()}${path}`;
 });
-const nativeShareData = computed<ShareData>(() => ({
-  text: `Мой результат в игре дня за ${formatDay(props.day)}\n\n${shareUrl.value}`,
-}));
+const shareText = computed(() => [
+  `Я ${props.game.gameState === "guessed" ? "отгадал" : "не смог отгадать"} слово дня за ${formatDay(props.day)}:`,
+  props.game.gameState === "guessed" && props.game.score != null ? `Счёт: ${props.game.score}` : null,
+  props.game.gameState === "guessed" && props.game.scoreDetails?.guessesCount != null
+    ? `Попыток: ${props.game.scoreDetails.guessesCount}` : null,
+  props.duration ? `Время: ${formatDuration(props.duration)}` : null,
+  "",
+  shareUrl.value,
+].filter(line => line !== null).join("\n"));
+const nativeShareData = computed<ShareData>(() => ({ text: shareText.value }));
 const nativeShareAvailable = computed(() => {
   if (typeof navigator.share !== "function" || nativeShareFailed.value) return false;
   if (typeof navigator.canShare !== "function" || !shareUrl.value) return true;
   return navigator.canShare(nativeShareData.value);
 });
-watch(() => props.gameId, () => {
+watch(() => props.game.id, () => {
   void loadShare();
 }, { immediate: true });
 
@@ -74,7 +84,7 @@ function resetCopyFeedback() {
   clearTimeout(buttonCopiedTimeout);
   fieldCopied.value = false;
   buttonCopied.value = false;
-  copyError.value = false;
+  copyError.value = null;
 }
 
 async function loadShare() {
@@ -96,7 +106,7 @@ async function loadShare() {
   resetCopyFeedback();
 
   try {
-    const existingPublicId = await getDailyGameShare(props.gameId, {
+    const existingPublicId = await getDailyGameShare(props.game.id, {
       signal: abortController.signal,
     });
     if (currentRequestId !== requestId) return;
@@ -118,7 +128,7 @@ async function createShare() {
   creating.value = true;
   createError.value = false;
   try {
-    const createdPublicId = await shareDailyGame(props.gameId);
+    const createdPublicId = await shareDailyGame(props.game.id);
     if (currentRequestId !== requestId) return;
     publicId.value = createdPublicId;
     state.value = "ready";
@@ -149,18 +159,18 @@ async function openNativeShare() {
     showToast({
       status: "info",
       title: "Поделиться",
-      message: "Системное меню недоступно. Скопируйте ссылку вручную.",
+      message: "Системное меню недоступно. Нажмите «Скопировать результат».",
     });
   } finally {
     if (currentRequestId === requestId) sharing.value = false;
   }
 }
 
-async function copyShareUrl(feedbackTarget: CopyFeedbackTarget) {
+async function copyShare(feedbackTarget: CopyFeedbackTarget) {
   if (!shareUrl.value || copying.value) return;
   const currentRequestId = requestId;
   copying.value = true;
-  copyError.value = false;
+  copyError.value = null;
   if (feedbackTarget === "field") {
     clearTimeout(fieldCopiedTimeout);
     fieldCopied.value = false;
@@ -169,7 +179,7 @@ async function copyShareUrl(feedbackTarget: CopyFeedbackTarget) {
     buttonCopied.value = false;
   }
   try {
-    await navigator.clipboard.writeText(shareUrl.value);
+    await navigator.clipboard.writeText(feedbackTarget === "field" ? shareUrl.value : shareText.value);
     if (currentRequestId !== requestId) return;
     if (feedbackTarget === "field") {
       fieldCopied.value = true;
@@ -180,7 +190,9 @@ async function copyShareUrl(feedbackTarget: CopyFeedbackTarget) {
     }
   } catch {
     if (currentRequestId !== requestId) return;
-    copyError.value = true;
+    copyError.value = feedbackTarget === "field"
+      ? "Не удалось скопировать ссылку. Выделите её и скопируйте вручную."
+      : "Не удалось скопировать результат. Попробуйте ещё раз или скопируйте ссылку вручную.";
   } finally {
     if (currentRequestId === requestId) copying.value = false;
   }
@@ -194,7 +206,7 @@ async function revokeShare() {
   const currentRequestId = ++requestId;
   revoking.value = true;
   try {
-    await unshareDailyGame(props.gameId);
+    await unshareDailyGame(props.game.id);
     if (currentRequestId !== requestId) return;
     publicId.value = null;
     state.value = "missing";
@@ -225,7 +237,10 @@ function formatDay(day: string) {
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(new Date(`${day}T00:00:00`));
+  }).formatToParts(new Date(`${day}T00:00:00`))
+    .filter(part => part.type !== "literal" || !part.value.includes("г."))
+    .map(part => part.value)
+    .join("");
 }
 </script>
 
@@ -267,7 +282,7 @@ function formatDay(day: string) {
                 :aria-describedby="copyError ? 'daily-share-copy-error' : undefined" />
               <UiIconButton class="share-card__link-copy" size="sm"
                 :label="fieldCopied ? 'Ссылка скопирована' : 'Скопировать ссылку'" :disabled="revoking || sharing"
-                :aria-busy="copying" @click="copyShareUrl('field')">
+                :aria-busy="copying" @click="copyShare('field')">
                 <Transition name="share-card-feedback" mode="out-in">
                   <i :key="fieldCopied ? 'copied' : 'copy'" :class="fieldCopied ? 'pi pi-check' : 'pi pi-copy'"
                     aria-hidden="true"></i>
@@ -282,7 +297,7 @@ function formatDay(day: string) {
           </div>
 
           <p v-if="copyError" id="daily-share-copy-error" class="share-card__error" role="alert">
-            Не удалось скопировать ссылку. Выделите её и скопируйте вручную.
+            {{ copyError }}
           </p>
         </template>
 
@@ -325,16 +340,16 @@ function formatDay(day: string) {
             </Transition>
           </UiButton>
           <UiButton class="share-card__copy" :variant="nativeShareAvailable ? 'outlined' : 'primary'"
-            :disabled="revoking || sharing" :aria-busy="copying" @click="copyShareUrl('button')">
+            :disabled="revoking || sharing" :aria-busy="copying" @click="copyShare('button')">
             <span class="share-card__copy-content">
               <span class="share-card__copy-sizer" aria-hidden="true">
                 <i class="pi pi-copy"></i>
-                Скопировать ссылку
+                Скопировать результат
               </span>
               <Transition name="share-card-feedback" mode="out-in">
                 <span :key="buttonCopied ? 'copied' : 'copy'" class="share-card__copy-feedback">
                   <i :class="buttonCopied ? 'pi pi-check' : 'pi pi-copy'" aria-hidden="true"></i>
-                  {{ buttonCopied ? "Скопировано" : "Скопировать ссылку" }}
+                  {{ buttonCopied ? "Скопировано" : "Скопировать результат" }}
                 </span>
               </Transition>
             </span>

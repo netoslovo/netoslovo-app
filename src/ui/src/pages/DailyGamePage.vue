@@ -59,7 +59,8 @@ const modeConfig = computed(() => ({
       :actions="actions"
     >
       <template #result-header-action>
-        <DailyGameShareDialog v-if="day" :game-id="session.game.value.id" :day="day"
+        <DailyGameShareDialog v-if="day" :game="session.game.value" :day="day"
+          :duration="resultStats.state.value.player.status === 'available' ? resultStats.state.value.player.data.duration : null"
           :attention-enabled="session.game.value.gameState === 'guessed'" />
       </template>
       <template #result-notice>
