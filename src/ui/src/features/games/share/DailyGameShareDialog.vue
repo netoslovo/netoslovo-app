@@ -3,11 +3,13 @@ import Dialog from "primevue/dialog";
 import { onBeforeUnmount, onMounted, ref } from "vue";
 import { userNoticeCodes } from "../../user-notices/model/userNoticeCodes";
 import { useUserNoticeStore } from "../../user-notices/model/userNoticeStore";
+import type { Game } from "../model/game";
 import DailyGameShareCard from "./DailyGameShareCard.vue";
 
 const props = defineProps<{
-  gameId: string;
+  game: Game;
   day: string;
+  duration: string | null;
   attentionEnabled: boolean;
 }>();
 
@@ -76,7 +78,7 @@ async function saveNoticeView() {
 
   <Dialog id="daily-game-share-dialog" v-model:visible="dialogOpen" modal dismissable-mask
     header="Поделиться результатом" class="game-dialog daily-game-share-dialog">
-    <DailyGameShareCard v-if="dialogOpen" :game-id="gameId" :day="day" />
+    <DailyGameShareCard v-if="dialogOpen" :game="game" :day="day" :duration="duration" />
   </Dialog>
 </template>
 
