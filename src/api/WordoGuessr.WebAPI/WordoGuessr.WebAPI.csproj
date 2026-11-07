@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
@@ -30,6 +31,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Messaging/Migrations/*" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="DataProtection/Migrations/*" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Auth\WordoGuessr.Auth.API\WordoGuessr.Auth.API.csproj" />

@@ -78,10 +78,10 @@ internal sealed partial class Program
         builder.Services.AddGameModule(appConnectionString);
         builder.Services.AddSagasModule(appConnectionString);
 
-        builder.Services.AddRedisConfiguredDataProtection(
+        builder.Services.AddEfConfiguredDataProtection(
             builder.Configuration,
             builder.Environment.ApplicationName,
-            () => redis.Persistent.Value.GetDatabase());
+            appConnectionString);
 
         builder.AddMessaging(appConnectionString);
 
