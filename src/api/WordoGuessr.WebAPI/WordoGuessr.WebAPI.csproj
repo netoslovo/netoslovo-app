@@ -32,6 +32,9 @@
     <EmbeddedResource Include="Messaging/Migrations/*" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="DataProtection/Migrations/*" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Auth\WordoGuessr.Auth.API\WordoGuessr.Auth.API.csproj" />
     <ProjectReference Include="..\Auth\WordoGuessr.Auth.Infra\WordoGuessr.Auth.Infra.csproj" />
     <ProjectReference Include="..\Common\WordoGuessr.API.BuildingBlocks\WordoGuessr.API.BuildingBlocks.csproj" />
