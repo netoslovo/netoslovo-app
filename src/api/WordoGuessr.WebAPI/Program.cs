@@ -62,7 +62,7 @@ internal sealed partial class Program
         builder.AddOpenTelemetry();
         builder.AddWebApiServices();
 
-        using var redis = RedisHepleres.CreateRedisInfrastructure(
+        using var redisConnection = new RedisConnection(
             builder.Configuration,
             builder.Environment.ApplicationName);
 
@@ -73,7 +73,7 @@ internal sealed partial class Program
         builder.Services.AddWordsModule(
             builder.Configuration,
             appConnectionString,
-            () => Task.FromResult(redis.InMemory.Value));
+            () => Task.FromResult(redisConnection.Value));
 
         builder.Services.AddGameModule(appConnectionString);
         builder.Services.AddSagasModule(appConnectionString);
