@@ -32,9 +32,7 @@ services:
         condition: service_completed_successfully
       mailpit:
         condition: service_started
-      valkey-inmemory:
-        condition: service_healthy
-      valkey-persistent:
+      valkey:
         condition: service_healthy
       minio:
         condition: service_healthy
@@ -52,8 +50,7 @@ services:
       HostingFeatures__WolverineDynamicCodeGeneration: "false"
 
       ConnectionStrings__PostgreSql: "Host=postgres;port=5432;Database=wordoguessr;Username=admin;Password=changeme;GSS Encryption Mode=Disable;"
-      ConnectionStrings__InmemoryRedis: "valkey-inmemory:6379"
-      ConnectionStrings__PersistentRedis: "valkey-persistent:6379"
+      ConnectionStrings__Redis: "valkey:6379"
 
       ObjectStorage__S3__ServiceUrl: "http://minio:9000"
       ObjectStorage__S3__AccessKey: admin
