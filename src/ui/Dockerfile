@@ -13,7 +13,9 @@ ARG VITE_API_URL
 RUN pnpm exec vite build
 
 
-FROM nginx:1.30.6-alpine-slim
+FROM nginx:1.30.7-alpine-slim
+
+RUN apk upgrade --no-cache libcrypto3 libssl3 zlib
 
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
