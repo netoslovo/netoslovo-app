@@ -26,10 +26,10 @@ const showOnTimeBadge = computed(() => wasGuessedOnReleaseDay(props.dailyGame));
 
     <RouterLink class="daily-compact-tile__action" :to="to"
       :aria-label="`${config.action}: ${date}. ${config.label}`" :title="`${date}: ${config.label}`">
-        <span class="daily-compact-tile__date">{{ date }}</span>
         <span class="daily-compact-tile__status" aria-hidden="true">
           <i :class="config.icon"></i>
         </span>
+        <span class="daily-compact-tile__date">{{ date }}</span>
     </RouterLink>
   </article>
 </template>
@@ -70,6 +70,12 @@ const showOnTimeBadge = computed(() => wasGuessedOnReleaseDay(props.dailyGame));
   border-color: var(--color-red-600);
 }
 
+.daily-compact-tile :deep(.daily-on-time-badge) {
+  top: -5px;
+  right: -5px;
+  transform: scale(0.92);
+}
+
 .daily-compact-tile__action {
   width: 100%;
   height: 100%;
@@ -105,6 +111,7 @@ const showOnTimeBadge = computed(() => wasGuessedOnReleaseDay(props.dailyGame));
 }
 
 .daily-compact-tile__date {
+  flex-shrink: 0;
   max-width: 100%;
   color: var(--color-gray-700);
   font-size: 11px;
